@@ -87,21 +87,36 @@
             color: var(--green);
             font-weight: 600;
         }
+        
+        /* IMPAGINAZIONE CORRETTA BULLET LIST */
         .features-list {
             list-style: none;
-            margin: 24px 0;
+            margin: 28px 0;
         }
         .features-list li {
             font-size: 15px;
             color: var(--text-muted);
-            margin-bottom: 12px;
+            margin-bottom: 18px;
             display: flex;
-            align-items: center;
-            gap: 10px;
+            align-items: flex-start; /* Allinea il check in alto a sinistra */
+            gap: 12px;
         }
-        .features-list li strong {
+        .features-list .check-icon {
+            color: var(--green);
+            font-size: 16px;
+            line-height: 1.4;
+            flex-shrink: 0;
+        }
+        .features-list .feature-text {
+            flex: 1;
+        }
+        .features-list .feature-title {
             color: var(--text);
+            font-weight: 700;
+            display: block;
+            margin-bottom: 2px;
         }
+
         .btn-primary {
             display: block;
             width: 100%;
@@ -160,10 +175,34 @@
             <p style="color: var(--text-muted); font-size: 14px;">Pay once, own forever. Includes 2 hardware-bound activations.</p>
 
             <ul class="features-list">
-                <li>✔️ <strong>Total Engine Freedom:</strong> Switch seamlessly between 100% private local LLMs (Ollama) and top Cloud APIs (Claude, OpenAI, Gemini, Mistral, Groq) or bring any custom provider.</li>
-                <li>✔️ <strong>Automated AR & Aging:</strong> Instant invoice parsing, multi-level reminder generation, and overdue tracking.</li>
-                <li>✔️ <strong>Zero Vendor Lock-in:</strong> No monthly cloud fees, no mandatory API markup.</li>
-                <li>✔️ <strong>Cross-Platform Desktop Agent:</strong> Runs natively on your workstation with complete data ownership.</li>
+                <li>
+                    <span class="check-icon">✔️</span>
+                    <div class="feature-text">
+                        <span class="feature-title">Total Engine Freedom:</span>
+                        Choose your preferred model, provider, or workflow. Switch seamlessly between top Cloud APIs (Claude, OpenAI, Gemini, Mistral [GDPR], Groq) or 100% private local LLMs (Ollama).
+                    </div>
+                </li>
+                <li>
+                    <span class="check-icon">✔️</span>
+                    <div class="feature-text">
+                        <span class="feature-title">Automated AR & Aging:</span>
+                        Instant invoice parsing, multi-level reminder generation, and overdue tracking.
+                    </div>
+                </li>
+                <li>
+                    <span class="check-icon">✔️</span>
+                    <div class="feature-text">
+                        <span class="feature-title">Zero Vendor Lock-in:</span>
+                        No monthly cloud fees, no mandatory API markup.
+                    </div>
+                </li>
+                <li>
+                    <span class="check-icon">✔️</span>
+                    <div class="feature-text">
+                        <span class="feature-title">Cross-Platform Desktop Agent:</span>
+                        Runs natively on your workstation with complete data ownership.
+                    </div>
+                </li>
             </ul>
 
             <!-- LEMON SQUEEZY OVERLAY CHECKOUT BUTTON -->
@@ -174,7 +213,7 @@
 
             <div class="freedom-box">
                 <h3>Total Freedom — Bring Your Own Engine</h3>
-                Choose how your AI processes invoices. Switch between 100% private local execution (Ollama: Gemma, Mistral, Qwen, DeepSeek) or top-tier Cloud speed (BYOC: Claude, OpenAI, Gemini, Mistral, Groq, or bring any custom provider).
+                Choose how your AI processes invoices. Switch between 100% private local execution (Ollama: Gemma, Mistral, Qwen, DeepSeek) or top-tier Cloud speed (BYOC: Claude, OpenAI, Gemini, Mistral [GDPR], Groq, or bring any custom provider).
             </div>
         </div>
 
