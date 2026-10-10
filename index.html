@@ -1,223 +1,52 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>ZUKWEND — Hybrid AI Billing & AR Automation Agent</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Lemon Squeezy Overlay Checkout Script -->
-    <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
-    
-    <style>
-        :root {
-            --bg: #0d0f12;
-            --card-bg: #161920;
-            --border: #262b36;
-            --text: #f0f2f5;
-            --text-muted: #9ba3b2;
-            --accent: #2563eb;
-            --accent-hover: #1d4ed8;
-            --green: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 760px;
-            width: 100%;
-            text-align: center;
-            padding: 40px 10px;
-        }
-        .badge {
-            display: inline-block;
-            background: rgba(37, 99, 235, 0.15);
-            color: #60a5fa;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 1px solid rgba(37, 99, 235, 0.3);
-            margin-bottom: 24px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        h1 {
-            font-size: 38px;
-            font-weight: 800;
-            line-height: 1.25;
-            margin-bottom: 18px;
-            background: linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        p.subheadline {
-            font-size: 18px;
-            color: var(--text-muted);
-            margin-bottom: 36px;
-            max-width: 660px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .pricing-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 36px 28px;
-            margin-bottom: 32px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            text-align: left;
-        }
-        .price-tag {
-            font-size: 36px;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-        .price-tag span {
-            font-size: 16px;
-            color: var(--green);
-            font-weight: 600;
-        }
-        .features-list {
-            list-style: none;
-            margin: 28px 0;
-        }
-        .features-list li {
-            font-size: 15px;
-            color: var(--text-muted);
-            margin-bottom: 18px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-        .features-list .check-icon {
-            color: var(--green);
-            font-size: 16px;
-            line-height: 1.4;
-            flex-shrink: 0;
-        }
-        .features-list .feature-text {
-            flex: 1;
-        }
-        .features-list .feature-title {
-            color: var(--text);
-            font-weight: 700;
-            display: block;
-            margin-bottom: 2px;
-        }
-        .btn-primary {
-            display: block;
-            width: 100%;
-            background: var(--accent);
-            color: #fff;
-            font-size: 18px;
-            font-weight: 700;
-            text-align: center;
-            padding: 16px 24px;
-            border-radius: 10px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-            margin-top: 20px;
-        }
-        .btn-primary:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-        .freedom-box {
-            background: rgba(255,255,255,0.02);
-            border: 1px dashed var(--border);
-            border-radius: 12px;
-            padding: 18px;
-            margin-top: 24px;
-            font-size: 14px;
-            color: var(--text-muted);
-            text-align: left;
-        }
-        .freedom-box h3 {
-            color: var(--text);
-            font-size: 15px;
-            margin-bottom: 4px;
-        }
-        .transparency-note {
-            font-size: 13px;
-            color: #71717a;
-            margin-top: 28px;
-            line-height: 1.5;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZUKWEND | Offline AI Invoice Reminder Software</title>
+<meta name="description" content="Generate professional payment reminders from your invoice PDFs. 100% offline AI, no subscriptions.">
+<style>
+:root{--bg:#0b0f1a;--card:#131a2b;--line:#222c45;--txt:#e6eaf5;--mut:#9aa6c4;--a:#6c8cff;--b:#b46cff;--ok:#2ecc8f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+header{padding:20px 0;border-bottom:1px solid var(--line)}
+.logo{font-weight:800;letter-spacing:.12em;color:var(--txt)}
+.hero{text-align:center;padding:84px 0 56px}
+h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.15;font-weight:800;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.sub{max-width:720px;margin:20px auto 0;color:var(--mut);font-size:1.15rem}
+.cta{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-top:36px}
+.btn{display:inline-block;padding:15px 30px;border-radius:10px;font-weight:700;text-decoration:none;font-size:1.05rem;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn-buy{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;box-shadow:0 8px 24px rgba(108,140,255,.35)}
+.btn-demo{border:1.5px solid var(--a);color:var(--txt);background:transparent}
+.note{margin-top:14px;color:var(--mut);font-size:.9rem}
+section{padding:48px 0;border-top:1px solid var(--line)}
+h2{font-size:1.7rem;margin-bottom:24px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+.card h3{margin-bottom:8px;color:var(--a)}
+.card p{color:var(--mut)}
+ul.ok{list-style:none;max-width:640px;margin:0 auto}
+ul.ok li{padding:8px 0 8px 30px;position:relative;color:var(--mut)}
+ul.ok li:before{content:"\2713";position:absolute;left:0;color:var(--ok);font-weight:800}
+.price{text-align:center}
+.price .amt{font-size:3.2rem;font-weight:800;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+footer{padding:32px 0;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:.85rem}
+</style>
 </head>
 <body>
-
-    <div class="container">
-        <div class="badge">Hybrid AI Architecture — BYOC & Local</div>
-        
-        <h1>ZUKWEND — Hybrid AI Billing & AR Automation Agent</h1>
-        
-        <p class="subheadline">
-            Automate invoice tracking, aging analysis, and payment reminders with total freedom. Run top-tier Cloud APIs via BYOC or 100% private local models. Zero monthly subscriptions.
-        </p>
-
-        <div class="pricing-card">
-            <div class="price-tag">€249 <span>/ Lifetime License (Early-Bird Offer)</span></div>
-            <p style="color: var(--text-muted); font-size: 14px;">Pay once, own forever. Includes 2 hardware-bound activations.</p>
-
-            <ul class="features-list">
-                <li>
-                    <span class="check-icon">✔️</span>
-                    <div class="feature-text">
-                        <span class="feature-title">Total Engine Freedom:</span>
-                        Choose your preferred model, provider, or workflow. Switch seamlessly between top Cloud APIs (Claude, OpenAI, Gemini, Mistral [GDPR], Groq) or 100% private local LLMs (Ollama).
-                    </div>
-                </li>
-                <li>
-                    <span class="check-icon">✔️</span>
-                    <div class="feature-text">
-                        <span class="feature-title">Automated AR & Aging:</span>
-                        Instant invoice parsing, multi-level reminder generation, and overdue tracking.
-                    </div>
-                </li>
-                <li>
-                    <span class="check-icon">✔️</span>
-                    <div class="feature-text">
-                        <span class="feature-title">Zero Vendor Lock-in:</span>
-                        No monthly cloud fees, no mandatory API markup.
-                    </div>
-                </li>
-                <li>
-                    <span class="check-icon">✔️</span>
-                    <div class="feature-text">
-                        <span class="feature-title">Cross-Platform Desktop Agent:</span>
-                        Runs natively on your workstation with complete data ownership.
-                    </div>
-                </li>
-            </ul>
-
-            <!-- LEMON SQUEEZY OVERLAY CHECKOUT BUTTON -->
-            <a href="https://oltrevista.lemonsqueezy.com/checkout/buy/5a0f67eb-a1ab-47d8-aaa0-df365147f5ae?embed=1" 
-               class="lemonsqueezy-button btn-primary">
-                Get Lifetime Access — €249
-            </a>
-
-            <div class="freedom-box">
-                <h3>Total Freedom — Bring Your Own Engine</h3>
-                Choose how your AI processes invoices. Switch between 100% private local execution (Ollama: Gemma, Mistral, Qwen, DeepSeek) or top-tier Cloud speed (BYOC: Claude, OpenAI, Gemini, Mistral [GDPR], Groq, or bring any custom provider).
-            </div>
-        </div>
-
-        <p class="transparency-note">
-            ⚠️ <strong>Transparency Note:</strong> ZUKWEND is an administrative desktop agent designed for Accounts Receivable (AR) automation, overdue invoice tracking, and reminder draft generation. It is not an active invoicing tool (it does not generate XML/SDI electronic invoices) nor a debt collection agency.
-        </p>
-    </div>
-
+<header><div class="wrap"><span class="logo">ZUKWEND</span></div></header>
+<main>
+<div class="wrap hero">
+<h1>Recover outstanding invoices without exposing your financial data.</h1>
+<p class="sub">ZUKWEND is the AI agent that reads your PDFs, calculates aging and writes professional payment reminders locally. 100% offline, zero recurring fees.</p>
+<div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Buy now - 249 EUR</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Download the free DEMO</a></div><p class="note">DEMO: 7 days or up to 10 invoices. One-time payment, no subscription.</p>
+</div>
+<section><div class="wrap"><h2>How it works</h2><div class="grid"><div class="card"><h3>1. AI parsing</h3><p>Drop your invoice PDFs: ZUKWEND extracts invoice number, client, amounts and due dates.</p></div><div class="card"><h3>2. Aging analysis</h3><p>Calculates overdue days and classifies payment risk instantly.</p></div><div class="card"><h3>3. Ready reminders</h3><p>Generates emails and formal letters (levels 1-3) based on the delay.</p></div></div></div></section>
+<section><div class="wrap"><h2>Privacy by design</h2><ul class="ok"><li>Zero cloud: the AI runs on your own machine.</li><li>Keeps working even without an internet connection.</li><li>Optional: bring your own API key if you prefer cloud speed.</li><li>Professional templates in 6 languages: IT, EN, FR, DE, ES, PT.</li></ul></div></section>
+<section class="price"><div class="wrap"><h2>Transparent pricing</h2><div class="amt">EUR 249</div><p class="sub">One-time license. No subscription.</p><div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Buy now - 249 EUR</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Download the free DEMO</a></div><p class="note">DEMO: 7 days or up to 10 invoices. One-time payment, no subscription.</p></div></section>
+</main>
+<footer><div class="wrap">ZUKWEND by OLTREVISTA AI. AI outputs must be verified by the user. See DISCLAIMER_EULA.</div></footer>
 </body>
 </html>
