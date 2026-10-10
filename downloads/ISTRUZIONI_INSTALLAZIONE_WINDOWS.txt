@@ -1,0 +1,11 @@
+====================================================================
+ZUKWEND Billing AI — Note sull'avvio in ambiente Windows
+====================================================================
+Trattandosi di un'applicazione nativa Desktop 100% Offline e priva di telemetria su server cloud, al primo avvio Microsoft Defender SmartScreen potrebbe mostrare la schermata blu 'PC protetto da Windows / App non riconosciuta'.
+
+PER AVVIARE L'APPLICAZIONE:
+1. Clicca sulla scritta 'Ulteriori informazioni' (o 'More info').
+2. Clicca sul pulsante 'Esegui comunque' (o 'Run anyway').
+
+ZUKWEND lavora esclusivamente sui tuoi file locali, non invia dati all'esterno ed è sicuro al 100%.
+====================================================================
