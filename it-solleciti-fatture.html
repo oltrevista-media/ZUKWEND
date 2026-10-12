@@ -3,8 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ZUKWEND | Software per solleciti di pagamento fatture, 100% offline</title>
-<meta name="description" content="Genera solleciti di pagamento professionali dalle tue fatture PDF. IA 100% offline, nessun abbonamento.">
+<title>ZUKWEND — Agente AI Ibrido per Solleciti Fatture e Gestione Crediti</title>
+<meta name="description" content="Genera solleciti di pagamento professionali dalle tue fatture PDF. Motore AI nativo pronto all'uso, opzionale Ollama locale o Cloud BYOC. Nessun abbonamento.">
+    <link rel="canonical" href="https://zukwend.com/it-solleciti-fatture.html">
+    <meta property="og:title" content="ZUKWEND — Agente AI Ibrido per Solleciti Fatture e Gestione Crediti">
+    <meta property="og:description" content="Genera solleciti di pagamento professionali dalle tue fatture PDF. Motore AI nativo pronto all'uso, opzionale Ollama locale o Cloud BYOC. Nessun abbonamento.">
+    <meta property="og:url" content="https://zukwend.com/it-solleciti-fatture.html">
+    <meta property="og:type" content="website">
 <style>
 :root{--bg:#0b0f1a;--card:#131a2b;--line:#222c45;--txt:#e6eaf5;--mut:#9aa6c4;--a:#6c8cff;--b:#b46cff;--ok:#2ecc8f}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -40,6 +45,23 @@ ul.ok li:before{content:"\2713";position:absolute;left:0;color:var(--ok);font-we
 .price{text-align:center}
 .price .amt{font-size:3.2rem;font-weight:800;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 footer{padding:32px 0;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:.85rem}
+
+.models-box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px;margin-top:20px}
+.models-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px}
+@media(max-width:860px){.models-grid{grid-template-columns:1fr}}
+.model-col{background:rgba(255,255,255,0.02);border:1px dashed var(--line);border-radius:12px;padding:20px}
+.model-col h4{color:var(--a);font-size:1.05rem;margin-bottom:8px}
+.model-col p{color:var(--mut);font-size:0.92rem;line-height:1.5}
+.model-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{background:rgba(108,140,255,0.12);color:var(--txt);font-size:0.8rem;padding:3px 8px;border-radius:6px;border:1px solid rgba(108,140,255,0.25)}
+.tag-ok{background:rgba(46,204,143,0.15);color:var(--ok);border:1px solid rgba(46,204,143,0.3)}
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:24px 0}
+.agent-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between;transition:transform .2s,border-color .2s}
+.agent-card:hover{transform:translateY(-2px);border-color:var(--a)}
+.agent-badge{display:inline-block;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em}
+.badge-soon{background:rgba(154,166,196,0.15);color:var(--mut);border:1px solid rgba(154,166,196,0.3)}
+.agent-title{font-size:1.2rem;font-weight:800;margin-bottom:8px;color:#fff}
+.agent-desc{color:var(--mut);font-size:0.92rem;line-height:1.5;margin-bottom:18px}
 </style>
 </head>
 <body>
@@ -59,11 +81,13 @@ footer{padding:32px 0;border-top:1px solid var(--line);text-align:center;color:v
 <main>
 <div class="wrap hero">
 <h1>Recupera le fatture insolute senza esporre i tuoi dati finanziari.</h1>
-<p class="sub">ZUKWEND è l&#x27;agente IA che legge i tuoi PDF, calcola lo scaduto e genera solleciti professionali in locale. 100% offline, zero canoni ricorrenti.</p>
+<p class="sub">ZUKWEND è l'agente AI desktop per la gestione dei crediti insoluti con motore AI nativo pronto all'uso: scarichi, installi ed è subito operativo al 100%. Potenziamento opzionale con modelli locali Ollama o chiavi Cloud personali (BYOC). Zero canoni ricorrenti.</p>
 <div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Acquista Ora — 249 €</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Scarica DEMO Gratuita</a></div><p class="note">DEMO: 7 giorni o massimo 10 fatture. Pagamento unico, nessun abbonamento.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Nota Windows: Trattandosi di un software nativo 100% offline, al primo avvio Defender SmartScreen potrebbe mostrare 'App non riconosciuta'. Clicca su 'Ulteriori informazioni' ➔ 'Esegui comunque'. Sicuro e privo di rete.</p>
 </div>
 <section><div class="wrap"><h2>Come funziona</h2><div class="grid"><div class="card"><h3>1. Lettura IA</h3><p>Trascina i PDF: ZUKWEND estrae numero fattura, cliente, importi e scadenze.</p></div><div class="card"><h3>2. Analisi dello scaduto</h3><p>Calcola i giorni di ritardo e classifica il rischio di mancato pagamento.</p></div><div class="card"><h3>3. Solleciti pronti</h3><p>Genera email e lettere formali (livelli 1-3) in base al ritardo.</p></div></div></div></section>
-<section><div class="wrap"><h2>Privacy by design</h2><ul class="ok"><li>Nessun upload: l&#x27;IA gira sul tuo computer.</li><li>Funziona anche senza connessione internet.</li><li>Opzionale: usa la tua chiave API se preferisci il cloud.</li><li>Modelli professionali in 6 lingue: IT, EN, FR, DE, ES, PT.</li></ul></div></section>
+<section><div class="wrap"><h2>Architettura AI a 3 Livelli — Massima Libertà di Calcolo</h2><div class="models-box"><p style="color:var(--mut);text-align:center;max-width:780px;margin:0 auto;">ZUKWEND include già un motore AI nativo pronto all'uso: scarichi, installi ed è subito operativo al 100% senza configurazioni obbligatorie, installazioni esterne o chiavi API richieste per iniziare.</p><div class="models-grid"><div class="model-col" style="border-color:var(--ok);background:rgba(46,204,143,0.03);"><h4 style="color:var(--ok);">LIVELLO 1 — Built-in Native AI Agent (Incluso)</h4><p>Subito operativo out-of-the-box. Scarichi, installi ed è immediatamente attivo al 100%. Zero configurazioni, zero installazioni esterne, zero Ollama obbligatorio, zero chiavi API richieste.</p><div class="model-tags"><span class="tag tag-ok">Motore AI Nativo</span><span class="tag tag-ok">Zero Setup</span><span class="tag tag-ok">Pronto all'Uso</span></div></div><div class="model-col"><h4>LIVELLO 2 — Local Ollama Power-Up (Opzionale)</h4><p>Per chi desidera modelli LLM locali estesi per la massima privacy e autonomia offline. Si collega a Ollama con 1 clic per eseguire modelli open-weights direttamente sulla tua workstation.</p><div class="model-tags"><span class="tag">Gemma</span><span class="tag">Mistral</span><span class="tag">Qwen</span><span class="tag">DeepSeek</span></div></div><div class="model-col"><h4>LIVELLO 3 — Cloud BYOC Power-Up (Opzionale)</h4><p>Per chi preferisce la velocità del cloud con la massima scalabilità. Inserisci le tue chiavi API personali (Bring Your Own Key) senza alcun ricarico sui token di calcolo.</p><div class="model-tags"><span class="tag">Claude</span><span class="tag">OpenAI</span><span class="tag">Gemini</span><span class="tag">Mistral (GDPR)</span><span class="tag">Groq</span></div></div></div></div></div></section>
+<section><div class="wrap"><h2>Privacy by Design & Desktop Nativo</h2><ul class="ok"><li>Motore AI nativo incluso e subito operativo al 100% out-of-the-box.</li><li>Zero upload o cloud obbligatorio: i dati contabili restano sul tuo computer.</li><li>Funziona perfettamente anche senza connessione internet.</li><li>Power-up opzionali: collegamento a Ollama con 1 clic o chiavi Cloud personali (BYOC).</li><li>Modelli di sollecito professionali in 6 lingue: IT, EN, FR, DE, ES, PT.</li></ul></div></section>
+<section><div class="wrap"><h2>Multi-Agent Pipeline</h2><div class="agents-grid"><div class="agent-card"><div><span class="agent-badge badge-soon">Pipeline — Q4 2026</span><div class="agent-title">Agent 2 — Ledger Recon AI</div><p class="agent-desc">Riconciliazione bancaria autonoma multi-conto con categorizzazione automatica delle transazioni e rilevamento anomalie contabili.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">In Sviluppo</div></div><div class="agent-card"><div><span class="agent-badge badge-soon">Pipeline — Q1 2027</span><div class="agent-title">Agent 3 — Corporate Treasury AI</div><p class="agent-desc">Previsione dei flussi di cassa e proiezione di liquidità aziendale con inferenza statistica locale e stress test.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">In Architettura</div></div><div class="agent-card"><div><span class="agent-badge badge-soon">Pipeline — Q2 2027</span><div class="agent-title">OLTREVISTA AI Suite</div><p class="agent-desc">Orchestratore desktop integrato per la gestione amministrativa e finanziaria autonoma end-to-end.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">In Arrivo</div></div></div></div></section>
 <section class="price"><div class="wrap"><h2>Prezzo trasparente</h2><div class="amt">249 EUR</div><p class="sub">Licenza una tantum. Nessun abbonamento.</p><div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Acquista Ora — 249 €</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Scarica DEMO Gratuita</a></div><p class="note">DEMO: 7 giorni o massimo 10 fatture. Pagamento unico, nessun abbonamento.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Nota Windows: Trattandosi di un software nativo 100% offline, al primo avvio Defender SmartScreen potrebbe mostrare 'App non riconosciuta'. Clicca su 'Ulteriori informazioni' ➔ 'Esegui comunque'. Sicuro e privo di rete.</p></div></section>
 </main>
 <div id="disclaimer"></div>
