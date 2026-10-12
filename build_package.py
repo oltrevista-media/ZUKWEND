@@ -57,7 +57,7 @@ Offline-First B2B Accounts Receivable Automation
 
 Licenza: DEMO 7 giorni inclusa all'avvio.
 Per attivazione licenza FULL: python license_manager.py --activate <IL_TUO_CODICE>
-Supporto: contact@zukwend.com
+Supporto: contact@oltrevista.com
 """
     (TARGET_DIR / "README.txt").write_text(readme_content, encoding="utf-8")
 
