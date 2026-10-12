@@ -406,7 +406,7 @@ class LicenseManager:
                 "message":      (
                     f"Questo codice non e valido per questa macchina.\n"
                     f"Machine ID: {get_machine_id_short()}\n"
-                    f"Contatta support@zukwend.com per assistenza."
+                    f"Contatta contact@zukwend.com per assistenza."
                 ),
                 "license_type": TYPE_INVALID,
             }
