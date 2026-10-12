@@ -1,0 +1,290 @@
+"""
+ZUKWEND — Multilingual Billing Agent
+Modulo: normalizer.py
+Versione: 1.0.1-PATCH (Gate 5)
+REPTANA MODE | OLTREVISTA 2030 | Offline-First
+"""
+
+import logging
+import re
+from datetime import datetime
+from typing import Optional
+
+logger = logging.getLogger("zukwend.normalizer")
+
+# ------------------------------------------------------------
+# Mappe mesi (estesi + abbreviati)
+# ------------------------------------------------------------
+MONTH_NAMES = {
+    "it": {
+        "gennaio":1,"febbraio":2,"marzo":3,"aprile":4,"maggio":5,"giugno":6,
+        "luglio":7,"agosto":8,"settembre":9,"ottobre":10,"novembre":11,"dicembre":12,
+        "gen":1,"feb":2,"mar":3,"apr":4,"mag":5,"giu":6,"lug":7,"ago":8,"set":9,"ott":10,"nov":11,"dic":12,
+    },
+    "en": {
+        "january":1,"february":2,"march":3,"april":4,"may":5,"june":6,
+        "july":7,"august":8,"september":9,"october":10,"november":11,"december":12,
+        "jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,"jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12,
+    },
+    "fr": {
+        "janvier":1,"fevrier":2,"mars":3,"avril":4,"mai":5,"juin":6,
+        "juillet":7,"aout":8,"septembre":9,"octobre":10,"novembre":11,"decembre":12,
+    },
+    "de": {
+        "januar":1,"februar":2,"maerz":3,"april":4,"mai":5,"juni":6,
+        "juli":7,"august":8,"september":9,"oktober":10,"november":11,"dezember":12,
+    },
+    "es": {
+        "enero":1,"febrero":2,"marzo":3,"abril":4,"mayo":5,"junio":6,
+        "julio":7,"agosto":8,"septiembre":9,"octubre":10,"noviembre":11,"diciembre":12,
+    },
+    "pt": {
+        "janeiro":1,"fevereiro":2,"marco":3,"abril":4,"maio":5,"junho":6,
+        "julho":7,"agosto":8,"setembro":9,"outubro":10,"novembro":11,"dezembro":12,
+    },
+}
+
+# ------------------------------------------------------------
+# Valute
+# ------------------------------------------------------------
+CURRENCY_ALIASES = {
+    "eur":"EUR","euro":"EUR","euros":"EUR","€":"EUR",
+    "usd":"USD","dollar":"USD","dollars":"USD","$":"USD",
+    "gbp":"GBP","pound":"GBP","pounds":"GBP","£":"GBP",
+    "brl":"BRL","real":"BRL","reais":"BRL","r$":"BRL",
+    "chf":"CHF","franc":"CHF","franchi":"CHF","franco":"CHF",
+    "sek":"SEK","nok":"NOK","dkk":"DKK",
+    "pln":"PLN","czk":"CZK","huf":"HUF","ron":"RON","try":"TRY",
+    "cad":"CAD","aud":"AUD","jpy":"JPY","¥":"JPY","yen":"JPY",
+}
+
+# ------------------------------------------------------------
+# Indicatori lingua
+# ------------------------------------------------------------
+LANG_INDICATORS = {
+    "it": ["fattura","scadenza","importo","cliente","gentile","spett","pagamento","emissione"],
+    "en": ["invoice","due","amount","client","dear","payment","issued","bill"],
+    "fr": ["facture","echeance","montant","client","madame","monsieur","paiement","emise"],
+    "de": ["rechnung","faellig","betrag","kunde","sehr","geehrte","zahlung","ausgestellt"],
+    "es": ["factura","vencimiento","importe","cliente","estimado","pago","emitida"],
+    "pt": ["fatura","vencimento","valor","cliente","prezado","pagamento","emitida"],
+}
+
+# ------------------------------------------------------------
+# normalize()
+# ------------------------------------------------------------
+def normalize(raw_fields: dict, locale: str = "it") -> dict:
+    result = dict(raw_fields)
+
+    raw_text = raw_fields.get("raw_text", "") or ""
+    detected_lang = detect_language(raw_text, hint=locale)
+    result["detected_language"] = detected_lang
+
+    # Date
+    result["issue_date"] = normalize_date(raw_fields.get("issue_date"), locale=detected_lang)
+    result["due_date"]   = normalize_date(raw_fields.get("due_date"),   locale=detected_lang)
+
+    # Importo
+    if raw_fields.get("amount") is None and raw_fields.get("amount_raw"):
+        result["amount"] = normalize_amount(raw_fields["amount_raw"], locale=detected_lang)
+    elif isinstance(raw_fields.get("amount"), str):
+        result["amount"] = normalize_amount(raw_fields["amount"], locale=detected_lang)
+    else:
+        result["amount"] = raw_fields.get("amount")
+
+    if result["amount"] is not None:
+        result["amount"] = round(float(result["amount"]), 2)
+
+    # Valuta
+    result["currency"] = normalize_currency(
+        raw_fields.get("currency") or raw_fields.get("amount_raw", "")
+    )
+
+    # Nomi
+    if raw_fields.get("client_name"):
+        result["client_name"] = normalize_name(raw_fields["client_name"])
+    if raw_fields.get("vendor_name"):
+        result["vendor_name"] = normalize_name(raw_fields["vendor_name"])
+
+    # Numero fattura
+    if raw_fields.get("invoice_number"):
+        result["invoice_number"] = normalize_invoice_number(raw_fields["invoice_number"])
+
+    result["normalization_locale"] = detected_lang
+    result["normalized_at"] = datetime.now().isoformat()
+    result["normalization_confidence"] = _compute_confidence(result)
+
+    return result
+
+# ------------------------------------------------------------
+# normalize_date()
+# ------------------------------------------------------------
+def normalize_date(raw: Optional[str], locale: str = "it") -> Optional[str]:
+    if not raw:
+        return None
+
+    raw = str(raw).strip()
+
+    # ISO or YYYY-MM-DD or anomalous YYYY-DD-MM (with optional whitespace)
+    m = re.match(r"^(\d{4})\s*[-/\.]\s*(\d{1,2})\s*[-/\.]\s*(\d{1,2})$", raw)
+    if m:
+        y, p1, p2 = m.group(1), int(m.group(2)), int(m.group(3))
+        if p1 > 12 and p2 <= 12:
+            return f"{y}-{str(p2).zfill(2)}-{str(p1).zfill(2)}"
+        elif p1 <= 12 and p2 > 12:
+            return f"{y}-{str(p1).zfill(2)}-{str(p2).zfill(2)}"
+        return f"{y}-{str(p1).zfill(2)}-{str(p2).zfill(2)}"
+
+    # EU numerico (with optional whitespace)
+    m = re.match(r"^(\d{1,2})\s*[/\.\-]\s*(\d{1,2})\s*[/\.\-]\s*(\d{4})$", raw)
+    if m:
+        p1, p2, y = int(m.group(1)), int(m.group(2)), m.group(3)
+        if p1 > 12 and p2 <= 12:
+            return f"{y}-{str(p2).zfill(2)}-{str(p1).zfill(2)}"
+        elif p2 > 12 and p1 <= 12:
+            return f"{y}-{str(p1).zfill(2)}-{str(p2).zfill(2)}"
+        return f"{y}-{str(p2).zfill(2)}-{str(p1).zfill(2)}"
+
+    # Testuale
+    text_lower = raw.lower()
+    for lang, months in MONTH_NAMES.items():
+        for name, num in months.items():
+            if name in text_lower:
+                nums = re.findall(r"\d+", raw)
+                if len(nums) >= 2:
+                    y = [n for n in nums if len(n) == 4][0]
+                    d = [n for n in nums if len(n) <= 2][0]
+                    return f"{y}-{str(num).zfill(2)}-{d.zfill(2)}"
+
+    # Strftime
+    for fmt in ["%d %B %Y", "%B %d, %Y", "%d %b %Y", "%b %d, %Y"]:
+        try:
+            return datetime.strptime(raw, fmt).strftime("%Y-%m-%d")
+        except:
+            pass
+
+    return None
+
+# ------------------------------------------------------------
+# normalize_amount()
+# ------------------------------------------------------------
+def normalize_amount(raw: Optional[str], locale: str = "it") -> Optional[float]:
+    if raw is None:
+        return None
+
+    raw = str(raw).strip()
+    cleaned = re.sub(r"[€$£¥\sA-Za-z]", "", raw)
+
+    if not cleaned:
+        return None
+
+    n_dots   = cleaned.count(".")
+    n_commas = cleaned.count(",")
+
+    if n_commas == 1 and n_dots == 0:
+        comma_pos = cleaned.index(",")
+        after = cleaned[comma_pos+1:]
+        if len(after) <= 2:
+            cleaned = cleaned.replace(",", ".")
+        else:
+            cleaned = cleaned.replace(",", "")
+
+    elif n_dots == 1 and n_commas == 0:
+        dot_pos = cleaned.index(".")
+        after = cleaned[dot_pos+1:]
+        if len(after) == 3 and locale in ("it","fr","de","es","pt"):
+            cleaned = cleaned.replace(".", "")
+
+    elif n_dots >= 1 and n_commas == 1:
+        last_comma = cleaned.rfind(",")
+        last_dot   = cleaned.rfind(".")
+        if last_comma > last_dot:
+            cleaned = cleaned.replace(".", "").replace(",", ".")
+        else:
+            cleaned = cleaned.replace(",", "")
+
+    elif n_commas >= 1 and n_dots == 0:
+        cleaned = cleaned.replace(",", "").replace(".", "")
+
+    try:
+        return round(float(cleaned), 2)
+    except:
+        return None
+
+# ------------------------------------------------------------
+# normalize_currency()
+# ------------------------------------------------------------
+def normalize_currency(raw: Optional[str]) -> str:
+    if not raw:
+        return "EUR"
+
+    raw_lower = str(raw).lower()
+
+    for iso in CURRENCY_ALIASES.values():
+        if iso.lower() in raw_lower:
+            return iso
+
+    for alias, iso in CURRENCY_ALIASES.items():
+        if alias in raw_lower:
+            return iso
+
+    return "EUR"
+
+# ------------------------------------------------------------
+# detect_language()
+# ------------------------------------------------------------
+def detect_language(text: str, hint: str = "it") -> str:
+    if not text or len(text.strip()) < 20:
+        return hint
+
+    text_lower = text.lower()
+    scores = {lang: 0 for lang in LANG_INDICATORS}
+
+    for lang, kws in LANG_INDICATORS.items():
+        for kw in kws:
+            if kw in text_lower:
+                scores[lang] += 1
+
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else hint
+
+# ------------------------------------------------------------
+# normalize_name()
+# ------------------------------------------------------------
+def normalize_name(raw: Optional[str]) -> Optional[str]:
+    if not raw:
+        return None
+    cleaned = re.sub(r"\s+", " ", raw.strip())[:120]
+
+    siglas = {
+        "srl":"Srl","spa":"SpA","ltd":"Ltd","gmbh":"GmbH",
+        "bv":"BV","sa":"SA","sas":"SAS","snc":"SNC"
+    }
+
+    words = cleaned.split()
+    out = []
+    for w in words:
+        lw = w.lower()
+        out.append(siglas.get(lw, w.capitalize()))
+    return " ".join(out)
+
+# ------------------------------------------------------------
+# normalize_invoice_number()
+# ------------------------------------------------------------
+def normalize_invoice_number(raw: Optional[str]) -> Optional[str]:
+    if not raw:
+        return None
+    return re.sub(r"\s+", "", raw.strip()).upper()[:50]
+
+# ------------------------------------------------------------
+# _compute_confidence()
+# ------------------------------------------------------------
+def _compute_confidence(n: dict) -> float:
+    required = ["invoice_number","due_date","amount","currency"]
+    present = sum(1 for f in required if n.get(f))
+
+    optional = ["issue_date","client_name","vendor_name"]
+    opt = sum(1 for f in optional if n.get(f))
+
+    score = (present/len(required))*0.8 + (opt/len(optional))*0.2
+    return round(score, 2)
