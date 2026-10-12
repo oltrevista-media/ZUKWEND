@@ -1,11 +1,21 @@
 ====================================================================
-ZUKWEND Billing AI — Note sull'avvio in ambiente Windows
+ZUKWEND — Hybrid AR & Billing AI Agent
+Windows Startup & 3-Tier AI Architecture Notes
 ====================================================================
-Trattandosi di un'applicazione nativa Desktop 100% Offline e priva di telemetria su server cloud, al primo avvio Microsoft Defender SmartScreen potrebbe mostrare la schermata blu 'PC protetto da Windows / App non riconosciuta'.
+NATIVE OUT-OF-THE-BOX AI ENGINE:
+ZUKWEND is 100% operational out-of-the-box upon installation thanks to the Level 1 Built-in Native AI Agent.
+Zero configuration, zero external installations, zero mandatory Ollama, and zero API keys required to start working.
 
-PER AVVIARE L'APPLICAZIONE:
-1. Clicca sulla scritta 'Ulteriori informazioni' (o 'More info').
-2. Clicca sul pulsante 'Esegui comunque' (o 'Run anyway').
+MICROSOFT DEFENDER SMARTSCREEN NOTE:
+As a 100% offline native desktop application free from cloud telemetry, on the first launch Microsoft Defender SmartScreen may display the screen 'Windows protected your PC / Unrecognized app'.
 
-ZUKWEND lavora esclusivamente sui tuoi file locali, non invia dati all'esterno ed è sicuro al 100%.
+TO LAUNCH THE APPLICATION:
+1. Click on 'More info' (or 'Ulteriori informazioni').
+2. Click on the 'Run anyway' button (or 'Esegui comunque').
+
+ZUKWEND operates strictly on your local files, does not transmit data outside, and is 100% safe.
+
+OPTIONAL POWER-UPS:
+- Level 2 — Local Ollama Power-Up (Optional): 1-click integration for local open-weights LLMs (Gemma, Mistral, Qwen, DeepSeek).
+- Level 3 — Cloud BYOC Power-Up (Optional): direct connection using your private API keys (Claude, OpenAI, Gemini, DeepSeek, Groq).
 ====================================================================
