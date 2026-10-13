@@ -78,17 +78,17 @@ Il portale [zukwend.com](https://zukwend.com) offre landing page geolocalizzate 
 
 ---
 
-## 🚀 Multi-Agent Ecosystem Pipeline (OLTREVISTA AI)
+## 🚀 ZUKWEND Ecosystem Roadmap (OLTREVISTA AI)
 
 ZUKWEND è il primo agente autonomo della suite OLTREVISTA AI dedicata all'automazione amministrativo-finanziaria:
 
 - **Agent 1: ZUKWEND — Hybrid AR & Billing AI Agent** (Disponibile / Live)  
   *Automazione ciclo attivo, monitoraggio scadenze e solleciti intelligenti.*
-- **Agent 2: Ledger Recon AI** (Pipeline — Q4 2026)  
+- **Agent 2: Ledger Recon AI** (Pipeline — In Development)  
   *Riconciliazione bancaria autonoma multi-conto, categorizzazione automatica e rilevamento anomalie contabili.*
-- **Agent 3: Corporate Treasury AI** (Pipeline — Q1 2027)  
+- **Agent 3: Corporate Treasury AI** (Pipeline — Planned)  
   *Previsione flussi di cassa, proiezione liquidità aziendale con inferenza statistica locale e stress test.*
-- **OLTREVISTA AI Suite** (Pipeline — Q2 2027)  
+- **ZUKWEND AI Suite** (Pipeline — Planned)  
   *Orchestratore desktop integrato per la gestione autonoma end-to-end del ciclo finanziario d'impresa.*
 
 ---
