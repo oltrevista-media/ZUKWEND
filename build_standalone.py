@@ -64,6 +64,7 @@ def run_build():
         "--hidden-import=report_generator",
         "--hidden-import=export_engine",
         "--hidden-import=license_manager",
+        "--hidden-import=reminder_engine",
     ]
 
     for exc in EXCLUDES:

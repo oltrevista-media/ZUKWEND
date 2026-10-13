@@ -184,6 +184,7 @@ def _fallback_regex_extraction(raw_text: str) -> dict:
         "amount_raw": amount_raw,
         "currency": currency or "EUR",
         "client_name": _extract_client_name(raw_text, text_lower),
+        "client_address": _extract_client_address(raw_text, text_lower),
         "vendor_name": _extract_vendor_name(raw_text, text_lower),
         "payment_terms": _extract_payment_terms(text_lower),
         "extraction_timestamp": datetime.now().isoformat(),
@@ -412,6 +413,21 @@ def _extract_currency_symbol(text: str) -> str:
     return normalize_currency(text).currency
 
 
+def clean_layout_tokens(raw: Optional[str]) -> Optional[str]:
+    """
+    Rimuove token spuri di intestazione layout (es. Invoice, Facture, Rechnung, Page, Fattura)
+    in coda a stringhe (es. 'London, UK Invoice' -> 'London, UK').
+    """
+    if not raw:
+        return None
+    s = str(raw).strip()
+    pattern = r"(?i)\s*[\-_|/:]*\s*\b(?:invoice|facture|rechnung|page|fattura|fatura)\b.*$"
+    s = re.sub(pattern, "", s)
+    s = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s if s else None
+
+
 def _extract_client_name(text: str, text_lower: str) -> Optional[str]:
     keywords = [
         "spett.le:", "spett.le", "spettabile:", "spettabile", "intestata a:", "intestata a",
@@ -426,7 +442,37 @@ def _extract_client_name(text: str, text_lower: str) -> Optional[str]:
                 cleaned = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", line.strip())
                 cleaned = re.sub(r"\s+", " ", cleaned)
                 if cleaned and len(cleaned) > 3 and not re.match(r"^(?:inv|fattura|date|p\.iva|vat|tax)\b", cleaned, re.I):
-                    return cleaned[:80]
+                    cleaned = clean_layout_tokens(cleaned)
+                    if cleaned:
+                        return cleaned[:80]
+    return None
+
+
+def _extract_client_address(text: str, text_lower: str) -> Optional[str]:
+    keywords = [
+        "bill to:", "bill to", "billed to:", "billed to", "client:", "client",
+        "customer:", "customer", "sold to:", "sold to", "spett.le:", "spett.le",
+        "spettabile:", "spettabile", "intestata a:", "intestata a", "a:", "fatturare a:"
+    ]
+    for keyword in keywords:
+        idx = text_lower.find(keyword)
+        if idx != -1:
+            segment = text[idx + len(keyword): idx + len(keyword) + 200]
+            lines = [l.strip() for l in segment.split("\n") if l.strip()]
+            found_name = False
+            for line in lines:
+                cleaned = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", line.strip())
+                cleaned = re.sub(r"\s+", " ", cleaned)
+                if not cleaned or len(cleaned) <= 3:
+                    continue
+                if re.match(r"^(?:inv|fattura|date|p\.iva|vat|tax)\b", cleaned, re.I):
+                    continue
+                if not found_name:
+                    found_name = True
+                    continue
+                cleaned_addr = clean_layout_tokens(cleaned)
+                if cleaned_addr:
+                    return cleaned_addr[:120]
     return None
 
 def _extract_vendor_name(text: str, text_lower: str) -> Optional[str]:

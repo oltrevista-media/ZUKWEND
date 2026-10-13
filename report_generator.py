@@ -81,6 +81,7 @@ REPORT_LABELS = {
         "due_date": "Data Scadenza",
         "amount": "Importo",
         "client": "Cliente",
+        "client_address": "Indirizzo",
         "status": "Stato",
         "overdue": "Giorni Scaduta",
         "risk": "Livello Rischio",
@@ -100,6 +101,7 @@ REPORT_LABELS = {
         "due_date": "Due Date",
         "amount": "Amount",
         "client": "Client",
+        "client_address": "Address",
         "status": "Status",
         "overdue": "Days Overdue",
         "risk": "Risk Level",
@@ -119,6 +121,7 @@ REPORT_LABELS = {
         "due_date": "Fälligkeitsdatum",
         "amount": "Betrag",
         "client": "Kunde",
+        "client_address": "Adresse",
         "status": "Status",
         "overdue": "Tage überfällig",
         "risk": "Risikostufe",
@@ -138,6 +141,7 @@ REPORT_LABELS = {
         "due_date": "Date Échéance",
         "amount": "Montant",
         "client": "Client",
+        "client_address": "Adresse",
         "status": "Statut",
         "overdue": "Jours de Retard",
         "risk": "Niveau de Risque",
@@ -157,6 +161,7 @@ REPORT_LABELS = {
         "due_date": "Fecha de Vencimiento",
         "amount": "Importe",
         "client": "Cliente",
+        "client_address": "Dirección",
         "status": "Estado",
         "overdue": "Días Vencida",
         "risk": "Nivel de Riesgo",
@@ -176,6 +181,7 @@ REPORT_LABELS = {
         "due_date": "Data de Vencimento",
         "amount": "Valor",
         "client": "Cliente",
+        "client_address": "Endereço",
         "status": "Estado",
         "overdue": "Dias em Atraso",
         "risk": "Nível de Risco",
@@ -248,6 +254,24 @@ def generate(
     logger.info(f"Report generati: {list(paths.keys())} in {out_dir}")
     return {"paths": paths, "base_name": base_name, "output_dir": str(out_dir), "errors": errors}
 
+def _clean_layout_tokens(raw: Optional[str]) -> str:
+    if not raw:
+        return ""
+    s = str(raw).strip()
+    pattern = r"(?i)\s*[\-_|/:]*\s*\b(?:invoice|facture|rechnung|page|fattura|fatura)\b.*$"
+    s = re.sub(pattern, "", s)
+    s = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+DEMO_FOOTER = {
+    "it": "[Generato con ZUKWEND DEMO Trial - Sblocca la versione completa su zukwend.com]",
+    "en": "[Generated with ZUKWEND DEMO Trial - Unlock full version at zukwend.com]",
+    "de": "[Erstellt mit ZUKWEND DEMO Trial - Vollversion freischalten auf zukwend.com]",
+    "fr": "[Généré avec ZUKWEND DEMO Trial - Débloquez la version complète sur zukwend.com]",
+    "es": "[Generado con ZUKWEND DEMO Trial - Desbloquea la versión completa en zukwend.com]",
+    "pt": "[Gerado com ZUKWEND DEMO Trial - Desbloqueie a versão completa em zukwend.com]",
+}
+
 # ---------------------------------------------------------------------------
 # Builder dati report
 # ---------------------------------------------------------------------------
@@ -260,24 +284,48 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
     labels = REPORT_LABELS.get(language, REPORT_LABELS["en"])
 
     recommendations = compliance.get("recommendations", [])
+    lang_clean = (language or "en").lower()
+    if lang_clean != "it":
+        translated_recs = []
+        for rec in recommendations:
+            rec_str = str(rec).strip()
+            if "superiore alla soglia" in rec_str:
+                translated_recs.append("Amount exceeds compliance threshold: authorization required.")
+            elif "consultare" in rec_str and ("legale" in rec_str or "diffida" in rec_str or "Livello 3" in rec_str):
+                translated_recs.append("Notice level 3: consult legal counsel prior to formal escalation.")
+            elif "90 giorni" in rec_str or "recupero crediti" in rec_str:
+                translated_recs.append("Overdue exceeds 90 days: evaluate debt recovery or bad debt provisioning.")
+            elif "KYC/AML" in rec_str or "Importo elevato" in rec_str:
+                translated_recs.append("High value amount: verify KYC/AML procedures.")
+            elif "Nessuna anomalia" in rec_str:
+                translated_recs.append(labels.get("no_anomalies", "No anomalies detected."))
+            else:
+                translated_recs.append(rec_str)
+        recommendations = translated_recs
+
     if not recommendations:
         recommendations = [labels["no_anomalies"]]
+
+    client_name = _clean_layout_tokens(invoice.get("client_name") or "N/A")
+    client_address = _clean_layout_tokens(invoice.get("client_address") or invoice.get("address") or "")
+    vendor_name = _clean_layout_tokens(invoice.get("vendor_name") or "N/A")
 
     return {
         "generated_at": datetime.now().isoformat(),
         "software": "ZUKWEND Multilingual Billing Agent",
-        "version": "2.1.0",
+        "version": "2.1.2",
         "language": language,
         "labels": labels,
         "is_demo": is_demo,
         "invoice": {
-            "number":     str(invoice.get("invoice_number") or "N/A"),
-            "issue_date": str(invoice.get("issue_date") or "N/A"),
-            "due_date":   str(invoice.get("due_date") or "N/A"),
-            "amount":     safe_amount,
-            "currency":   str(invoice.get("currency") or "EUR"),
-            "client":     re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(invoice.get("client_name") or "N/A").strip()),
-            "vendor":     re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(invoice.get("vendor_name") or "N/A").strip()),
+            "number":         str(invoice.get("invoice_number") or "N/A"),
+            "issue_date":     str(invoice.get("issue_date") or "N/A"),
+            "due_date":       str(invoice.get("due_date") or "N/A"),
+            "amount":         safe_amount,
+            "currency":       str(invoice.get("currency") or "EUR"),
+            "client":         client_name or "N/A",
+            "client_address": client_address,
+            "vendor":         vendor_name or "N/A",
         },
         "classification": {
             "payment_status":   str(classification.get("payment_status") or "N/A"),
@@ -301,13 +349,13 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
         },
         "reminder_text": (
             str(reminder_text or "") + (
-                "\n\n---\n[Generato con ZUKWEND DEMO Trial - Sblocca la versione completa su zukwend.com]"
+                f"\n\n---\n{DEMO_FOOTER.get(language, DEMO_FOOTER['en'])}"
                 if is_demo else ""
             )
         ),
         "audit": {
             "processed_at": datetime.now().isoformat(),
-            "software_version": "2.1.0",
+            "software_version": "2.1.2",
             "is_demo": is_demo,
             "data_sent_externally": False,
             "disclaimer": DISCLAIMER_TEXT.get(language, DISCLAIMER_TEXT["en"]),
@@ -350,11 +398,15 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
         [labels["due_date"],     inv["due_date"]],
         [labels["amount"],       f"{inv['currency']} {inv['amount']:,.2f}"],
         [labels["client"],       inv["client"]],
+    ]
+    if inv.get("client_address"):
+        table_data.append([labels.get("client_address", "Indirizzo"), inv["client_address"]])
+    table_data.extend([
         [labels["status"],       clf["payment_status"]],
         [labels["overdue"],      str(clf["days_overdue"])],
         [labels["risk"],         clf["risk_level_label"]],
         [labels["reminder_lvl"], f"L{clf['reminder_level']}"],
-    ]
+    ])
     t = Table(table_data, colWidths=[5.5*cm, 10.5*cm])
     t.setStyle(TableStyle([
         ("BACKGROUND", (0,0), (0,-1), colors.HexColor(LIGHT_GRAY)),
@@ -430,6 +482,7 @@ def _build_text_report(data: dict, is_demo: bool) -> str:
         f"  {labels['due_date']}:    {inv['due_date']}",
         f"  {labels['amount']}:      {inv['currency']} {inv['amount']:,.2f}",
         f"  {labels['client']}:      {inv['client']}",
+    ] + ([f"  {labels.get('client_address', 'Address')}:     {inv['client_address']}"] if inv.get("client_address") else []) + [
         f"  {labels['status']}:      {clf['payment_status']} ({clf['days_overdue']})",
         f"  {labels['risk']}:        {clf['risk_level_label']} | L{clf['reminder_level']}",
         sep,
@@ -476,6 +529,7 @@ def _generate_docx(data: dict, path: Path, is_demo: bool = False) -> Path:
         (labels["due_date"],     str(inv["due_date"])),
         (labels["amount"],       f"{inv['currency']} {inv['amount']:,.2f}"),
         (labels["client"],       inv["client"]),
+    ] + ([(labels.get("client_address", "Address"), inv["client_address"])] if inv.get("client_address") else []) + [
         (labels["status"],       clf["payment_status"]),
         (labels["overdue"],      str(clf["days_overdue"])),
         (labels["risk"],         clf["risk_level_label"]),
@@ -588,6 +642,7 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
       <tr><th>{labels['due_date']}</th><td>{inv['due_date']}</td></tr>
       <tr><th>{labels['amount']}</th><td><strong>{inv['currency']} {inv['amount']:,.2f}</strong></td></tr>
       <tr><th>{labels['client']}</th><td>{inv['client']}</td></tr>
+      {f"<tr><th>{labels.get('client_address', 'Address')}</th><td>{inv['client_address']}</td></tr>" if inv.get("client_address") else ""}
       <tr><th>{labels['status']}</th><td>{clf['payment_status']}</td></tr>
       <tr><th>{labels['overdue']}</th><td>{clf['days_overdue']}</td></tr>
       <tr><th>{labels['risk']}</th><td class="{risk_class}">{clf['risk_level_label']}</td></tr>

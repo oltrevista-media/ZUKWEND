@@ -91,7 +91,7 @@ class ReminderEngine:
                 language, level, text, vars, timestamp
         """
 
-        lang = invoice.get("language", "it")
+        lang = (invoice.get("language") or invoice.get("detected_language") or rules.get("language") or "en").lower()
         if lang not in SUPPORTED_LANGS:
             lang = "en"
 

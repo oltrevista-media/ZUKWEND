@@ -109,6 +109,12 @@ def normalize(raw_fields: dict, locale: str = "it") -> dict:
     if raw_fields.get("vendor_name"):
         result["vendor_name"] = normalize_name(raw_fields["vendor_name"])
 
+    # Indirizzo cliente
+    if raw_fields.get("client_address"):
+        result["client_address"] = normalize_address(raw_fields["client_address"])
+    elif raw_fields.get("address"):
+        result["client_address"] = normalize_address(raw_fields["address"])
+
     # Numero fattura
     if raw_fields.get("invoice_number"):
         result["invoice_number"] = normalize_invoice_number(raw_fields["invoice_number"])
@@ -390,13 +396,47 @@ def detect_language(text: str, hint: str = "it") -> str:
     return best if scores[best] > 0 else hint
 
 # ------------------------------------------------------------
+# clean_layout_tokens() & normalize_address()
+# ------------------------------------------------------------
+def clean_layout_tokens(raw: Optional[str]) -> Optional[str]:
+    """
+    Rimuove token spuri di intestazione layout (es. Invoice, Facture, Rechnung, Page, Fattura)
+    in coda a stringhe (es. 'London, UK Invoice' -> 'London, UK').
+    """
+    if not raw:
+        return None
+    s = str(raw).strip()
+    pattern = r"(?i)\s*[\-_|/:]*\s*\b(?:invoice|facture|rechnung|page|fattura|fatura)\b.*$"
+    s = re.sub(pattern, "", s)
+    s = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s if s else None
+
+def normalize_address(raw: Optional[str]) -> Optional[str]:
+    """
+    Normalizza l'indirizzo applicando il trimming finale sui token spuri di intestazione layout (es. Invoice).
+    Esempio: 'London, UK Invoice' -> 'London, UK'.
+    """
+    if not raw:
+        return None
+    cleaned = clean_layout_tokens(raw)
+    if not cleaned:
+        return None
+    cleaned = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", cleaned)
+    return cleaned.strip() if cleaned else None
+
+# ------------------------------------------------------------
 # normalize_name()
 # ------------------------------------------------------------
 def normalize_name(raw: Optional[str]) -> Optional[str]:
     if not raw:
         return None
+    # Trimming preliminare token spuri di layout
+    cleaned = clean_layout_tokens(raw)
+    if not cleaned:
+        return None
     # Rimuovi caratteri di punteggiatura orfani iniziali/finali (due punti ':', virgole ',', etc.)
-    cleaned = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", raw.strip())
+    cleaned = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", cleaned.strip())
     cleaned = re.sub(r"\s+", " ", cleaned)[:120]
 
     siglas = {
@@ -415,7 +455,8 @@ def normalize_name(raw: Optional[str]) -> Optional[str]:
         else:
             out.append(w.capitalize() if w.islower() else w)
     result = " ".join(out)
-    return re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", result.strip())
+    result = clean_layout_tokens(result)
+    return re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", result.strip()) if result else None
 
 # ------------------------------------------------------------
 # normalize_invoice_number()

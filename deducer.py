@@ -251,35 +251,74 @@ def deduce(invoice: dict, classification: dict, language: str = "it") -> dict:
         "deduced_at": datetime.now().isoformat(),
     }
 
-def check_compliance(invoice: dict, classification: dict) -> dict:
+RECOMMENDATIONS_BY_LANG = {
+    "en": {
+        "threshold": "Amount exceeds compliance threshold: authorization required.",
+        "high_value": "High value amount: verify KYC/AML procedures.",
+        "level_3": "Notice level 3: consult legal counsel prior to formal escalation.",
+        "overdue_90": "Overdue exceeds 90 days: evaluate debt recovery or bad debt provisioning.",
+        "clean": "No anomalies detected.",
+    },
+    "it": {
+        "threshold": "Importo superiore alla soglia: verifica autorizzazione.",
+        "high_value": "Importo elevato: verifica procedure KYC/AML.",
+        "level_3": "Livello 3: consultare un legale prima della diffida.",
+        "overdue_90": "Oltre 90 giorni: valutare recupero crediti o accantonamento.",
+        "clean": "Nessuna anomalia rilevata.",
+    },
+    "de": {
+        "threshold": "Betrag überschreitet Compliance-Schwellenwert: Genehmigung erforderlich.",
+        "high_value": "Hoher Betrag: KYC/AML-Verfahren überprüfen.",
+        "level_3": "Mahnstufe 3: Vor formeller Eskalation Rechtsbeistand hinzuziehen.",
+        "overdue_90": "Überfälligkeit über 90 Tage: Inkasso oder Forderungsabschreibung prüfen.",
+        "clean": "Keine Unregelmäßigkeiten festgestellt.",
+    },
+    "fr": {
+        "threshold": "Montant supérieur au seuil de conformité: autorisation requise.",
+        "high_value": "Montant élevé: vérifier les procédures KYC/AML.",
+        "level_3": "Niveau 3: consulter un conseiller juridique avant mise en demeure.",
+        "overdue_90": "Retard supérieur à 90 jours: évaluer le recouvrement ou la provision pour créance douteuse.",
+        "clean": "Aucune anomalie détectée.",
+    },
+    "es": {
+        "threshold": "Importe superior al umbral de cumplimiento: autorización requerida.",
+        "high_value": "Importe elevado: verificar procedimientos KYC/AML.",
+        "level_3": "Nivel 3: consultar con asesoría jurídica antes de la reclamación formal.",
+        "overdue_90": "Vencimiento superior a 90 días: evaluar recobro o provisión por insolvencia.",
+        "clean": "No se detectaron anomalías.",
+    },
+    "pt": {
+        "threshold": "Montante excede o limiar de conformidade: autorização necessária.",
+        "high_value": "Montante elevado: verificar procedimentos KYC/AML.",
+        "level_3": "Nível 3: consultar apoio jurídico antes de notificação formal.",
+        "overdue_90": "Atraso superior a 90 dias: avaliar cobrança difícil ou imparidade de dívida.",
+        "clean": "Nenhuma anomalia detetada.",
+    },
+}
+
+def check_compliance(invoice: dict, classification: dict, language: Optional[str] = None) -> dict:
     flags = list(classification.get("flags", []))
     recommendations = []
     reminder_level = classification.get("reminder_level", 0)
     compliance_flag = classification.get("compliance_flag", False)
 
-    clean_recs = {
-        "it": "Nessuna anomalia rilevata.",
-        "en": "No anomalies detected.",
-        "de": "Keine Unregelmäßigkeiten festgestellt.",
-        "fr": "Aucune anomalie détectée.",
-        "es": "No se detectaron anomalías.",
-        "pt": "Nenhuma anomalia detetada.",
-    }
-
-    lang = invoice.get("detected_language", "en")
-    if lang not in clean_recs:
+    # Verifica della lingua: priorità al parametro language, poi campi fattura, fallback 'en'
+    lang = (language or invoice.get("detected_language") or invoice.get("language") or "en").lower()
+    if lang not in RECOMMENDATIONS_BY_LANG:
         lang = "en"
 
+    active_recs = RECOMMENDATIONS_BY_LANG.get(lang, RECOMMENDATIONS_BY_LANG["en"])
+
     if compliance_flag:
-        recommendations.append("Importo superiore alla soglia: verifica autorizzazione.")
+        recommendations.append(active_recs["threshold"])
     if "high_value_kyc_aml" in flags:
-        recommendations.append("Importo elevato: verifica procedure KYC/AML.")
+        recommendations.append(active_recs["high_value"])
     if reminder_level >= 3:
-        recommendations.append("Livello 3: consultare un legale prima della diffida.")
+        recommendations.append(active_recs["level_3"])
     if "critical_overdue_risk_inesigibilita" in flags:
-        recommendations.append("Oltre 90 giorni: valutare recupero crediti o accantonamento.")
+        recommendations.append(active_recs["overdue_90"])
     if not recommendations:
-        recommendations.append(clean_recs.get(lang, clean_recs["en"]))
+        recommendations.append(active_recs["clean"])
 
     return {
         "compliance_flag": compliance_flag,

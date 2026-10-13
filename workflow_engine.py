@@ -242,17 +242,57 @@ def classify_invoice(normalized: dict, compliance_threshold: float = 10000.0) ->
             "classification_rationale": f"Errore: {e}",
         }
 
-def check_compliance(normalized: dict, classification: dict) -> dict:
+DISCLAIMER_BY_LANG = {
+    "it": (
+        "NOTA: Questo documento è generato da software. "
+        "Il software fornisce suggerimenti, non decisioni. "
+        "Consultare un professionista legale prima di inviare comunicazioni di livello 3."
+    ),
+    "en": (
+        "NOTE: This document is software-generated. "
+        "The software provides suggestions, not decisions. "
+        "Consult a legal professional before sending level-3 notices."
+    ),
+    "fr": (
+        "NOTE: Ce document est généré par logiciel. "
+        "Le logiciel fournit des suggestions, pas des décisions. "
+        "Consultez un professionnel juridique avant d'envoyer des avis de niveau 3."
+    ),
+    "de": (
+        "HINWEIS: Dieses Dokument wurde von Software erstellt. "
+        "Die Software liefert Vorschläge, keine Entscheidungen. "
+        "Konsultieren Sie einen Rechtsanwalt, bevor Sie Mahnstufe-3-Schreiben versenden."
+    ),
+    "es": (
+        "NOTA: Este documento es generado por software. "
+        "El software proporciona sugerencias, no decisiones. "
+        "Consulte a un profesional legal antes de enviar avisos de nivel 3."
+    ),
+    "pt": (
+        "NOTA: Este documento é gerado por software. "
+        "O software fornece sugestões, não decisões. "
+        "Consulte um profissional jurídico antes de enviar avisos de livello 3."
+    ),
+}
+
+def check_compliance(normalized: dict, classification: dict, language: Optional[str] = None) -> dict:
     deducer_mod = _import_module("deducer")
+    lang = (language or normalized.get("detected_language") or normalized.get("language") or "en").lower()
+    disclaimer_text = DISCLAIMER_BY_LANG.get(lang, DISCLAIMER_BY_LANG["en"])
     if deducer_mod is None:
         return {
             "compliance_flag": False,
             "flags": [],
             "recommendations": [],
-            "disclaimer": "Il software fornisce suggerimenti, non decisioni.",
+            "disclaimer": disclaimer_text,
         }
     try:
-        compliance = deducer_mod.check_compliance(normalized, classification)
+        import inspect
+        sig = inspect.signature(deducer_mod.check_compliance)
+        if "language" in sig.parameters:
+            compliance = deducer_mod.check_compliance(normalized, classification, language=lang)
+        else:
+            compliance = deducer_mod.check_compliance(normalized, classification)
         logger.info(f"Compliance: flag={compliance.get('compliance_flag')} | flags={compliance.get('flags')}")
         return compliance
     except Exception as e:
@@ -261,7 +301,7 @@ def check_compliance(normalized: dict, classification: dict) -> dict:
             "compliance_flag": False,
             "flags": [],
             "recommendations": [],
-            "disclaimer": "Il software fornisce suggerimenti, non decisioni.",
+            "disclaimer": disclaimer_text,
             "error": str(e),
         }
 
@@ -540,7 +580,7 @@ def run_pipeline(
     else:
         _audit("CLASSIFY", "OK", f"status={classification.get('payment_status')} | level={classification.get('reminder_level')}")
 
-    compliance, err = _safe_step("COMPLIANCE", lambda: check_compliance(normalized, classification))
+    compliance, err = _safe_step("COMPLIANCE", lambda: check_compliance(normalized, classification, language=language))
     if err:
         errors.append({"step": "COMPLIANCE", "code": ERR_COMPLIANCE, "error": str(err)})
         _audit("COMPLIANCE", "FALLBACK", str(err))

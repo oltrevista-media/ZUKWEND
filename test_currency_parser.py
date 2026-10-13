@@ -92,13 +92,70 @@ class TestUniversalCurrencyParser(unittest.TestCase):
             self.assertEqual(norm_name, clean_expected, f"Pulizia nome fallita per '{raw_name}'")
             self.assertFalse(norm_name.startswith(":"), f"Nome inizia ancora con due punti: '{norm_name}'")
 
-    def test_03_full_pipeline_verification(self):
-        """Azione 3: Esecuzione pipeline completa su b2b_invoice_sample_en.pdf e verifica requisiti 100%."""
+    def test_03_layout_token_and_address_cleaning(self):
+        """Azione 2b (v2.1.2): Trimming finale token spuri layout su indirizzo e nome cliente."""
+        test_addresses = [
+            ("London, UK Invoice", "London, UK"),
+            ("45 Canary Wharf, London, E14 5AB, UK Invoice", "45 Canary Wharf, London, E14 5AB, UK"),
+            ("Paris, France Facture", "Paris, France"),
+            ("Berlin, Germany Rechnung", "Berlin, Germany"),
+            ("Milano, Italy Page 1", "Milano, Italy"),
+            ("Madrid, Spain - Invoice No: 99", "Madrid, Spain"),
+            ("London, UK", "London, UK"),
+        ]
+
+        for raw_addr, expected_addr in test_addresses:
+            clean_addr = normalizer.normalize_address(raw_addr)
+            self.assertEqual(clean_addr, expected_addr, f"Pulizia indirizzo fallita per '{raw_addr}'")
+            self.assertNotIn("Invoice", clean_addr or "", f"Parola 'Invoice' ancora presente in indirizzo: '{clean_addr}'")
+
+        test_names = [
+            ("Global Logistics Solutions Ltd. Invoice", "Global Logistics Solutions Ltd."),
+            ("Acme Corp Page", "Acme Corp"),
+            ("Siemens AG Rechnung", "Siemens AG"),
+            ("Alstom SA Facture", "Alstom SA"),
+        ]
+        for raw_n, exp_n in test_names:
+            clean_n = normalizer.normalize_name(raw_n)
+            self.assertEqual(clean_n, exp_n, f"Pulizia nome con token layout fallita per '{raw_n}'")
+
+    def test_04_dynamic_recommendations_localization(self):
+        """Azione 1b (v2.1.2): Localizzazione dinamica raccomandazioni 100% EN su report/deducer."""
+        dummy_inv = {"detected_language": "en", "amount": 18450.0, "currency": "$"}
+        dummy_classif = {
+            "compliance_flag": True,
+            "flags": ["high_value_kyc_aml", "critical_overdue_risk_inesigibilita"],
+            "reminder_level": 3,
+            "days_overdue": 126
+        }
+
+        comp_en = deducer.check_compliance(dummy_inv, dummy_classif, language="en")
+        recs_en = comp_en["recommendations"]
+
+        expected_en = [
+            "Amount exceeds compliance threshold: authorization required.",
+            "High value amount: verify KYC/AML procedures.",
+            "Notice level 3: consult legal counsel prior to formal escalation.",
+            "Overdue exceeds 90 days: evaluate debt recovery or bad debt provisioning.",
+        ]
+
+        for expected in expected_en:
+            self.assertIn(expected, recs_en, f"Raccomandazione EN mancante: '{expected}'")
+
+        # Verifica assenza assoluta di residui in lingua italiana
+        italian_fragments = ["Importo superiore", "Livello 3", "Oltre 90", "legale", "soglia"]
+        for rec in recs_en:
+            for frag in italian_fragments:
+                self.assertNotIn(frag.lower(), rec.lower(), f"Residuo italiano '{frag}' in raccomandazione EN: '{rec}'")
+
+    def test_05_full_pipeline_verification(self):
+        """Azione 3 (v2.1.2): Esecuzione pipeline completa su b2b_invoice_sample_en.pdf e smoke test."""
         result = workflow_engine.run_pipeline(str(self.pdf_path), language="en", mode="local")
         self.assertTrue(result.success, f"Pipeline fallita con errori: {result.errors}")
 
         invoice = result.invoice
         classification = result.classification
+        compliance = result.compliance
         reminder_text = result.reminder_text
 
         # 1. Amount: 18450.00 (EUR / $)
@@ -113,22 +170,45 @@ class TestUniversalCurrencyParser(unittest.TestCase):
         self.assertNotIn("0 days", reminder_text, "Il testo del sollecito contiene erroneamente '0 days'")
         self.assertNotIn("overdue by 0 days", reminder_text, "Il testo del sollecito contiene erroneamente 'overdue by 0 days'")
 
-        # 4. Client Name: "Global Logistics Solutions Ltd." (senza ':' iniziale)
+        # 4. Client Name: "Global Logistics Solutions Ltd." (senza ':' iniziale e senza token spuri)
         self.assertEqual(invoice.get("client_name"), "Global Logistics Solutions Ltd.", "Nome cliente estratto non corretto")
         self.assertFalse(invoice.get("client_name", "").startswith(":"), "Nome cliente inizia con ':'")
 
-        # 5. Verifica iniezione dinamica importo nel testo sollecito ($ 18,450.00 o EUR 18,450.00)
+        # 5. Client Address: pulito senza la parola "Invoice" in coda
+        client_address = invoice.get("client_address")
+        self.assertIsNotNone(client_address, "Indirizzo cliente non estratto")
+        self.assertEqual(client_address, "45 Canary Wharf, London, E14 5AB, UK", f"Indirizzo non corretto: '{client_address}'")
+        self.assertFalse(client_address.endswith("Invoice"), "Indirizzo termina ancora con 'Invoice'")
+        self.assertNotIn("Invoice", client_address, "Indirizzo contiene ancora 'Invoice'")
+
+        # 6. Raccomandazioni 100% in lingua inglese
+        recs = compliance.get("recommendations", [])
+        self.assertTrue(len(recs) > 0, "Nessuna raccomandazione presente")
+        expected_subset = [
+            "Amount exceeds compliance threshold: authorization required.",
+            "Notice level 3: consult legal counsel prior to formal escalation.",
+            "Overdue exceeds 90 days: evaluate debt recovery or bad debt provisioning."
+        ]
+        for exp in expected_subset:
+            self.assertIn(exp, recs, f"Raccomandazione EN attesa mancante: {exp}")
+
+        for rec in recs:
+            for it_frag in ["superiore alla soglia", "consultare un legale", "oltre 90 giorni"]:
+                self.assertNotIn(it_frag, rec.lower(), f"Raccomandazione contiene testo italiano: {rec}")
+
+        # 7. Verifica iniezione dinamica importo nel testo sollecito ($ 18,450.00 o EUR 18,450.00)
         self.assertTrue(
             "18,450.00" in reminder_text or "18450.00" in reminder_text,
             "Importo esatto non presente nel testo del sollecito"
         )
 
         print("\n===========================================================================")
-        print("  VERIFICA PIPELINE COMPLETATA CON SUCCESSO (100% CRITERI RISPETTATI):")
+        print("  VERIFICA PIPELINE v2.1.2 COMPLETATA CON SUCCESSO (100% CRITERI RISPETTATI):")
         print(f"  • Amount:       {invoice.get('amount')} ({invoice.get('currency')})")
         print(f"  • Days Overdue: {classification.get('days_overdue')}")
         print(f"  • Client Name:  '{invoice.get('client_name')}'")
-        print(f"  • Notice Match: 'overdue by 126 days' confermato (0 days ASSENTE)")
+        print(f"  • Client Addr:  '{client_address}' (Invoice RIMOSSA con successo)")
+        print(f"  • Recs EN:      {recs}")
         print("===========================================================================")
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 """
 Generatore di fattura di test in lingua inglese b2b_invoice_sample_en.pdf
-Specifiche:
+Specifiche v2.1.2:
 - Importo: $ 18,450.00
 - Client: : Global Logistics Solutions Ltd. (con ':' iniziale per testare pulizia)
+- Address: 45 Canary Wharf, London, E14 5AB, UK Invoice (con 'Invoice' in coda per testare pulizia token layout)
 - Scadenza: 126 giorni fa rispetto ad oggi (es. 2026-06-09 per oggi 2026-10-13)
 """
 from pathlib import Path
@@ -28,9 +29,9 @@ def generate_sample_invoice(output_path: str = "b2b_invoice_sample_en.pdf", days
     story.append(Paragraph("100 Wall Street, New York, NY 10005, USA — Tax ID: US-987654321", styles["Normal"]))
     story.append(Spacer(1, 20))
 
-    # Client Header (with leading colon to verify extraction and normalization)
+    # Client Header (with leading colon and trailing 'Invoice' to verify extraction and normalization trimming)
     client_style = ParagraphStyle("Client", parent=styles["Normal"], fontSize=11, leading=14)
-    story.append(Paragraph("<b>Bill To:</b><br/>: Global Logistics Solutions Ltd.<br/>45 Canary Wharf, London, E14 5AB, UK", client_style))
+    story.append(Paragraph("<b>Bill To:</b><br/>: Global Logistics Solutions Ltd.<br/>45 Canary Wharf, London, E14 5AB, UK Invoice", client_style))
     story.append(Spacer(1, 20))
 
     # Invoice Details
