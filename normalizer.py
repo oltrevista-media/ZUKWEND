@@ -96,9 +96,12 @@ def normalize(raw_fields: dict, locale: str = "it") -> dict:
         result["amount"] = round(float(result["amount"]), 2)
 
     # Valuta
-    result["currency"] = normalize_currency(
+    curr_res = normalize_currency(
         raw_fields.get("currency") or raw_fields.get("amount_raw", "")
     )
+    result["currency"] = curr_res.currency if hasattr(curr_res, "currency") else str(curr_res)
+    if result.get("amount") is None and getattr(curr_res, "amount", None) is not None:
+        result["amount"] = curr_res.amount
 
     # Nomi
     if raw_fields.get("client_name"):
@@ -168,12 +171,20 @@ def normalize_date(raw: Optional[str], locale: str = "it") -> Optional[str]:
 # ------------------------------------------------------------
 # normalize_amount()
 # ------------------------------------------------------------
+# ------------------------------------------------------------
+# normalize_amount()
+# ------------------------------------------------------------
 def normalize_amount(raw: Optional[str], locale: str = "it") -> Optional[float]:
     if raw is None:
         return None
 
+    # Prova prima con il parser universale di valuta
+    res = normalize_currency(raw)
+    if res.amount is not None:
+        return res.amount
+
     raw = str(raw).strip()
-    cleaned = re.sub(r"[€$£¥\sA-Za-z]", "", raw)
+    cleaned = re.sub(r"[€$£¥\sA-Za-z'’`]", "", raw)
 
     if not cleaned:
         return None
@@ -212,23 +223,153 @@ def normalize_amount(raw: Optional[str], locale: str = "it") -> Optional[float]:
         return None
 
 # ------------------------------------------------------------
-# normalize_currency()
+# CurrencyResult e normalize_currency()
 # ------------------------------------------------------------
-def normalize_currency(raw: Optional[str]) -> str:
+class CurrencyResult(tuple):
+    def __new__(cls, amount: Optional[float], currency: str, iso_code: str = "EUR"):
+        return super().__new__(cls, (amount, currency))
+
+    def __init__(self, amount: Optional[float], currency: str, iso_code: str = "EUR"):
+        self._iso = iso_code
+
+    @property
+    def amount(self) -> Optional[float]:
+        return self[0]
+
+    @property
+    def currency(self) -> str:
+        return self[1]
+
+    @property
+    def iso_code(self) -> str:
+        return self._iso
+
+    def __eq__(self, other):
+        if isinstance(other, tuple):
+            return super().__eq__(other)
+        if isinstance(other, (int, float)):
+            return self.amount == other
+        if isinstance(other, str):
+            return self.currency == other or self._iso == other
+        return False
+
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            if item == "amount":
+                return self[0]
+            if item == "currency":
+                return self[1]
+            if item == "iso_code":
+                return self._iso
+            raise KeyError(item)
+        return super().__getitem__(item)
+
+    def get(self, key, default=None):
+        if key == "amount":
+            return self[0]
+        if key == "currency":
+            return self[1]
+        if key == "iso_code":
+            return self._iso
+        return default
+
+    def to_dict(self):
+        return {"amount": self[0], "currency": self[1], "iso_code": self._iso}
+
+
+def normalize_currency(raw: Optional[str]) -> CurrencyResult:
+    """
+    Normalizza valuta e importo:
+    - Estrae simbolo valuta originale ($, €, £, CHF) o default EUR se assente.
+    - Conserva il simbolo originale nell'output (.currency), tracciando anche l'ISO (.iso_code).
+    - Pulisce e calcola l'importo numerico su formati Anglo-Sassone, Continentale e Svizzero.
+    """
     if not raw:
-        return "EUR"
+        return CurrencyResult(None, "EUR", "EUR")
 
-    raw_lower = str(raw).lower()
+    s = str(raw).strip()
+    if not s:
+        return CurrencyResult(None, "EUR", "EUR")
 
-    for iso in CURRENCY_ALIASES.values():
-        if iso.lower() in raw_lower:
-            return iso
+    curr = "EUR"
+    iso = "EUR"
+    if "CHF" in s:
+        curr = "CHF"
+        iso = "CHF"
+    elif "R$" in s:
+        curr = "R$"
+        iso = "BRL"
+    elif "$" in s:
+        curr = "$"
+        iso = "USD"
+    elif "€" in s:
+        curr = "€"
+        iso = "EUR"
+    elif "£" in s:
+        curr = "£"
+        iso = "GBP"
+    elif "¥" in s:
+        curr = "¥"
+        iso = "JPY"
+    elif "USD" in s:
+        curr = "$"
+        iso = "USD"
+    elif "EUR" in s or "euro" in s.lower():
+        curr = "EUR"
+        iso = "EUR"
+    elif "GBP" in s:
+        curr = "£"
+        iso = "GBP"
+    elif "BRL" in s:
+        curr = "BRL"
+        iso = "BRL"
+    else:
+        # Check aliases
+        raw_lower = s.lower()
+        for alias, iso_val in CURRENCY_ALIASES.items():
+            if alias in raw_lower:
+                iso = iso_val
+                curr = alias if alias in ("$", "€", "£", "¥", "CHF") else iso_val
+                break
 
-    for alias, iso in CURRENCY_ALIASES.items():
-        if alias in raw_lower:
-            return iso
+    # Pulizia numerica
+    num_str = re.sub(
+        r"(?i)\b(?:EUR|USD|GBP|CHF|BRL|CAD|AUD|JPY|TOTAL|AMOUNT|SUBTOTAL|VALORE|IMPORTO|SOLDE|NETTO|LORDO|DUE|BALANCE)\b",
+        "",
+        s,
+    )
+    num_str = re.sub(r"[\$€£¥]", "", num_str)
+    num_str = re.sub(r"['’`]", "", num_str)
+    num_str = re.sub(r"(\d)\s+(\d)", r"\1\2", num_str)
+    num_str = re.sub(r"[^\d.,]", "", num_str).strip()
 
-    return "EUR"
+    if not num_str:
+        return CurrencyResult(None, curr, iso)
+
+    if "," in num_str and "." in num_str:
+        if num_str.rfind(".") > num_str.rfind(","):
+            num_str = num_str.replace(",", "")
+        else:
+            num_str = num_str.replace(".", "").replace(",", ".")
+    elif "," in num_str:
+        parts = num_str.split(",")
+        if len(parts) == 2 and len(parts[1]) in (1, 2):
+            num_str = num_str.replace(",", ".")
+        else:
+            num_str = num_str.replace(",", "")
+    elif "." in num_str:
+        parts = num_str.split(".")
+        if len(parts) == 2 and len(parts[1]) == 3 and len(parts[0]) <= 3:
+            num_str = num_str.replace(".", "")
+        elif len(parts) > 2:
+            num_str = num_str.replace(".", "")
+
+    try:
+        amt = round(float(num_str), 2)
+    except Exception:
+        amt = None
+
+    return CurrencyResult(amt, curr, iso)
 
 # ------------------------------------------------------------
 # detect_language()
@@ -254,19 +395,27 @@ def detect_language(text: str, hint: str = "it") -> str:
 def normalize_name(raw: Optional[str]) -> Optional[str]:
     if not raw:
         return None
-    cleaned = re.sub(r"\s+", " ", raw.strip())[:120]
+    # Rimuovi caratteri di punteggiatura orfani iniziali/finali (due punti ':', virgole ',', etc.)
+    cleaned = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", raw.strip())
+    cleaned = re.sub(r"\s+", " ", cleaned)[:120]
 
     siglas = {
-        "srl":"Srl","spa":"SpA","ltd":"Ltd","gmbh":"GmbH",
-        "bv":"BV","sa":"SA","sas":"SAS","snc":"SNC"
+        "srl": "Srl", "s.r.l.": "S.r.l.", "spa": "SpA", "s.p.a.": "S.p.A.",
+        "ltd": "Ltd", "ltd.": "Ltd.", "gmbh": "GmbH",
+        "bv": "BV", "sa": "SA", "sas": "SAS", "snc": "SNC",
+        "llc": "LLC", "inc": "Inc", "inc.": "Inc."
     }
 
     words = cleaned.split()
     out = []
     for w in words:
         lw = w.lower()
-        out.append(siglas.get(lw, w.capitalize()))
-    return " ".join(out)
+        if lw in siglas:
+            out.append(siglas[lw])
+        else:
+            out.append(w.capitalize() if w.islower() else w)
+    result = " ".join(out)
+    return re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", result.strip())
 
 # ------------------------------------------------------------
 # normalize_invoice_number()

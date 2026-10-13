@@ -46,15 +46,16 @@ TEMPLATES = {
     ("en", 2): (
         "Dear {client_name},\n\n"
         "Invoice {invoice_number} ({currency} {amount}), due on {due_date}, "
-        "is still outstanding after {days_overdue} days.\n"
-        "Please settle within {grace_days} days.\n\n"
+        "is overdue by {days_overdue} days.\n"
+        "Please settle within {grace_days} days to prevent further escalation.\n\n"
         "Best regards,\n{vendor_name}"
     ),
     ("en", 3): (
-        "FORMAL NOTICE\n\n"
-        "Dear {client_name},\n\n"
-        "We formally request payment for invoice {invoice_number} ({currency} {amount}), "
-        "due on {due_date} ({days_overdue} days overdue), within {grace_days} days.\n\n"
+        "FORMAL COLLECTION NOTICE\n\n"
+        "{client_name},\n\n"
+        "You are formally required to settle invoice no. {invoice_number} "
+        "({currency} {amount}), overdue by {days_overdue} days, within {grace_days} days. "
+        "Failure to comply will result in immediate legal action.\n\n"
         "{vendor_name}"
     ),
 }
@@ -117,15 +118,26 @@ class ReminderEngine:
     # Variabili template
     # ------------------------------------------------------------
     def _build_vars(self, invoice: Dict, rules: Dict) -> Dict:
+        import re
+        client = str(invoice.get("client_name", "Cliente"))
+        client = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", client.strip())
+        client = re.sub(r"\s+", " ", client)
+
+        vendor = str(invoice.get("vendor_name", ""))
+        vendor = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", vendor.strip())
+        vendor = re.sub(r"\s+", " ", vendor)
+
+        days = rules.get("days_overdue") if rules.get("days_overdue") is not None else invoice.get("days_overdue", 0)
+
         return {
-            "client_name": invoice.get("client_name", "Cliente"),
-            "vendor_name": invoice.get("vendor_name", ""),
+            "client_name": client,
+            "vendor_name": vendor,
             "invoice_number": invoice.get("invoice_number", "N/A"),
             "issue_date": invoice.get("issue_date", "N/A"),
             "due_date": invoice.get("due_date", "N/A"),
-            "amount": f"{float(invoice.get('amount', 0.0)):.2f}",
+            "amount": f"{float(invoice.get('amount', 0.0)):,.2f}",
             "currency": invoice.get("currency", "EUR"),
-            "days_overdue": str(rules.get("days_overdue", 0)),
+            "days_overdue": str(days),
             "grace_days": str(self._grace_days(rules.get("reminder_level", 1))),
         }
 

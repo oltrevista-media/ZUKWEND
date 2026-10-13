@@ -1,4 +1,4 @@
-﻿"""
+"""
 ZUKWEND — Multilingual Billing Agent
 Modulo: deducer.py
 Versione: 2.1.0-ENTERPRISE (Full 6-Language Native Edition)
@@ -246,6 +246,7 @@ def deduce(invoice: dict, classification: dict, language: str = "it") -> dict:
         "reminder_level": reminder_level,
         "grace_days": grace_days,
         "next_escalation_days": next_esc_days,
+        "days_overdue": days_overdue,
         "language": lang,
         "deduced_at": datetime.now().isoformat(),
     }
@@ -294,18 +295,21 @@ def generate_reminder_text(
     language: str = "it",
     mode: str = "local",
     api_key: Optional[str] = None,
+    classification: Optional[dict] = None,
 ) -> str:
     lang = language.lower() if language and language.lower() in SUPPORTED_LANGS else "en"
     level = billing.get("reminder_level", 1)
-    vars_static = _build_vars(invoice, billing, lang)
+    vars_static = _build_vars(invoice, billing, lang, classification)
 
     prompt_path = Path(__file__).parent / "prompts" / "prompt_deducer_ar.md"
     if not prompt_path.exists():
         logger.warning("prompt_deducer_ar.md mancante. Uso fallback statico.")
         return _render_static(lang, level, vars_static)
 
-    system_prompt = prompt_path.read_text(encoding="utf-8").replace("{{LANGUAGE}}", lang)
     invoice_data = {"invoice": invoice, "billing_severity": billing}
+    if classification:
+        invoice_data["classification"] = classification
+    system_prompt = prompt_path.read_text(encoding="utf-8").replace("{{LANGUAGE}}", lang)
     full_prompt = f"{system_prompt}\n\nDATI FATTURA E GRAVITÀ:\n{json.dumps(invoice_data, indent=2)}"
 
     try:
@@ -344,19 +348,42 @@ def generate_reminder_text(
         logger.error(f"Errore LLM deduzione, attivazione fallback statico: {e}")
         return _render_static(lang, level, vars_static)
 
-def _build_vars(invoice: dict, billing: dict, language: str) -> dict:
+def _build_vars(invoice: dict, billing: dict, language: str, classification: Optional[dict] = None) -> dict:
     raw_amount = invoice.get("amount")
     safe_amount = 0.0 if raw_amount is None else float(raw_amount)
-    
+
+    # Iniezione corretta days_overdue dalla classificazione, billing o fattura
+    days_overdue = 0
+    if classification and classification.get("days_overdue") is not None:
+        days_overdue = classification.get("days_overdue")
+    elif billing and billing.get("days_overdue") is not None:
+        days_overdue = billing.get("days_overdue")
+    elif invoice and invoice.get("days_overdue") is not None:
+        days_overdue = invoice.get("days_overdue")
+
+    # Pulizia rigorosa nome cliente da punteggiatura orfana iniziale/finale
+    client_name = invoice.get("client_name") or "Valued Customer"
+    client_name = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(client_name).strip())
+    client_name = re.sub(r"\s+", " ", client_name)
+
+    vendor_name = invoice.get("vendor_name") or "The Management"
+    vendor_name = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(vendor_name).strip())
+    vendor_name = re.sub(r"\s+", " ", vendor_name)
+
+    # Formattazione importo con separatore migliaia
+    formatted_amount = f"{safe_amount:,.2f}"
+
+    currency = invoice.get("currency") or "EUR"
+
     return {
-        "client_name": invoice.get("client_name") or "Valued Customer",
-        "vendor_name": invoice.get("vendor_name") or "The Management",
+        "client_name": client_name,
+        "vendor_name": vendor_name,
         "invoice_number": invoice.get("invoice_number") or "N/A",
         "issue_date": invoice.get("issue_date") or "N/A",
         "due_date": invoice.get("due_date") or "N/A",
-        "amount": f"{safe_amount:.2f}",
-        "currency": invoice.get("currency") or "EUR",
-        "days_overdue": str(invoice.get("days_overdue") or billing.get("days_overdue") or 0),
+        "amount": formatted_amount,
+        "currency": currency,
+        "days_overdue": str(days_overdue),
         "grace_days": str(billing.get("grace_days") or 5),
         "disclaimer": DISCLAIMER_BY_LANG.get(language, DISCLAIMER_BY_LANG["en"]),
     }

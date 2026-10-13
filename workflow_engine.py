@@ -274,9 +274,12 @@ def deduce_billing_action(normalized: dict, classification: dict, language: str)
             "template_key": f"reminder_{language}_L1",
             "reminder_level": max(1, classification.get("reminder_level", 1)),
             "next_escalation_days": 15,
+            "days_overdue": classification.get("days_overdue", 0),
         }
     try:
         billing = deducer_mod.deduce(normalized, classification, language=language)
+        if "days_overdue" not in billing:
+            billing["days_overdue"] = classification.get("days_overdue", 0)
         logger.info(f"Deducer: action={billing.get('action')} | template={billing.get('template_key')}")
         return billing
     except Exception as e:
@@ -287,6 +290,7 @@ def deduce_billing_action(normalized: dict, classification: dict, language: str)
             "template_key": f"reminder_{language}_L1",
             "reminder_level": 1,
             "next_escalation_days": 15,
+            "days_overdue": classification.get("days_overdue", 0),
             "error": str(e),
         }
 
@@ -296,14 +300,24 @@ def generate_reminder_text(
     language: str,
     mode: str = "local",
     api_key: Optional[str] = None,
+    classification: Optional[dict] = None,
 ) -> str:
     deducer_mod = _import_module("deducer")
+    if classification and "days_overdue" not in billing:
+        billing["days_overdue"] = classification.get("days_overdue", 0)
     if deducer_mod is None:
         return _static_reminder(normalized, billing, language)
     try:
-        text = deducer_mod.generate_reminder_text(
-            normalized, billing, language=language, mode=mode, api_key=api_key
-        )
+        import inspect
+        sig = inspect.signature(deducer_mod.generate_reminder_text)
+        if "classification" in sig.parameters:
+            text = deducer_mod.generate_reminder_text(
+                normalized, billing, language=language, mode=mode, api_key=api_key, classification=classification
+            )
+        else:
+            text = deducer_mod.generate_reminder_text(
+                normalized, billing, language=language, mode=mode, api_key=api_key
+            )
         if not text or len(text.strip()) < 20:
             raise ValueError("Testo generato troppo corto o vuoto")
         logger.info(f"Reminder generato: {len(text)} caratteri | lingua={language} | mode={mode}")
@@ -313,79 +327,90 @@ def generate_reminder_text(
         return _static_reminder(normalized, billing, language)
 
 def _static_reminder(normalized: dict, billing: dict, language: str) -> str:
+    import re
     level = billing.get("reminder_level", 1)
     num = normalized.get("invoice_number") or "N/A"
     raw_amt = normalized.get("amount")
     amount = 0.0 if raw_amt is None else float(raw_amt)
     currency = normalized.get("currency") or "EUR"
+
     client = normalized.get("client_name") or "Valued Customer"
+    client = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(client).strip())
+    client = re.sub(r"\s+", " ", client)
+
     vendor = normalized.get("vendor_name") or ""
+    vendor = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(vendor).strip())
+    vendor = re.sub(r"\s+", " ", vendor)
+
     due = normalized.get("due_date") or "N/A"
+    days_overdue = billing.get("days_overdue") or normalized.get("days_overdue") or 0
+    grace_days = billing.get("grace_days") or (7 if level == 3 else (3 if level == 2 else 5))
 
     templates = {
         "it": {
-            1: (f"Gentile {client},\n\nla fattura n. {num} per {currency} {amount:.2f}, "
+            1: (f"Gentile {client},\n\nla fattura n. {num} per {currency} {amount:,.2f}, "
                 f"con scadenza {due}, risulta ancora non saldata.\n"
-                f"La invitiamo cortesemente a procedere al pagamento entro 5 giorni lavorativi.\n\n"
+                f"La invitiamo cortesemente a procedere al pagamento entro {grace_days} giorni lavorativi.\n\n"
                 f"Cordiali saluti,\n{vendor}"),
             2: (f"Gentile {client},\n\nNonostante i precedenti solleciti, la fattura n. {num} "
-                f"per {currency} {amount:.2f} risulta ancora impagata.\n"
-                f"La invitiamo a saldare entro 72 ore per evitare ulteriori azioni.\n\n"
+                f"per {currency} {amount:,.2f} ({days_overdue} giorni di ritardo) risulta ancora impagata.\n"
+                f"La invitiamo a saldare entro {grace_days} giorni per evitare ulteriori azioni.\n\n"
                 f"Distinti saluti,\n{vendor}"),
-            3: (f"DIFFIDA FORMALE\n\n{client},\n\nla fattura n. {num} per {currency} {amount:.2f} "
-                f"e gravemente scaduta. Si diffida a pagare entro 7 giorni, pena azioni legali.\n\n"
+            3: (f"DIFFIDA FORMALE\n\n{client},\n\nla fattura n. {num} per {currency} {amount:,.2f} "
+                f"e gravemente scaduta da {days_overdue} giorni. Si diffida a pagare entro {grace_days} giorni, pena azioni legali.\n\n"
                 f"NOTA: Consultare un legale prima di inviare questa comunicazione.\n{vendor}"),
         },
         "en": {
-            1: (f"Dear {client},\n\nInvoice no. {num} for {currency} {amount:.2f} "
-                f"(due {due}) remains unpaid.\nWe kindly ask you to arrange payment within 5 business days.\n\n"
+            1: (f"Dear {client},\n\nInvoice no. {num} for {currency} {amount:,.2f} "
+                f"(due {due}) remains unpaid.\nWe kindly ask you to arrange payment within {grace_days} business days.\n\n"
                 f"Kind regards,\n{vendor}"),
-            2: (f"Dear {client},\n\nDespite our previous reminder, invoice no. {num} "
-                f"for {currency} {amount:.2f} remains outstanding.\n"
-                f"Please settle within 72 hours to avoid further action.\n\nBest regards,\n{vendor}"),
-            3: (f"FORMAL NOTICE\n\nDear {client},\n\nInvoice no. {num} for {currency} {amount:.2f} "
-                f"is severely overdue. Payment is required within 7 days or legal action will follow.\n\n"
-                f"NOTE: Consult a lawyer before sending this notice.\n{vendor}"),
+            2: (f"Dear {client},\n\nDespite our previous notice, invoice no. {num} ({currency} {amount:,.2f}) "
+                f"due on {due} is overdue by {days_overdue} days.\n"
+                f"Please settle within {grace_days} days to prevent further escalation.\n\nBest regards,\n{vendor}"),
+            3: (f"FORMAL COLLECTION NOTICE\n\n{client},\n\n"
+                f"You are formally required to settle invoice no. {num} ({currency} {amount:,.2f}), "
+                f"overdue by {days_overdue} days, within {grace_days} days. "
+                f"Failure to comply will result in immediate legal action.\n\n{vendor}"),
         },
         "de": {
-            1: (f"Sehr geehrte(r) {client},\n\ndie Rechnung Nr. {num} ueber {currency} {amount:.2f} "
-                f"(Faelligkeit: {due}) ist noch offen.\nBitte ueberweisen Sie den Betrag innerhalb von 5 Werktagen.\n\n"
+            1: (f"Sehr geehrte(r) {client},\n\ndie Rechnung Nr. {num} ueber {currency} {amount:,.2f} "
+                f"(Faelligkeit: {due}) ist noch offen.\nBitte ueberweisen Sie den Betrag innerhalb von {grace_days} Werktagen.\n\n"
                 f"Mit freundlichen Gruessen,\n{vendor}"),
             2: (f"Sehr geehrte(r) {client},\n\ntrotz Erinnerung ist die Rechnung Nr. {num} "
-                f"ueber {currency} {amount:.2f} weiterhin unbezahlt.\nBitte begleichen Sie den Betrag innerhalb von 72 Stunden.\n\n"
+                f"ueber {currency} {amount:,.2f} seit {days_overdue} Tagen ueberfaellig.\nBitte begleichen Sie den Betrag innerhalb von {grace_days} Tagen.\n\n"
                 f"Mit freundlichen Gruessen,\n{vendor}"),
-            3: (f"LETZTE MAHNUNG\n\nSehr geehrte(r) {client},\n\ndie Rechnung Nr. {num} ueber {currency} {amount:.2f} "
-                f"ist stark ueberfaellig. Zahlen Sie binnen 7 Tagen, andernfalls werden rechtliche Schritte eingeleitet.\n{vendor}"),
+            3: (f"LETZTE MAHNUNG\n\nSehr geehrte(r) {client},\n\ndie Rechnung Nr. {num} ueber {currency} {amount:,.2f} "
+                f"ist stark ueberfaellig ({days_overdue} Tage). Zahlen Sie binnen {grace_days} Tagen, andernfalls werden rechtliche Schritte eingeleitet.\n{vendor}"),
         },
         "fr": {
-            1: (f"Bonjour {client},\n\nLa facture n° {num} d'un montant de {currency} {amount:.2f} "
-                f"(echeance le {due}) est toujours en attente.\nMerci de proceder au reglement sous 5 jours ouvres.\n\n"
+            1: (f"Bonjour {client},\n\nLa facture n° {num} d'un montant de {currency} {amount:,.2f} "
+                f"(echeance le {due}) est toujours en attente.\nMerci de proceder au reglement sous {grace_days} jours ouvres.\n\n"
                 f"Cordialement,\n{vendor}"),
             2: (f"Bonjour {client},\n\nSauf erreur, la facture n° {num} "
-                f"de {currency} {amount:.2f} demeure impayee.\nMerci de regulariser la situation sous 72 heures.\n\n"
+                f"de {currency} {amount:,.2f} est en retard de {days_overdue} jours.\nMerci de regulariser la situation sous {grace_days} jours.\n\n"
                 f"Cordialement,\n{vendor}"),
-            3: (f"MISE EN DEMEURE\n\n{client},\n\nLa facture n° {num} de {currency} {amount:.2f} "
-                f"est a echeance critique. Sans reglement sous 7 jours, une procedure legale sera engagee.\n{vendor}"),
+            3: (f"MISE EN DEMEURE\n\n{client},\n\nLa facture n° {num} de {currency} {amount:,.2f} "
+                f"est en retard critique ({days_overdue} jours). Sans reglement sous {grace_days} jours, une procedure legale sera engagee.\n{vendor}"),
         },
         "es": {
-            1: (f"Estimado/a {client},\n\nLa factura n.° {num} por importe de {currency} {amount:.2f} "
-                f"(vencimiento {due}) se encuentra pendiente.\nLe rogamos efectue el pago en un plazo de 5 dias habiles.\n\n"
+            1: (f"Estimado/a {client},\n\nLa factura n.° {num} por importe de {currency} {amount:,.2f} "
+                f"(vencimiento {due}) se encuentra pendiente.\nLe rogamos efectue el pago en un plazo de {grace_days} dias habiles.\n\n"
                 f"Atentamente,\n{vendor}"),
             2: (f"Estimado/a {client},\n\nA pesar de los avisos, la factura n.° {num} "
-                f"por {currency} {amount:.2f} sigue impagada.\nRogamos regularice la situacion en 72 horas.\n\n"
+                f"por {currency} {amount:,.2f} acumula {days_overdue} dias de retraso.\nRogamos regularice la situacion en {grace_days} dias.\n\n"
                 f"Saludos cordiales,\n{vendor}"),
-            3: (f"REQUERIMIENTO FORMAL DE PAGO\n\n{client},\n\nLa factura n.° {num} por {currency} {amount:.2f} "
-                f"esta gravemente vencida. Dispone de 7 dias para abonarla antes de acciones legales.\n{vendor}"),
+            3: (f"REQUERIMIENTO FORMAL DE PAGO\n\n{client},\n\nLa factura n.° {num} por {currency} {amount:,.2f} "
+                f"acumula {days_overdue} dias de retraso. Dispone de {grace_days} dias para abonarla antes de acciones legales.\n{vendor}"),
         },
         "pt": {
-            1: (f"Prezado(a) {client},\n\nA fatura n.º {num} no valor de {currency} {amount:.2f} "
-                f"(vencimento a {due}) permanece em aberto.\nSolicitamos a regularizacao no prazo de 5 dias uteis.\n\n"
+            1: (f"Prezado(a) {client},\n\nA fatura n.º {num} no valor de {currency} {amount:,.2f} "
+                f"(vencimento a {due}) permanece em aberto.\nSolicitamos a regularizacao no prazo de {grace_days} dias uteis.\n\n"
                 f"Com os melhores cumprimentos,\n{vendor}"),
             2: (f"Prezado(a) {client},\n\nApesar dos avisos, a fatura n.º {num} "
-                f"de {currency} {amount:.2f} continua por liquidar.\nPedimos a liquidacao em 72 horas.\n\n"
+                f"de {currency} {amount:,.2f} encontra-se vencida ha {days_overdue} dias.\nPedimos a liquidacao em {grace_days} dias.\n\n"
                 f"Atenciosamente,\n{vendor}"),
-            3: (f"NOTIFICACAO FORMAL DE COBRANCA\n\n{client},\n\nA fatura n.º {num} de {currency} {amount:.2f} "
-                f"encontra-se vencida. Exige-se o pagamento no prazo de 7 dias sob pena judicial.\n{vendor}"),
+            3: (f"NOTIFICACAO FORMAL DE COBRANCA\n\n{client},\n\nA fatura n.º {num} de {currency} {amount:,.2f} "
+                f"encontra-se vencida ha {days_overdue} dias. Exige-se o pagamento no prazo de {grace_days} dias sob pena judicial.\n{vendor}"),
         },
     }
     lang_templates = templates.get(language, templates["en"])
@@ -536,7 +561,7 @@ def run_pipeline(
 
     reminder_text, err = _safe_step(
         "REMINDER",
-        lambda: generate_reminder_text(normalized, billing, language, mode, api_key)
+        lambda: generate_reminder_text(normalized, billing, language, mode, api_key, classification=classification)
     )
     if err or not reminder_text:
         try:

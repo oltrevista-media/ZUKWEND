@@ -36,7 +36,8 @@ CRITICAL_OVERDUE_DAYS        = 90
 
 SUPPORTED_CURRENCIES = {
     "EUR","USD","GBP","BRL","CHF","SEK","NOK","DKK",
-    "PLN","CZK","HUF","RON","TRY","CAD","AUD","JPY"
+    "PLN","CZK","HUF","RON","TRY","CAD","AUD","JPY",
+    "$","€","£","¥","R$"
 }
 
 # ------------------------------------------------------------

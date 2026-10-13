@@ -9,6 +9,7 @@ REPTANA MODE | OLTREVISTA 2030 | Offline-First
 import json
 import logging
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -275,8 +276,8 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "due_date":   str(invoice.get("due_date") or "N/A"),
             "amount":     safe_amount,
             "currency":   str(invoice.get("currency") or "EUR"),
-            "client":     str(invoice.get("client_name") or "N/A"),
-            "vendor":     str(invoice.get("vendor_name") or "N/A"),
+            "client":     re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(invoice.get("client_name") or "N/A").strip()),
+            "vendor":     re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(invoice.get("vendor_name") or "N/A").strip()),
         },
         "classification": {
             "payment_status":   str(classification.get("payment_status") or "N/A"),
@@ -347,7 +348,7 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
         [labels["inv_num"],      inv["number"]],
         [labels["issue_date"],   inv["issue_date"]],
         [labels["due_date"],     inv["due_date"]],
-        [labels["amount"],       f"{inv['currency']} {inv['amount']:.2f}"],
+        [labels["amount"],       f"{inv['currency']} {inv['amount']:,.2f}"],
         [labels["client"],       inv["client"]],
         [labels["status"],       clf["payment_status"]],
         [labels["overdue"],      str(clf["days_overdue"])],
@@ -427,7 +428,7 @@ def _build_text_report(data: dict, is_demo: bool) -> str:
         labels["title"].upper(),
         f"  {labels['inv_num']}:     {inv['number']}",
         f"  {labels['due_date']}:    {inv['due_date']}",
-        f"  {labels['amount']}:      {inv['currency']} {inv['amount']:.2f}",
+        f"  {labels['amount']}:      {inv['currency']} {inv['amount']:,.2f}",
         f"  {labels['client']}:      {inv['client']}",
         f"  {labels['status']}:      {clf['payment_status']} ({clf['days_overdue']})",
         f"  {labels['risk']}:        {clf['risk_level_label']} | L{clf['reminder_level']}",
@@ -473,7 +474,7 @@ def _generate_docx(data: dict, path: Path, is_demo: bool = False) -> Path:
         (labels["inv_num"],      inv["number"]),
         (labels["issue_date"],   str(inv["issue_date"])),
         (labels["due_date"],     str(inv["due_date"])),
-        (labels["amount"],       f"{inv['currency']} {inv['amount']:.2f}"),
+        (labels["amount"],       f"{inv['currency']} {inv['amount']:,.2f}"),
         (labels["client"],       inv["client"]),
         (labels["status"],       clf["payment_status"]),
         (labels["overdue"],      str(clf["days_overdue"])),
@@ -585,7 +586,7 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
       <tr><th>{labels['inv_num']}</th><td>{inv['number']}</td></tr>
       <tr><th>{labels['issue_date']}</th><td>{inv['issue_date']}</td></tr>
       <tr><th>{labels['due_date']}</th><td>{inv['due_date']}</td></tr>
-      <tr><th>{labels['amount']}</th><td><strong>{inv['currency']} {inv['amount']:.2f}</strong></td></tr>
+      <tr><th>{labels['amount']}</th><td><strong>{inv['currency']} {inv['amount']:,.2f}</strong></td></tr>
       <tr><th>{labels['client']}</th><td>{inv['client']}</td></tr>
       <tr><th>{labels['status']}</th><td>{clf['payment_status']}</td></tr>
       <tr><th>{labels['overdue']}</th><td>{clf['days_overdue']}</td></tr>
