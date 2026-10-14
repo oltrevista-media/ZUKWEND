@@ -65,6 +65,10 @@ footer a:hover{color:#ffffff;text-decoration:underline}
 .badge-soon{background:rgba(154,166,196,0.15);color:var(--mut);border:1px solid rgba(154,166,196,0.3)}
 .agent-title{font-size:1.2rem;font-weight:800;margin-bottom:8px;color:#fff}
 .agent-desc{color:var(--mut);font-size:0.92rem;line-height:1.5;margin-bottom:18px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:15px 28px;border-radius:10px;font-weight:700;text-decoration:none;font-size:1.05rem;transition:transform .15s,box-shadow .15s,background .15s}
+.btn-video{border:1.5px solid var(--a);color:var(--txt);background:rgba(108,140,255,0.08)}
+.btn-video:hover{background:rgba(108,140,255,0.2);color:#fff;box-shadow:0 4px 16px rgba(108,140,255,0.25)}
 </style>
     <link rel="alternate" hreflang="x-default" href="https://zukwend.com/" />
     <link rel="alternate" hreflang="en" href="https://zukwend.com/" />
@@ -73,6 +77,22 @@ footer a:hover{color:#ffffff;text-decoration:underline}
     <link rel="alternate" hreflang="es" href="https://zukwend.com/es-recordatorios-pago.html" />
     <link rel="alternate" hreflang="pt" href="https://zukwend.com/pt-lembrete-faturas.html" />
     <link rel="alternate" hreflang="it" href="https://zukwend.com/it-solleciti-fatture.html" />
+    <!-- VideoObject JSON-LD (SEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "ZUKWEND Billing AI — 30s Interactive Demo",
+      "description": "Watch 30s interactive demo of ZUKWEND Billing AI: drop invoice PDFs, calculate aging risk, and generate automated payment reminders with 100% offline privacy.",
+      "thumbnailUrl": [
+        "https://img.youtube.com/vi/a6V65LRN4oc/maxresdefault.jpg",
+        "https://img.youtube.com/vi/a6V65LRN4oc/hqdefault.jpg"
+      ],
+      "uploadDate": "2026-10-14T00:00:00+02:00",
+      "contentUrl": "https://youtu.be/a6V65LRN4oc",
+      "embedUrl": "https://www.youtube.com/embed/a6V65LRN4oc"
+    }
+    </script>
 </head>
 <body>
 <header>
@@ -92,13 +112,26 @@ footer a:hover{color:#ffffff;text-decoration:underline}
 <div class="wrap hero">
 <h1>Récupérez vos factures impayées sans exposer vos données financières.</h1>
 <p class="sub">ZUKWEND est l'agent IA de bureau pour la gestion et le recouvrement de factures impayées avec moteur IA natif inclus : téléchargez, installez et travaillez à 100% sans délai. Évolution optionnelle via Ollama local ou clés Cloud (BYOC). Aucun abonnement récurrent.</p>
-<div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Acheter Maintenant — 249 €</a><a href="#features" class="btn btn-demo">Decouvrir les Fonctionnalites</a></div><p class="note">DEMO : 7 jours ou 10 factures maximum. Paiement unique, sans abonnement.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Remarque Windows : En tant que logiciel 100% local et hors ligne, Defender peut afficher 'Application non reconnue'. Cliquez sur 'Informations complémentaires' ➔ 'Exécuter quand même'.</p>
+
+<div class="hero-pricing" style="margin:28px 0 16px;text-align:center;">
+    <div style="font-size:1.25rem;font-weight:800;display:inline-flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <span style="text-decoration:line-through;opacity:0.6;color:var(--mut);font-size:1.2rem;">349 €</span>
+        <span style="color:#fff;font-size:2.2rem;font-weight:800;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">249 €</span>
+        <span style="background:rgba(46,204,143,0.15);color:var(--ok);border:1px solid rgba(46,204,143,0.3);font-size:0.8rem;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:.05em;">[OFFRE DE LANCEMENT — LICENCE À VIE]</span>
+    </div>
+    <div style="color:var(--mut);font-size:0.92rem;margin-top:6px;">(Paiement unique. Zéro abonnement).</div>
+</div>
+<div class="cta">
+    <a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Acheter Maintenant — 249 €</a>
+    <a class="btn btn-video" href="https://youtu.be/a6V65LRN4oc" target="_blank" rel="noopener noreferrer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;vertical-align:-3px;" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Voir la Demo (30s)</a>
+    <a href="#features" class="btn btn-demo">Decouvrir les Fonctionnalites</a>
+</div><p class="note">DEMO : 7 jours ou 10 factures maximum. Paiement unique, sans abonnement.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Remarque Windows : En tant que logiciel 100% local et hors ligne, Defender peut afficher 'Application non reconnue'. Cliquez sur 'Informations complémentaires' ➔ 'Exécuter quand même'.</p>
 </div>
 <section id="features"><div class="wrap"><h2>Comment ça marche</h2><div class="grid"><div class="card"><h3>1. Lecture par IA</h3><p>Déposez vos PDF : ZUKWEND extrait numéro de facture, client, montants et échéances.</p></div><div class="card"><h3>2. Analyse des retards</h3><p>Calcule les jours de retard et classe le risque d&#x27;impayé.</p></div><div class="card"><h3>3. Relances prêtes</h3><p>Génère e-mails et courriers formels (niveaux 1 à 3) selon le retard.</p></div></div></div></section>
 <section><div class="wrap"><h2>Architecture IA à 3 Niveaux — Liberté Totale de Traitement</h2><div class="models-box"><p style="color:var(--mut);text-align:center;max-width:780px;margin:0 auto;">ZUKWEND intègre nativement son propre moteur IA prêt à l'emploi : téléchargez, installez et soyez immédiatement opérationnel à 100% sans configuration obligatoire ni outils externes.</p><div class="models-grid"><div class="model-col" style="border-color:var(--ok);background:rgba(46,204,143,0.03);"><h4 style="color:var(--ok);">NIVEAU 1 — Built-in Native AI Agent (Inclus)</h4><p>Opérationnel immédiatement out-of-the-box. Téléchargez, installez et travaillez à 100%. Zéro configuration requise, zéro outil externe, zéro Ollama obligatoire, aucune clé API requise.</p><div class="model-tags"><span class="tag tag-ok">Moteur IA Natif</span><span class="tag tag-ok">Zéro Configuration</span><span class="tag tag-ok">Prêt à l'Emploi</span></div></div><div class="model-col"><h4>NIVEAU 2 — Local Ollama Power-Up (Optionnel)</h4><p>Pour les utilisateurs souhaitant de grands modèles locaux pour une confidentialité maximale. Connexion en 1 clic à Ollama pour exécuter des open-weights directement sur votre GPU/CPU.</p><div class="model-tags"><span class="tag">Gemma</span><span class="tag">Mistral</span><span class="tag">Qwen</span><span class="tag">DeepSeek</span></div></div><div class="model-col"><h4>NIVEAU 3 — Cloud BYOC Power-Up (Optionnel)</h4><p>Pour privilégier la rapidité du cloud et une puissance maximale. Connectez vos propres clés API (Bring Your Own Key) à prix coûtant sans marge intermédiaire.</p><div class="model-tags"><span class="tag">Claude</span><span class="tag">OpenAI</span><span class="tag">Gemini</span><span class="tag">Mistral (RGPD)</span><span class="tag">Groq</span></div></div></div></div></div></section>
 <section><div class="wrap"><h2>Confidentialité par Conception & Desktop Natif</h2><ul class="ok"><li>Moteur IA natif intégré et immédiatement opérationnel à 100% à l'installation.</li><li>Zéro cloud obligatoire : vos documents financiers restent sur votre ordinateur.</li><li>Fonctionne même sans connexion internet active.</li><li>Options d'accélération : connexion en 1 clic à Ollama local ou clés API Cloud (BYOC).</li><li>Modèles professionnels de relance en 6 langues : IT, EN, FR, DE, ES, PT.</li></ul></div></section>
 <section><div class="wrap"><h2>ZUKWEND Ecosystem Roadmap</h2><div class="agents-grid"><div class="agent-card"><div><span class="agent-badge badge-soon">In Development</span><div class="agent-title">Agent 2 — Ledger Recon AI</div><p class="agent-desc">Rapprochement bancaire autonome multi-comptes avec catégorisation automatique des écritures et détection d'anomalies.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">En Développement</div></div><div class="agent-card"><div><span class="agent-badge badge-soon">Planned</span><div class="agent-title">Agent 3 — Corporate Treasury AI</div><p class="agent-desc">Prévision des flux de trésorerie et projections de liquidités d'entreprise par inférence statistique locale.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">En Conception</div></div><div class="agent-card"><div><span class="agent-badge badge-soon">Planned</span><div class="agent-title">ZUKWEND AI Suite</div><p class="agent-desc">Orchestrateur de bureau unifié pour l'administration et la gestion financière autonome d'entreprise.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">Bientôt Disponible</div></div></div></div></section>
-<section class="price"><div class="wrap"><h2>Tarif transparent</h2><div class="amt">249 EUR</div><p class="sub">Licence unique. Sans abonnement.</p><div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Acheter Maintenant — 249 €</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Télécharger la DEMO Gratuite</a></div><p class="note">DEMO : 7 jours ou 10 factures maximum. Paiement unique, sans abonnement.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Remarque Windows : En tant que logiciel 100% local et hors ligne, Defender peut afficher 'Application non reconnue'. Cliquez sur 'Informations complémentaires' ➔ 'Exécuter quand même'.</p></div></section>
+<section class="price"><div class="wrap"><h2>Tarification transparente</h2><div class="amt"><span style="text-decoration:line-through;opacity:0.5;font-size:0.6em;margin-right:12px;vertical-align:middle;color:var(--mut);font-weight:500;">349 €</span>249 €</div><p class="sub" style="margin-top:10px;font-weight:700;"><span style="background:rgba(46,204,143,0.15);color:var(--ok);border:1px solid rgba(46,204,143,0.3);font-size:0.85rem;padding:4px 12px;border-radius:6px;letter-spacing:.05em;">[OFFRE DE LANCEMENT — LICENCE À VIE]</span></p><p class="sub" style="margin-top:6px;">(Paiement unique. Zéro abonnement).</p><div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Acheter Maintenant — 249 €</a><a class="btn btn-video" href="https://youtu.be/a6V65LRN4oc" target="_blank" rel="noopener noreferrer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;vertical-align:-3px;" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Voir la Demo (30s)</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Télécharger DEMO Gratuite</a></div><p class="note">DEMO : 7 jours ou 10 factures maximum. Paiement unique, sans abonnement.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Remarque Windows : En tant que logiciel 100% local et hors ligne, Defender peut afficher 'Application non reconnue'. Cliquez sur 'Informations complémentaires' ➔ 'Exécuter quand même'.</p></div></section>
 </main>
 <footer><div class="wrap">ZUKWEND par <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Logiciel autonome de bureau fourni &laquo; En l'&eacute;tat &raquo; (As-Is) &mdash; les r&eacute;sultats g&eacute;n&eacute;r&eacute;s doivent &ecirc;tre v&eacute;rifi&eacute;s par l'utilisateur. Voir <a href="DISCLAIMER_EULA.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="DISCLAIMER_EULA.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Contact Officiel &amp; Licences (uniquement pour questions administratives et licences) : <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a></div></footer>
 </body>

@@ -65,6 +65,10 @@ footer a:hover{color:#ffffff;text-decoration:underline}
 .badge-soon{background:rgba(154,166,196,0.15);color:var(--mut);border:1px solid rgba(154,166,196,0.3)}
 .agent-title{font-size:1.2rem;font-weight:800;margin-bottom:8px;color:#fff}
 .agent-desc{color:var(--mut);font-size:0.92rem;line-height:1.5;margin-bottom:18px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:15px 28px;border-radius:10px;font-weight:700;text-decoration:none;font-size:1.05rem;transition:transform .15s,box-shadow .15s,background .15s}
+.btn-video{border:1.5px solid var(--a);color:var(--txt);background:rgba(108,140,255,0.08)}
+.btn-video:hover{background:rgba(108,140,255,0.2);color:#fff;box-shadow:0 4px 16px rgba(108,140,255,0.25)}
 </style>
     <link rel="alternate" hreflang="x-default" href="https://zukwend.com/" />
     <link rel="alternate" hreflang="en" href="https://zukwend.com/" />
@@ -73,6 +77,22 @@ footer a:hover{color:#ffffff;text-decoration:underline}
     <link rel="alternate" hreflang="es" href="https://zukwend.com/es-recordatorios-pago.html" />
     <link rel="alternate" hreflang="pt" href="https://zukwend.com/pt-lembrete-faturas.html" />
     <link rel="alternate" hreflang="it" href="https://zukwend.com/it-solleciti-fatture.html" />
+    <!-- VideoObject JSON-LD (SEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "ZUKWEND Billing AI — 30s Interactive Demo",
+      "description": "Watch 30s interactive demo of ZUKWEND Billing AI: drop invoice PDFs, calculate aging risk, and generate automated payment reminders with 100% offline privacy.",
+      "thumbnailUrl": [
+        "https://img.youtube.com/vi/a6V65LRN4oc/maxresdefault.jpg",
+        "https://img.youtube.com/vi/a6V65LRN4oc/hqdefault.jpg"
+      ],
+      "uploadDate": "2026-10-14T00:00:00+02:00",
+      "contentUrl": "https://youtu.be/a6V65LRN4oc",
+      "embedUrl": "https://www.youtube.com/embed/a6V65LRN4oc"
+    }
+    </script>
 </head>
 <body>
 <header>
@@ -95,13 +115,26 @@ footer a:hover{color:#ffffff;text-decoration:underline}
 
 
 
-<div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Buy Now — 249 €</a><a href="#features" class="btn btn-demo">Explore Features</a></div><p class="note">DEMO: 7 days or up to 10 invoices. One-time payment, no subscription.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Windows Note: As 100% native offline software without cloud telemetry, Windows Defender may show an 'Unrecognized App' notice on first launch. Click 'More info' ➔ 'Run anyway'. 100% local & secure.</p>
+
+<div class="hero-pricing" style="margin:28px 0 16px;text-align:center;">
+    <div style="font-size:1.25rem;font-weight:800;display:inline-flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <span style="text-decoration:line-through;opacity:0.6;color:var(--mut);font-size:1.2rem;">349 €</span>
+        <span style="color:#fff;font-size:2.2rem;font-weight:800;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">249 €</span>
+        <span style="background:rgba(46,204,143,0.15);color:var(--ok);border:1px solid rgba(46,204,143,0.3);font-size:0.8rem;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:.05em;">[LAUNCH OFFER — LIFETIME LICENSE]</span>
+    </div>
+    <div style="color:var(--mut);font-size:0.92rem;margin-top:6px;">(One-time payment. Zero subscriptions).</div>
+</div>
+<div class="cta">
+    <a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Buy Now — 249 €</a>
+    <a class="btn btn-video" href="https://youtu.be/a6V65LRN4oc" target="_blank" rel="noopener noreferrer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;vertical-align:-3px;" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Watch Demo (30s)</a>
+    <a href="#features" class="btn btn-demo">Explore Features</a>
+</div><p class="note">DEMO: 7 days or up to 10 invoices. One-time payment, no subscription.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Windows Note: As 100% native offline software without cloud telemetry, Windows Defender may show an 'Unrecognized App' notice on first launch. Click 'More info' ➔ 'Run anyway'. 100% local & secure.</p>
 </div>
 <section id="features"><div class="wrap"><h2>How it works</h2><div class="grid"><div class="card"><h3>1. AI parsing</h3><p>Drop your invoice PDFs: ZUKWEND extracts invoice number, client, amounts and due dates.</p></div><div class="card"><h3>2. Aging analysis</h3><p>Calculates overdue days and classifies payment risk instantly.</p></div><div class="card"><h3>3. Ready reminders</h3><p>Generates emails and formal letters (levels 1-3) based on the delay.</p></div></div></div></section>
 <section><div class="wrap"><h2>3-Tier AI Architecture — Maximum Compute Freedom</h2><div class="models-box"><p style="color:var(--mut);text-align:center;max-width:780px;margin:0 auto;">ZUKWEND includes a native AI engine ready out-of-the-box: download, install, and run 100% immediately without mandatory configuration, external tools, or API keys.</p><div class="models-grid"><div class="model-col" style="border-color:var(--ok);background:rgba(46,204,143,0.03);"><h4 style="color:var(--ok);">LEVEL 1 — Built-in Native AI Agent (Included)</h4><p>Instantly operational out-of-the-box. Download, install, and start working at 100%. Zero configuration, zero external installations, zero mandatory Ollama, zero API keys required.</p><div class="model-tags"><span class="tag tag-ok">Native AI Engine</span><span class="tag tag-ok">Zero Setup</span><span class="tag tag-ok">Ready Out-of-the-Box</span></div></div><div class="model-col"><h4>LEVEL 2 — Local Ollama Power-Up (Optional)</h4><p>For teams requiring extended local LLMs for maximum privacy and offline autonomy. Connects to Ollama with 1 click to run open-weight models directly on your GPU/CPU.</p><div class="model-tags"><span class="tag">Gemma</span><span class="tag">Mistral</span><span class="tag">Qwen</span><span class="tag">DeepSeek</span></div></div><div class="model-col"><h4>LEVEL 3 — Cloud BYOC Power-Up (Optional)</h4><p>For teams preferring frontier cloud speed and unlimited scalability. Connect your personal API keys (Bring Your Own Key: Claude, OpenAI, Gemini, Mistral, Groq) with zero markup.</p><div class="model-tags"><span class="tag">Claude</span><span class="tag">OpenAI</span><span class="tag">Gemini</span><span class="tag">Mistral (GDPR)</span><span class="tag">Groq</span></div></div></div></div></div></section>
 <section><div class="wrap"><h2>Privacy by Design & Desktop Native</h2><ul class="ok"><li>Built-in native AI engine ready out-of-the-box (no external setup required).</li><li>Zero cloud required: financial records stay strictly on your local machine.</li><li>Keeps working even without an active internet connection.</li><li>Optional power-ups: 1-click local Ollama or bring your own Cloud API keys (BYOC).</li><li>Professional localized templates in 6 languages: EN, DE, IT, ES, FR, PT.</li></ul></div></section>
 <section><div class="wrap"><h2>ZUKWEND Ecosystem Roadmap</h2><div class="agents-grid"><div class="agent-card"><div><span class="agent-badge badge-soon">In Development</span><div class="agent-title">Agent 2 — Ledger Recon AI</div><p class="agent-desc">Autonomous multi-bank statement reconciliation with automated transaction categorisation and anomaly detection.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">In Development</div></div><div class="agent-card"><div><span class="agent-badge badge-soon">Planned</span><div class="agent-title">Agent 3 — Corporate Treasury AI</div><p class="agent-desc">Cash flow forecasting and liquidity projection desktop engine with local statistical reasoning.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">Planned</div></div><div class="agent-card"><div><span class="agent-badge badge-soon">Planned</span><div class="agent-title">ZUKWEND AI Suite</div><p class="agent-desc">Unified cross-agent desktop orchestrator for end-to-end autonomous business administration.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">Planned</div></div></div></div></section>
-<section class="price"><div class="wrap"><h2>Transparent pricing</h2><div class="amt">EUR 249</div><p class="sub">One-time license. No subscription.</p><div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Buy Now — 249 €</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Download Free DEMO</a></div><p class="note">DEMO: 7 days or up to 10 invoices. One-time payment, no subscription.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Windows Note: As 100% native offline software without cloud telemetry, Windows Defender may show an 'Unrecognized App' notice on first launch. Click 'More info' ➔ 'Run anyway'. 100% local & secure.</p></div></section>
+<section class="price"><div class="wrap"><h2>Transparent pricing</h2><div class="amt"><span style="text-decoration:line-through;opacity:0.5;font-size:0.6em;margin-right:12px;vertical-align:middle;color:var(--mut);font-weight:500;">349 €</span>249 €</div><p class="sub" style="margin-top:10px;font-weight:700;"><span style="background:rgba(46,204,143,0.15);color:var(--ok);border:1px solid rgba(46,204,143,0.3);font-size:0.85rem;padding:4px 12px;border-radius:6px;letter-spacing:.05em;">[LAUNCH OFFER — LIFETIME LICENSE]</span></p><p class="sub" style="margin-top:6px;">(One-time payment. Zero subscriptions).</p><div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Buy Now — 249 €</a><a class="btn btn-video" href="https://youtu.be/a6V65LRN4oc" target="_blank" rel="noopener noreferrer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;vertical-align:-3px;" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Watch Demo (30s)</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Download Free DEMO</a></div><p class="note">DEMO: 7 days or up to 10 invoices. One-time payment, no subscription.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Windows Note: As 100% native offline software without cloud telemetry, Windows Defender may show an 'Unrecognized App' notice on first launch. Click 'More info' ➔ 'Run anyway'. 100% local & secure.</p></div></section>
 </main>
 <footer><div class="wrap">ZUKWEND by <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Autonomous desktop software provided &ldquo;As-Is&rdquo; &mdash; generated outputs must be verified by the user. See <a href="DISCLAIMER_EULA.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="DISCLAIMER_EULA.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Official Contact &amp; Licensing (administrative and licensing inquiries only): <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a></div></footer>
 </body>

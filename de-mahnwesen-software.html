@@ -65,6 +65,10 @@ footer a:hover{color:#ffffff;text-decoration:underline}
 .badge-soon{background:rgba(154,166,196,0.15);color:var(--mut);border:1px solid rgba(154,166,196,0.3)}
 .agent-title{font-size:1.2rem;font-weight:800;margin-bottom:8px;color:#fff}
 .agent-desc{color:var(--mut);font-size:0.92rem;line-height:1.5;margin-bottom:18px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:15px 28px;border-radius:10px;font-weight:700;text-decoration:none;font-size:1.05rem;transition:transform .15s,box-shadow .15s,background .15s}
+.btn-video{border:1.5px solid var(--a);color:var(--txt);background:rgba(108,140,255,0.08)}
+.btn-video:hover{background:rgba(108,140,255,0.2);color:#fff;box-shadow:0 4px 16px rgba(108,140,255,0.25)}
 </style>
     <link rel="alternate" hreflang="x-default" href="https://zukwend.com/" />
     <link rel="alternate" hreflang="en" href="https://zukwend.com/" />
@@ -73,6 +77,22 @@ footer a:hover{color:#ffffff;text-decoration:underline}
     <link rel="alternate" hreflang="es" href="https://zukwend.com/es-recordatorios-pago.html" />
     <link rel="alternate" hreflang="pt" href="https://zukwend.com/pt-lembrete-faturas.html" />
     <link rel="alternate" hreflang="it" href="https://zukwend.com/it-solleciti-fatture.html" />
+    <!-- VideoObject JSON-LD (SEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "ZUKWEND Billing AI — 30s Interactive Demo",
+      "description": "Watch 30s interactive demo of ZUKWEND Billing AI: drop invoice PDFs, calculate aging risk, and generate automated payment reminders with 100% offline privacy.",
+      "thumbnailUrl": [
+        "https://img.youtube.com/vi/a6V65LRN4oc/maxresdefault.jpg",
+        "https://img.youtube.com/vi/a6V65LRN4oc/hqdefault.jpg"
+      ],
+      "uploadDate": "2026-10-14T00:00:00+02:00",
+      "contentUrl": "https://youtu.be/a6V65LRN4oc",
+      "embedUrl": "https://www.youtube.com/embed/a6V65LRN4oc"
+    }
+    </script>
 </head>
 <body>
 <header>
@@ -92,13 +112,26 @@ footer a:hover{color:#ffffff;text-decoration:underline}
 <div class="wrap hero">
 <h1>Offene Rechnungen einfordern, ohne Finanzdaten preiszugeben.</h1>
 <p class="sub">ZUKWEND ist der Desktop-KI-Agent für intelligentes Mahnwesen mit integrierter nativer KI: Herunterladen, installieren und sofort zu 100% startklar. Optional erweiterbar mit lokalem Ollama oder Cloud-APIs (BYOC). Keine laufenden Gebühren.</p>
-<div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Jetzt Kaufen — 249 €</a><a href="#features" class="btn btn-demo">Funktionen Entdecken</a></div><p class="note">DEMO: 7 Tage oder maximal 10 Rechnungen. Einmalzahlung, kein Abonnement.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Windows-Hinweis: Da es sich um eine 100% lokale Offline-Software handelt, zeigt Defender beim ersten Start möglicherweise 'Unbekannte App' an. Klicken Sie auf 'Weitere Informationen' ➔ 'Trotzdem ausführen'.</p>
+
+<div class="hero-pricing" style="margin:28px 0 16px;text-align:center;">
+    <div style="font-size:1.25rem;font-weight:800;display:inline-flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <span style="text-decoration:line-through;opacity:0.6;color:var(--mut);font-size:1.2rem;">349 €</span>
+        <span style="color:#fff;font-size:2.2rem;font-weight:800;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">249 €</span>
+        <span style="background:rgba(46,204,143,0.15);color:var(--ok);border:1px solid rgba(46,204,143,0.3);font-size:0.8rem;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:.05em;">[EINFÜHRUNGSANGEBOT — LEBENSLANGE LIZENZ]</span>
+    </div>
+    <div style="color:var(--mut);font-size:0.92rem;margin-top:6px;">(Einmalige Zahlung. Keine Abonnements).</div>
+</div>
+<div class="cta">
+    <a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Jetzt Kaufen — 249 €</a>
+    <a class="btn btn-video" href="https://youtu.be/a6V65LRN4oc" target="_blank" rel="noopener noreferrer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;vertical-align:-3px;" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Demo Ansehen (30s)</a>
+    <a href="#features" class="btn btn-demo">Funktionen Entdecken</a>
+</div><p class="note">DEMO: 7 Tage oder maximal 10 Rechnungen. Einmalzahlung, kein Abonnement.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Windows-Hinweis: Da es sich um eine 100% lokale Offline-Software handelt, zeigt Defender beim ersten Start möglicherweise 'Unbekannte App' an. Klicken Sie auf 'Weitere Informationen' ➔ 'Trotzdem ausführen'.</p>
 </div>
 <section id="features"><div class="wrap"><h2>Funktionsweise</h2><div class="grid"><div class="card"><h3>1. KI-Erfassung</h3><p>PDF-Rechnungen ablegen: ZUKWEND extrahiert Rechnungsnummer, Kunde, Betr&auml;ge und F&auml;lligkeit.</p></div><div class="card"><h3>2. F&auml;lligkeitsanalyse</h3><p>Berechnet Verzugstage und stuft das Zahlungsrisiko sofort ein.</p></div><div class="card"><h3>3. Versandbereite Mahnungen</h3><p>Erstellt E-Mails und Mahnschreiben (Stufen 1-3) passend zum Verzug.</p></div></div></div></section>
 <section><div class="wrap"><h2>3-Stufen-KI-Architektur — Maximale Rechenfreiheit</h2><div class="models-box"><p style="color:var(--mut);text-align:center;max-width:780px;margin:0 auto;">ZUKWEND enthält bereits eine native KI-Engine direkt ab Werk: Herunterladen, installieren und sofort zu 100% einsatzbereit ohne Pflicht-Konfigurationen oder externe Tools.</p><div class="models-grid"><div class="model-col" style="border-color:var(--ok);background:rgba(46,204,143,0.03);"><h4 style="color:var(--ok);">STUFE 1 — Built-in Native AI Agent (Inbegriffen)</h4><p>Sofort einsatzbereit out-of-the-box. Herunterladen, installieren und unmittelbar zu 100% arbeitsfähig. Null Konfiguration, keine externen Installationen, kein Pflicht-Ollama, keine API-Schlüssel nötig.</p><div class="model-tags"><span class="tag tag-ok">Native KI-Engine</span><span class="tag tag-ok">Zero Setup</span><span class="tag tag-ok">Sofort Startklar</span></div></div><div class="model-col"><h4>STUFE 2 — Lokales Ollama Power-Up (Optional)</h4><p>Für alle, die erweiterte lokale LLMs für kompromisslose Privatsphäre und Offline-Autonomie wünschen. 1-Klick-Anbindung an Ollama zur Ausführung direkt auf GPU/CPU.</p><div class="model-tags"><span class="tag">Gemma</span><span class="tag">Mistral</span><span class="tag">Qwen</span><span class="tag">DeepSeek</span></div></div><div class="model-col"><h4>STUFE 3 — Cloud BYOC Power-Up (Optional)</h4><p>Für maximale Geschwindigkeit und Skalierbarkeit. Nutzen Sie Ihre persönlichen API-Schlüssel (Bring Your Own Key) ohne Plattformaufschläge auf Token-Kosten.</p><div class="model-tags"><span class="tag">Claude</span><span class="tag">OpenAI</span><span class="tag">Gemini</span><span class="tag">Mistral (DSGVO)</span><span class="tag">Groq</span></div></div></div></div></div></section>
 <section><div class="wrap"><h2>Datenschutz durch Design & Desktop Nativo</h2><ul class="ok"><li>Integrierte native KI-Engine sofort zu 100% einsatzbereit ab Werk.</li><li>Zero Cloud: Rechnungsdaten verbleiben ausschließlich lokal auf Ihrem Computer.</li><li>Funktioniert vollständig ohne bestehende Internetverbindung.</li><li>Optionale Upgrades: 1-Klick lokales Ollama oder eigene Cloud-API-Schlüssel (BYOC).</li><li>Professionelle Mahnvorlagen in 6 Sprachen: IT, EN, DE, FR, ES, PT.</li></ul></div></section>
 <section><div class="wrap"><h2>ZUKWEND Ecosystem Roadmap</h2><div class="agents-grid"><div class="agent-card"><div><span class="agent-badge badge-soon">In Development</span><div class="agent-title">Agent 2 — Ledger Recon AI</div><p class="agent-desc">Autonomer Multi-Bank-Kontoauszugsabgleich mit automatischer Buchungskategorisierung und Anomalieerkennung.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">In Entwicklung</div></div><div class="agent-card"><div><span class="agent-badge badge-soon">Planned</span><div class="agent-title">Agent 3 — Corporate Treasury AI</div><p class="agent-desc">Liquiditätsprognose und Cashflow-Simulationen auf Basis lokaler statistischer Berechnungsverfahren.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">Im Systemdesign</div></div><div class="agent-card"><div><span class="agent-badge badge-soon">Planned</span><div class="agent-title">ZUKWEND AI Suite</div><p class="agent-desc">Zentraler Desktop-Orchestrator für nahtlos automatisierte kaufmännische Unternehmensabläufe.</p></div><div style="color:var(--mut);font-size:0.85rem;font-style:italic;">Demnächst Verfügbar</div></div></div></div></section>
-<section class="price"><div class="wrap"><h2>Transparente Preise</h2><div class="amt">EUR 249</div><p class="sub">Einzellizenz. Kein Abonnement.</p><div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Jetzt Kaufen — 249 €</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Kostenlose DEMO Herunterladen</a></div><p class="note">DEMO: 7 Tage oder maximal 10 Rechnungen. Einmalzahlung, kein Abonnement.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Windows-Hinweis: Da es sich um eine 100% lokale Offline-Software handelt, zeigt Defender beim ersten Start möglicherweise 'Unbekannte App' an. Klicken Sie auf 'Weitere Informationen' ➔ 'Trotzdem ausführen'.</p></div></section>
+<section class="price"><div class="wrap"><h2>Transparente Preise</h2><div class="amt"><span style="text-decoration:line-through;opacity:0.5;font-size:0.6em;margin-right:12px;vertical-align:middle;color:var(--mut);font-weight:500;">349 €</span>249 €</div><p class="sub" style="margin-top:10px;font-weight:700;"><span style="background:rgba(46,204,143,0.15);color:var(--ok);border:1px solid rgba(46,204,143,0.3);font-size:0.85rem;padding:4px 12px;border-radius:6px;letter-spacing:.05em;">[EINFÜHRUNGSANGEBOT — LEBENSLANGE LIZENZ]</span></p><p class="sub" style="margin-top:6px;">(Einmalige Zahlung. Keine Abonnements).</p><div class="cta"><a class="btn btn-buy" href="https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-087e-4e04-8c78-2de2a1dcfda6">Jetzt Kaufen — 249 €</a><a class="btn btn-video" href="https://youtu.be/a6V65LRN4oc" target="_blank" rel="noopener noreferrer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;vertical-align:-3px;" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Demo Ansehen (30s)</a><a class="btn btn-demo" href="/downloads/ZUKWEND_DEMO_Setup.zip">Kostenlose DEMO Herunterladen</a></div><p class="note">DEMO: 7 Tage oder maximal 10 Rechnungen. Einmalzahlung, kein Abonnement.</p><p class="smartscreen-note" style="font-size:12px;color:var(--mut);margin-top:6px;line-height:1.5;opacity:0.85;">ℹ️ Windows-Hinweis: Da es sich um eine 100% lokale Offline-Software handelt, zeigt Defender beim ersten Start möglicherweise 'Unbekannte App' an. Klicken Sie auf 'Weitere Informationen' ➔ 'Trotzdem ausführen'.</p></div></section>
 </main>
 <footer><div class="wrap">ZUKWEND von <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Autonome Desktop-Software bereitgestellt &bdquo;Wie besehen&ldquo; (As-Is) &mdash; KI-Ergebnisse sind vom Nutzer zu pr&uuml;fen. Siehe <a href="DISCLAIMER_EULA.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="DISCLAIMER_EULA.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Offizieller Kontakt &amp; Lizenzen (nur f&uuml;r administrative Anfragen und Lizenzen): <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a></div></footer>
 </body>
