@@ -30,8 +30,9 @@ p{color:var(--txt);margin-bottom:16px;font-size:1rem}
 ul{margin:12px 0 20px 24px;color:var(--txt)}
 li{margin-bottom:8px}
 footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:0.9rem}
-footer a{color:var(--a);text-decoration:none}
-footer a:hover{text-decoration:underline}
+footer a{color:#e2e8f0;text-decoration:none;transition:color .2s ease}
+footer a:hover{color:#ffffff;text-decoration:underline}
+#privacy{scroll-margin-top:32px}
 </style>
 </head>
 <body>
@@ -70,24 +71,24 @@ footer a:hover{text-decoration:underline}
             <li><strong>Hardware Node-Locking:</strong> Each individual license allows activation on up to two (2) authorized physical workstations owned by the licensee. Licenses are personal, non-transferable, and non-assignable.</li>
             <li><strong>Local State Integrity:</strong> Licensing status and activation tokens are stored locally within the user&rsquo;s profile directory (<code>.zukwend</code>). The licensee is solely responsible for preserving their license credentials. Any deliberate alteration, reverse-engineering, or tampering with the local license verification system immediately voids the license without right of refund.</li>
         </ul>
-        <h2>5. 100% Offline Local Privacy &amp; Data Sovereignty</h2>
+        <div id="privacy">
+        <h2>5. 100% Offline Local Privacy &amp; Data Sovereignty &mdash; Local-First Declaration</h2>
+        <p><strong>Local-First Architecture &amp; Privacy Policy Declaration:</strong> ZUKWEND is architected from the ground up on strict <em>Local-First</em> and <em>Privacy-by-Design</em> principles. All invoice ingestion, document parsing, financial aging computations, and draft generation occur exclusively in the memory of the licensee&rsquo;s local physical machine.</p>
         <ul>
+            <li><strong>Local-First Data Sovereignty:</strong> No telemetry, analytics tracking, behavioral cookies, background cloud syncing, or remote logging exist within the Software. Your accounting books, customer identities, payment histories, and financial metrics never leave your local infrastructure.</li>
             <li><strong>100% Offline Local Execution:</strong> Under standard local execution (using native algorithms or local Ollama engines), all document parsing, invoice processing, and AI inference take place exclusively on the user&rsquo;s local hardware. No customer databases, debtor files, invoice details, or financial metrics are ever transmitted to external servers or cloud repositories.</li>
             <li><strong>Customer Cloud Key (BYOC Option):</strong> In the event the user opts to enable external cloud LLM inference, the user supplies their own personal API key (Bring Your Own Cloud / Key). In such instances, API calls are dispatched directly from the user&rsquo;s machine to the chosen cloud provider under the user&rsquo;s account and terms.</li>
             <li><strong>Data Protection &amp; GDPR Compliance:</strong> Because all processed data remains under the user&rsquo;s physical custody, full compliance with applicable privacy regulations (including GDPR, UK GDPR, and CCPA), safe document retention, and regular data backups remain the sole responsibility of the user.</li>
         </ul>
+        </div>
         <h2>6. Warranty Disclaimer (&ldquo;As Is&rdquo;)</h2>
         <p>The Software is provided strictly on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis, without warranties of any kind, whether express, statutory, or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, and non-infringement.</p>
         <h2>7. Acceptance of Agreement</h2>
         <p>Installation, deployment, or continued use of the Software signifies complete, unconditional acceptance of this Agreement. If the user disagrees with any part of these terms, they must immediately cease using the Software and delete all local copies.</p>
-        <h2>8. Official Contact &amp; Support</h2>
-        <p>For inquiries, licensing questions, or official communications, please contact: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
+        <h2>8. Official Contact &amp; Licensing</h2>
+        <p>Given the standalone, autonomous desktop nature of the software provided strictly on an &ldquo;As-Is&rdquo; basis, official contact is reserved exclusively for administrative questions and commercial licensing inquiries. For licensing support or official business correspondence, contact: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
     </div>
 </main>
-<footer>
-    <div class="wrap">
-        ZUKWEND by <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Generated outputs must be verified by the user. See <a href="disclaimer.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="disclaimer.html" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Contact: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>
-    </div>
-</footer>
+<footer><div class="wrap">ZUKWEND by <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Autonomous desktop software provided &ldquo;As-Is&rdquo; &mdash; generated outputs must be verified by the user. See <a href="DISCLAIMER_EULA.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="DISCLAIMER_EULA.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Official Contact &amp; Licensing (administrative and licensing inquiries only): <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a></div></footer>
 </body>
 </html>

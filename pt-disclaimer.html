@@ -30,8 +30,9 @@ p{color:var(--txt);margin-bottom:16px;font-size:1rem}
 ul{margin:12px 0 20px 24px;color:var(--txt)}
 li{margin-bottom:8px}
 footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:0.9rem}
-footer a{color:var(--a);text-decoration:none}
-footer a:hover{text-decoration:underline}
+footer a{color:#e2e8f0;text-decoration:none;transition:color .2s ease}
+footer a:hover{color:#ffffff;text-decoration:underline}
+#privacy{scroll-margin-top:32px}
 </style>
 </head>
 <body>
@@ -70,24 +71,24 @@ footer a:hover{text-decoration:underline}
             <li><strong>Bloqueio por Hardware (Node-Locking):</strong> Cada licen&ccedil;a individual permite ativa&ccedil;&atilde;o em at&eacute; duas (2) esta&ccedil;&otilde;es f&iacute;sicas autorizadas de propriedade do comprador. As licen&ccedil;as s&atilde;o de uso pessoal e intransfer&iacute;veis.</li>
             <li><strong>Integridade do Estado Local:</strong> As credenciais e os tokens de ativa&ccedil;&atilde;o ficam gravados na pasta de perfil do usu&aacute;rio (<code>.zukwend</code>). Qualquer adultera&ccedil;&atilde;o no sistema local de licen&ccedil;a cancela imediatamente a autoriza&ccedil;&atilde;o de uso sem direito a reembolso.</li>
         </ul>
-        <h2>5. Privacidade 100% Local Offline &amp; Soberania de Dados</h2>
+        <div id="privacy">
+        <h2>5. Privacidade 100% Local Offline &amp; Soberania de Dados &mdash; Declara&ccedil;&atilde;o Local-First</h2>
+        <p><strong>Pol&iacute;tica de Privacidade &amp; Arquitetura Local-First:</strong> O ZUKWEND foi concebido sob um rigoroso paradigma de <em>Local-First</em> e <em>Privacy-by-Design</em>. Todo o processamento de faturas em PDF e an&aacute;lise de cobran&ccedil;as ocorre a 100% no hardware do utilizador, sem qualquer telemetria, rastreamento ou sincroniza&ccedil;&atilde;o externa na nuvem.</p>
         <ul>
-            <li><strong>Execu&ccedil;&atilde;o 100% Local e Desconectada:</strong> Utilizando o motor nativo embutido ou execu&ccedil;&atilde;o local no Ollama, toda a leitura de faturas e infer&ecirc;ncia de IA ocorre exclusivamente no hardware do usu&aacute;rio. Nenhum dado cont&aacute;bil &eacute; enviado para servidores em nuvem externos.</li>
+            <li><strong>Soberania Local de Dados:</strong> Nenhuma informa&ccedil;&atilde;o cont&aacute;bil ou cadastro de clientes sai do seu computador. Os dados mant&ecirc;m-se sob a sua guarda f&iacute;sica exclusiva.</li>
+            <li><strong>Execu&ccedil;&atilde;o 100% Local e Desconectada:</strong> Utilizando o motor nativo embutido ou execu&ccedil;&atilde;o local no Ollama, toda a infer&ecirc;ncia ocorre no hardware do utilizador sem transmiss&atilde;o remota.</li>
             <li><strong>Chave de Nuvem Pr&oacute;pria (Op&ccedil;&atilde;o BYOC):</strong> Caso o usu&aacute;rio opte por ativar modelos LLM em nuvem, fornecer&aacute; sua pr&oacute;pria chave de API. A comunica&ccedil;&atilde;o ocorrer&aacute; diretamente do seu computador para o provedor contratado.</li>
-            <li><strong>Conformidade LGPD / RGPD:</strong> Como todos os dados permanecem sob cust&oacute;dia f&iacute;sica do usu&aacute;rio, a conformidade com as leis de prote&ccedil;&atilde;o de dados (LGPD / RGPD) e a realiza&ccedil;&atilde;o de c&oacute;pias de seguran&ccedil;a peri&oacute;dicas s&atilde;o responsabilidade exclusiva do usu&aacute;rio.</li>
+            <li><strong>Conformidade LGPD / RGPD:</strong> Como todos os dados permanecem sob cust&oacute;dia f&iacute;sica do usu&aacute;rio, a conformidade com as leis de prote&ccedil;&atilde;o de dados e a realiza&ccedil;&atilde;o de c&oacute;pias de seguran&ccedil;a s&atilde;o responsabilidade exclusiva do usu&aacute;rio.</li>
         </ul>
+        </div>
         <h2>6. Isen&ccedil;&atilde;o de Garantias (&ldquo;No Estado em que se Encontra&rdquo; / &ldquo;As Is&rdquo;)</h2>
         <p>O Software &eacute; fornecido estritamente &ldquo;no estado em que se encontra&rdquo; (&ldquo;as is&rdquo;) e &ldquo;conforme dispon&iacute;vel&rdquo;, sem garantias de qualquer esp&eacute;cie, expressas ou impl&iacute;citas, incluindo garantias de comercializa&ccedil;&atilde;o, adequa&ccedil;&atilde;o a fins espec&iacute;ficos ou aus&ecirc;ncia de erros.</p>
         <h2>7. Aceita&ccedil;&atilde;o do Contrato</h2>
         <p>A instala&ccedil;&atilde;o ou uso cont&iacute;nuo do Software constitui aceita&ccedil;&atilde;o integral destes termos. Caso n&atilde;o concorde com qualquer item, cesse o uso imediatamente e remova todas as c&oacute;pias do equipamento.</p>
-        <h2>8. Contato Oficial &amp; Suporte</h2>
-        <p>Para d&uacute;vidas comerciais ou comunica&ccedil;&otilde;es oficiais: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
+        <h2>8. Contacto Oficial &amp; Licen&ccedil;as</h2>
+        <p>Dada a natureza de software desktop aut&oacute;nomo fornecido &ldquo;No estado em que se encontra&rdquo; (As-Is), o contacto oficial destina-se exclusivamente a esclarecimentos administrativos e pedidos de licen&ccedil;as: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
     </div>
 </main>
-<footer>
-    <div class="wrap">
-        ZUKWEND por <a href="index.html" rel="noopener">OLTREVISTA AI</a>. O utilizador deve verificar os resultados gerados pela IA. Ver <a href="pt-disclaimer.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="pt-disclaimer.html" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Contacto: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>
-    </div>
-</footer>
+<footer><div class="wrap">ZUKWEND por <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Software desktop aut&oacute;nomo fornecido &ldquo;No estado em que se encontra&rdquo; (As-Is) &mdash; o utilizador deve verificar os resultados gerados pela IA. Ver <a href="DISCLAIMER_EULA.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="DISCLAIMER_EULA.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Contacto Oficial &amp; Licen&ccedil;as (apenas para quest&otilde;es administrativas e licen&ccedil;as): <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a></div></footer>
 </body>
 </html>

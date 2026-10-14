@@ -30,8 +30,9 @@ p{color:var(--txt);margin-bottom:16px;font-size:1rem}
 ul{margin:12px 0 20px 24px;color:var(--txt)}
 li{margin-bottom:8px}
 footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:0.9rem}
-footer a{color:var(--a);text-decoration:none}
-footer a:hover{text-decoration:underline}
+footer a{color:#e2e8f0;text-decoration:none;transition:color .2s ease}
+footer a:hover{color:#ffffff;text-decoration:underline}
+#privacy{scroll-margin-top:32px}
 </style>
 </head>
 <body>
@@ -70,24 +71,24 @@ footer a:hover{text-decoration:underline}
             <li><strong>Verrouillage Mat&eacute;riel (Node-Locking) :</strong> Chaque licence individuelle permet l&rsquo;activation sur un maximum de deux (2) postes physiques appartenant au licenci&eacute;. Les licences sont strictement personnelles et non transf&eacute;rables.</li>
             <li><strong>Int&eacute;grit&eacute; de l&rsquo;&Eacute;tat Local :</strong> La cl&eacute; et les jetons d&rsquo;activation sont stock&eacute;s localement dans le profil utilisateur (<code>.zukwend</code>). Toute alt&eacute;ration ou tentative de r&eacute;tro-ing&eacute;nierie du m&eacute;canisme entra&icirc;ne l'annulation imm&eacute;diate de la licence sans remboursement.</li>
         </ul>
-        <h2>5. Confidentialit&eacute; 100% Locale Hors Ligne &amp; Souverainet&eacute; des Donn&eacute;es</h2>
+        <div id="privacy">
+        <h2>5. Confidentialit&eacute; 100% Locale Hors Ligne &amp; Souverainet&eacute; des Donn&eacute;es &mdash; D&eacute;claration Local-First</h2>
+        <p><strong>Politique de Confidentialit&eacute; &amp; Architecture Local-First :</strong> ZUKWEND est con&ccedil;u selon un principe strict de <em>Local-First</em> et de <em>Privacy-by-Design</em>. L'int&eacute;gralit&eacute; du traitement des factures PDF et des donn&eacute;es financi&egrave;res s'effectue exclusivement sur le poste local de l'utilisateur, sans aucune t&eacute;l&eacute;m&eacute;trie ni synchronisation cloud.</p>
         <ul>
-            <li><strong>Ex&eacute;cution 100% Hors Ligne Locale :</strong> Gr&acirc;ce au moteur natif embarqu&eacute; ou &agrave; un d&eacute;ploiement local Ollama, l&rsquo;analyse des pi&egrave;ces et l&rsquo;inf&eacute;rence IA ont lieu exclusivement sur le mat&eacute;riel de l&rsquo;utilisateur. Aucune donn&eacute;e de facturation, fichier client ou &eacute;l&eacute;ment financier n&rsquo;est transmis &agrave; des serveurs distants.</li>
-            <li><strong>Cl&eacute; Cloud Personnelle (Option BYOC) :</strong> Si l&rsquo;utilisateur choisit d&rsquo;activer un mod&egrave;le cloud tiers, il renseigne sa propre cl&eacute; d'API (Bring Your Own Key). La liaison s'effectue directement de sa machine vers le fournisseur cloud de son choix.</li>
-            <li><strong>Protection des Donn&eacute;es &amp; RGPD :</strong> L&rsquo;int&eacute;gralit&eacute; des documents restant sous la ma&icirc;trise mat&eacute;rielle de l&rsquo;utilisateur, la conformit&eacute; au R&egrave;glement G&eacute;n&eacute;ral sur la Protection des Donn&eacute;es (RGPD) et la r&eacute;alisation de sauvegardes r&eacute;guli&egrave;res rel&egrave;vent de sa responsabilit&eacute; unique.</li>
+            <li><strong>Souverainet&eacute; Locale des Donn&eacute;es :</strong> Aucune transmission externe de donn&eacute;es comptables ou d'identit&eacute;s clients. Les donn&eacute;es restent sous votre contr&ocirc;le physique exclusif.</li>
+            <li><strong>Ex&eacute;cution 100% Hors Ligne :</strong> En mode natif ou avec Ollama local, l'analyse et la g&eacute;n&eacute;ration de relances se d&eacute;roulent int&eacute;gralement sur votre mat&eacute;riel sans connexion requise.</li>
+            <li><strong>Cl&eacute; Cloud Personnelle (Option BYOC) :</strong> En cas d'activation facultative de mod&egrave;les cloud, l'utilisateur renseigne sa propre cl&eacute; API. Les requ&ecirc;tes partent directement de son poste vers le fournisseur s&eacute;lectionn&eacute;.</li>
+            <li><strong>Protection des Donn&eacute;es &amp; RGPD :</strong> L'utilisateur conservant la garde mat&eacute;rielle de l'ensemble de ses fichiers, la conformit&eacute; au RGPD et les sauvegardes r&eacute;guli&egrave;res lui incombent.</li>
         </ul>
+        </div>
         <h2>6. Exclusion de Garantie (&laquo; En l'&eacute;tat &raquo;)</h2>
         <p>Le Logiciel est fourni strictement &laquo; en l'&eacute;tat &raquo; (&laquo; as is &raquo;) et selon disponibilit&eacute;, sans garantie d&rsquo;aucune sorte, expresse ou implicite, quant &agrave; son ad&eacute;quation &agrave; un usage particulier ou &agrave; l&rsquo;absence d&rsquo;anomalies.</p>
         <h2>7. Acceptation du Contrat</h2>
         <p>L&rsquo;installation ou l&rsquo;utilisation du Logiciel vaut acceptation pleine et enti&egrave;re des pr&eacute;sentes conditions. En cas de d&eacute;saccord, vous devez d&eacute;sinstaller imm&eacute;diatement le Logiciel et en supprimer toutes les copies.</p>
-        <h2>8. Contact Officiel &amp; Support</h2>
-        <p>Pour toute demande relative aux licences ou assistance officielle : <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
+        <h2>8. Contact Officiel &amp; Licences</h2>
+        <p>Compte tenu de la nature autonome de bureau de ce logiciel fourni &laquo; En l'&eacute;tat &raquo; (As-Is), le contact officiel est exclusivement r&eacute;serv&eacute; aux questions administratives et demandes de licences commerciales : <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
     </div>
 </main>
-<footer>
-    <div class="wrap">
-        ZUKWEND par <a href="index.html" rel="noopener">OLTREVISTA AI</a>. Les résultats générés doivent être vérifiés par l'utilisateur. Voir <a href="fr-disclaimer.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="fr-disclaimer.html" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Contact : <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>
-    </div>
-</footer>
+<footer><div class="wrap">ZUKWEND par <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Logiciel autonome de bureau fourni &laquo; En l'&eacute;tat &raquo; (As-Is) &mdash; les r&eacute;sultats g&eacute;n&eacute;r&eacute;s doivent &ecirc;tre v&eacute;rifi&eacute;s par l'utilisateur. Voir <a href="DISCLAIMER_EULA.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="DISCLAIMER_EULA.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Contact Officiel &amp; Licences (uniquement pour questions administratives et licences) : <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a></div></footer>
 </body>
 </html>

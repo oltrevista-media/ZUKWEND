@@ -30,8 +30,9 @@ p{color:var(--txt);margin-bottom:16px;font-size:1rem}
 ul{margin:12px 0 20px 24px;color:var(--txt)}
 li{margin-bottom:8px}
 footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:0.9rem}
-footer a{color:var(--a);text-decoration:none}
-footer a:hover{text-decoration:underline}
+footer a{color:#e2e8f0;text-decoration:none;transition:color .2s ease}
+footer a:hover{color:#ffffff;text-decoration:underline}
+#privacy{scroll-margin-top:32px}
 </style>
 </head>
 <body>
@@ -70,24 +71,24 @@ footer a:hover{text-decoration:underline}
             <li><strong>Attivazione Legata all&rsquo;Hardware (Node-Locking):</strong> Ciascuna licenza individuale consente l&rsquo;attivazione su un massimo di 2 (due) workstation fisiche autorizzate di propriet&agrave; dell&rsquo;acquirente. Le licenze sono strettamente personali e non cedibili.</li>
             <li><strong>Integrit&agrave; dello Stato Locale:</strong> Lo stato di licenza e i token di validazione sono memorizzati localmente nella directory del profilo utente (<code>.zukwend</code>). L&rsquo;utente &egrave; l&rsquo;unico responsabile della conservazione dei propri file. Qualsiasi manomissione o alterazione del sistema locale comporta l&rsquo;annullamento immediato della licenza senza diritto a rimborso.</li>
         </ul>
-        <h2>5. Privacy 100% Locale Offline &amp; Sovranit&agrave; dei Dati</h2>
+        <div id="privacy">
+        <h2>5. Privacy 100% Locale Offline &amp; Sovranit&agrave; dei Dati &mdash; Dichiarazione Local-First</h2>
+        <p><strong>Privacy Policy &amp; Architettura Local-First:</strong> ZUKWEND &egrave; progettato secondo un rigoroso paradigma <em>Local-First</em> e <em>Privacy-by-Design</em>. Tutta l'elaborazione dei documenti contabili, la lettura dei PDF, il calcolo delle scadenze e la generazione dei solleciti avvengono al 100% sulla macchina locale dell'utente, senza telemetria, tracciamento o sincronizzazione remota.</p>
         <ul>
+            <li><strong>Sovranit&agrave; Locale dei Dati:</strong> Nessun dato contabile, partitario debitori, importo o metrica finanziaria viene mai trasmesso all'esterno o archiviato su cloud proprietari.</li>
             <li><strong>Esecuzione 100% Offline Locale:</strong> Con l&rsquo;architettura nativa predefinita o tramite Ollama locale, ogni estrazione documentale, elaborazione delle fatture e inferenza AI avviene esclusivamente sull&rsquo;hardware dell&rsquo;utente. Nessun dato contabile, fattura o informazione su debitori viene mai trasmesso a server o cloud esterni.</li>
             <li><strong>Chiave Cloud Personale (Opzione BYOC):</strong> Qualora l&rsquo;utente scelga facoltativamente di attivare l&rsquo;inferenza su modelli cloud avanzati, utilizzer&agrave; la propria chiave API personale (Bring Your Own Key). In tal caso, le chiamate API partono direttamente dalla macchina dell&rsquo;utente verso il provider cloud selezionato.</li>
             <li><strong>Protezione dei Dati &amp; Conformit&agrave; GDPR:</strong> Rimanendo tutti i dati sotto la custodia fisica dell&rsquo;utente, la piena conformit&agrave; al GDPR, la sicurezza dei documenti e l&rsquo;esecuzione di backup regolari ricadono sotto l&rsquo;esclusiva responsabilit&agrave; dell&rsquo;utente.</li>
         </ul>
+        </div>
         <h2>6. Esclusione di Garanzie (&ldquo;Cos&igrave; com&rsquo;&egrave;&rdquo;)</h2>
         <p>Il Software &egrave; fornito rigorosamente &ldquo;cos&igrave; com&rsquo;&egrave;&rdquo; (&ldquo;as is&rdquo;) e &ldquo;secondo disponibilit&agrave;&rdquo;, senza garanzie di alcun tipo, n&eacute; esplicite n&eacute; implicite, incluse, a titolo esemplificativo, garanzie di commerciabilit&agrave;, idoneit&agrave; a uno scopo specifico e non violazione dei diritti altrui.</p>
         <h2>7. Accettazione del Contratto</h2>
         <p>L&rsquo;installazione, l&rsquo;attivazione o l&rsquo;utilizzo del Software costituiscono piena e incondizionata accettazione del presente Accordo. Qualora l&rsquo;utente non concordi con alcuno dei punti sopra descritti, deve interrompere immediatamente l&rsquo;utilizzo ed eliminare ogni copia del Software dal proprio sistema.</p>
-        <h2>8. Contatti Ufficiali &amp; Supporto</h2>
-        <p>Per richieste commerciali, quesiti sulle licenze o comunicazioni ufficiali: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
+        <h2>8. Contatti Ufficiali &amp; Licenze</h2>
+        <p>In considerazione della natura di software autonomo desktop fornito &ldquo;Cos&igrave; com'&egrave;&rdquo; (As-Is), il contatto ufficiale &egrave; riservato esclusivamente a quesiti amministrativi e licenze commerciali: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
     </div>
 </main>
-<footer>
-    <div class="wrap">
-        ZUKWEND di <a href="index.html" rel="noopener">OLTREVISTA AI</a>. Gli output generati vanno verificati dall'utente. Vedi <a href="it-disclaimer.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="it-disclaimer.html" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Contatto: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>
-    </div>
-</footer>
+<footer><div class="wrap">ZUKWEND di <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Software autonomo desktop fornito &ldquo;Cos&igrave; com'&egrave;&rdquo; (As-Is) &mdash; gli output generati vanno verificati dall'utente. Vedi <a href="DISCLAIMER_EULA.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="DISCLAIMER_EULA.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Contatti Ufficiali &amp; Licenze (solo per quesiti amministrativi e licenze): <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a></div></footer>
 </body>
 </html>

@@ -30,8 +30,9 @@ p{color:var(--txt);margin-bottom:16px;font-size:1rem}
 ul{margin:12px 0 20px 24px;color:var(--txt)}
 li{margin-bottom:8px}
 footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:0.9rem}
-footer a{color:var(--a);text-decoration:none}
-footer a:hover{text-decoration:underline}
+footer a{color:#e2e8f0;text-decoration:none;transition:color .2s ease}
+footer a:hover{color:#ffffff;text-decoration:underline}
+#privacy{scroll-margin-top:32px}
 </style>
 </head>
 <body>
@@ -70,24 +71,24 @@ footer a:hover{text-decoration:underline}
             <li><strong>Hardware-Bindung (Node-Locking):</strong> Jede Einzelplatzlizenz berechtigt zur Aktivierung auf bis zu 2 (zwei) autorisierten Arbeitsplatzrechnern des Lizenznehmers. Lizenzen sind personengebunden und nicht &uuml;bertragbar.</li>
             <li><strong>Lokale Datenintegrit&auml;t:</strong> Lizenzdaten und Aktivierungstokens werden lokal im Benutzerprofil (<code>.zukwend</code>) gespeichert. Der Nutzer ist selbst f&uuml;r die Datensicherung verantwortlich. Manipulationen an den Lizenzdateien f&uuml;hren zum sofortigen Erl&ouml;schen der Lizenz ohne Erstattungsanspruch.</li>
         </ul>
-        <h2>5. 100% Lokaler Offline-Datenschutz &amp; Datensouver&auml;nit&auml;t</h2>
+        <div id="privacy">
+        <h2>5. 100% Lokaler Offline-Datenschutz &amp; Datensouver&auml;nit&auml;t &mdash; Local-First-Erkl&auml;rung</h2>
+        <p><strong>Datenschutzerkl&auml;rung &amp; Local-First-Architektur:</strong> ZUKWEND basiert auf einem kompromisslosen <em>Local-First</em>- und <em>Privacy-by-Design</em>-Paradigma. Die gesamte Verarbeitung von Rechnungs-PDFs, Kundendaten und Finanzkennzahlen erfolgt ausschlie&szlig;lich lokal auf dem Computer des Nutzers ohne Telemetrie oder Cloud-Speicherung.</p>
         <ul>
-            <li><strong>100% Lokale Offline-Ausf&uuml;hrung:</strong> Bei Nutzung der integrierten nativen KI oder eines lokalen Ollama-Modells erfolgt s&auml;mtliche Dokumentenanalyse und KI-Inferenz ausschlie&szlig;lich auf der Hardware des Nutzers. Es werden zu keinem Zeitpunkt Rechnungsinformationen, Kundendaten oder Finanzkennzahlen an externe Cloud-Server &uuml;bertragen.</li>
-            <li><strong>Eigener Cloud-Schl&uuml;ssel (Optionale BYOC-Erweiterung):</strong> Falls der Nutzer optional externe Cloud-LLMs anbindet, verwendet er seinen eigenen API-Schl&uuml;ssel. In diesem Fall kommuniziert die Anwendung direkt mit dem gew&auml;hlten Cloud-Anbieter gem&auml;&szlig; dessen Gesch&auml;ftsbedingungen.</li>
-            <li><strong>DSGVO-Konformit&auml;t &amp; Datensicherung:</strong> Da s&auml;mtliche Rechnungs- und Debitorendaten in der physischen Obhut des Nutzers verbleiben, obliegt die Einhaltung der geltenden Datenschutzgesetze (DSGVO) sowie regelm&auml;&szlig;ige Datensicherungen allein dem Nutzer.</li>
+            <li><strong>Lokale Datensouver&auml;nit&auml;t:</strong> Keine Telemetrie, Analyse-Tracker oder Cloud-Synchronisation. Ihre vertraulichen Gesch&auml;ftsdaten verbleiben vollst&auml;ndig unter Ihrer physischen Kontrolle.</li>
+            <li><strong>100% Lokale Offline-Ausf&uuml;hrung:</strong> Bei nativer Nutzung oder lokalem Ollama findet jede Dokumentenextraktion und KI-Verarbeitung ausschlie&szlig;lich auf der lokalen Hardware statt. Es werden keine Finanzdaten an externe Server gesendet.</li>
+            <li><strong>Eigener Cloud-Schl&uuml;ssel (Option BYOC):</strong> Falls der Nutzer optional Cloud-LLMs aktiviert, verwendet er seinen eigenen API-Schl&uuml;ssel. API-Aufrufe erfolgen direkt vom Nutzer-PC zum gew&auml;hlten Provider.</li>
+            <li><strong>Datenschutz &amp; DSGVO-Konformit&auml;t:</strong> Da alle Daten unter physischer Kontrolle des Nutzers bleiben, liegt die Einhaltung der DSGVO und regelm&auml;&szlig;ige Backups in dessen eigener Verantwortung.</li>
         </ul>
+        </div>
         <h2>6. Gew&auml;hrleistungsausschluss (&bdquo;Wie besehen&ldquo;)</h2>
         <p>Die Software wird ausdr&uuml;cklich &bdquo;wie besehen&ldquo; (&bdquo;as is&ldquo;) und &bdquo;wie verf&uuml;gbar&ldquo; bereitgestellt, ohne ausdr&uuml;ckliche oder stillschweigende Garantien f&uuml;r Marktg&auml;ngigkeit, Fehlerfreiheit oder Eignung f&uuml;r einen bestimmten Zweck.</p>
         <h2>7. Annahme der Vereinbarung</h2>
         <p>Die Installation, Inbetriebnahme oder fortgesetzte Nutzung der Software gilt als uneingeschr&auml;nkte Zustimmung zu diesen Bedingungen. Sollten Sie den Bedingungen nicht zustimmen, m&uuml;ssen Sie die Nutzung unverz&uuml;glich einstellen und alle Kopien l&ouml;schen.</p>
-        <h2>8. Offizieller Kontakt &amp; Support</h2>
-        <p>F&uuml;r Lizenzfragen und offizielle Anfragen wenden Sie sich bitte an: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
+        <h2>8. Offizieller Kontakt &amp; Lizenzen</h2>
+        <p>Aufgrund der unabh&auml;ngigen Desktop-Natur der Software (&bdquo;Wie besehen&ldquo; / As-Is) dient der offizielle Kontakt ausschlie&szlig;lich administrativen Angelegenheiten und Lizenzanfragen: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>.</p>
     </div>
 </main>
-<footer>
-    <div class="wrap">
-        ZUKWEND von <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. KI-Ergebnisse sind vom Nutzer zu pr&uuml;fen. Siehe <a href="de-disclaimer.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="de-disclaimer.html" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Kontakt: <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a>
-    </div>
-</footer>
+<footer><div class="wrap">ZUKWEND von <a href="https://oltrevista.com" rel="noopener">OLTREVISTA AI</a>. Autonome Desktop-Software bereitgestellt &bdquo;Wie besehen&ldquo; (As-Is) &mdash; KI-Ergebnisse sind vom Nutzer zu pr&uuml;fen. Siehe <a href="DISCLAIMER_EULA.html" target="_blank" rel="noopener">DISCLAIMER_EULA</a> &bull; <a href="DISCLAIMER_EULA.html#privacy" target="_blank" rel="noopener">Privacy Policy</a>. &bull; Offizieller Kontakt &amp; Lizenzen (nur f&uuml;r administrative Anfragen und Lizenzen): <a href="mailto:contact@oltrevista.com">contact@oltrevista.com</a></div></footer>
 </body>
 </html>

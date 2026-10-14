@@ -102,11 +102,13 @@ ZUKWEND è il primo agente autonomo della suite OLTREVISTA AI dedicata all'autom
 
 ---
 
-## ⚖️ Note Legali & Trasparenza (EULA)
+## ⚖️ Note Legali, Licenza & Privacy (EULA)
 
-ZUKWEND è un agente software desktop per l'automazione amministrativa, il tracciamento dei crediti insoluti e la predisposizione di bozze di sollecito. Non costituisce uno strumento di fatturazione elettronica attiva (non emette file XML per SDI/Agenzia delle Entrate) né un'agenzia di recupero crediti. Tutte le bozze generate devono essere verificate e approvate da personale qualificato prima della spedizione.
+ZUKWEND è un agente software desktop autonomo fornito "Così com'è" (As-Is) per l'automazione amministrativa, il tracciamento dei crediti insoluti e la predisposizione di bozze di sollecito. Non costituisce uno strumento di fatturazione elettronica attiva (non emette file XML per SDI/Agenzia delle Entrate) né un'agenzia di recupero crediti. Tutte le bozze generate devono essere verificate e approvate da personale qualificato prima della spedizione.
 
-Consultare [https://zukwend.com/disclaimer.html](https://zukwend.com/disclaimer.html) per i termini di licenza completi.
+- **Termini di Licenza & EULA:** [https://zukwend.com/DISCLAIMER_EULA.html](https://zukwend.com/DISCLAIMER_EULA.html)
+- **Privacy Policy (Local-First):** [https://zukwend.com/DISCLAIMER_EULA.html#privacy](https://zukwend.com/DISCLAIMER_EULA.html#privacy)
+- **Contatti Ufficiali & Licenze:** contact@oltrevista.com *(destinato esclusivamente a quesiti amministrativi e licenze commerciali per il software autonomo desktop fornito As-Is)*
 
 ---
 © 2026 **OLTREVISTA AI** — [oltrevista.com](https://oltrevista.com). Tutti i diritti riservati.
