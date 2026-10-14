@@ -58,7 +58,7 @@ ZUKWEND è sicuro al 100%: opera esclusivamente in locale sui documenti selezion
 | **Licenza a Vita (Lifetime License)** | **~~349 €~~ 249 € una tantum** | **[OFFERTA DI LANCIO — LICENZA A VITA]** (Pagamento unico una tantum. Zero abbonamenti). Zero costi ricorrenti, nessun canone o abbonamento mensile. Include **2 attivazioni con vincolo hardware** (Hardware-locked Machine ID) per workstation principale e laptop aziendale. |
 | **Versione DEMO Gratuita** | Gratuita (7 giorni) | Fino a 10 fatture elaborate con sample fac-simile inclusi per testare immediatamente il flusso di lavoro. |
 
-- **Video Demo Interattiva (30s)**: [https://youtu.be/a6V65LRN4oc](https://youtu.be/a6V65LRN4oc)
+- **Video Demo Interattiva (40s)**: [https://youtu.be/a6V65LRN4oc](https://youtu.be/a6V65LRN4oc)
 - Acquisto licenza: [https://zukwend.com](https://zukwend.com)
 - Download pacchetto demo: [https://zukwend.com/downloads/ZUKWEND_DEMO_Setup.zip](https://zukwend.com/downloads/ZUKWEND_DEMO_Setup.zip)
 
@@ -76,21 +76,6 @@ Il portale [zukwend.com](https://zukwend.com) offre landing page geolocalizzate 
 | 🇪🇸 **Spagnolo** | `es-recordatorios-de-pago.html` | Recordatorios de Pago & Gestión de Cobranzas |
 | 🇫🇷 **Francese** | `fr-relance-factures.html` | Logiciel de Relance Factures Impayées |
 | 🇵🇹 **Portoghese** | `pt-lembrete-de-faturas.html` | Gestão de Cobrança e Lembretes de Faturas |
-
----
-
-## 🚀 ZUKWEND Ecosystem Roadmap (OLTREVISTA AI)
-
-ZUKWEND è il primo agente autonomo della suite OLTREVISTA AI dedicata all'automazione amministrativo-finanziaria:
-
-- **Agent 1: ZUKWEND — Hybrid AR & Billing AI Agent** (Disponibile / Live)  
-  *Automazione ciclo attivo, monitoraggio scadenze e solleciti intelligenti.*
-- **Agent 2: Ledger Recon AI** (Pipeline — In Development)  
-  *Riconciliazione bancaria autonoma multi-conto, categorizzazione automatica e rilevamento anomalie contabili.*
-- **Agent 3: Corporate Treasury AI** (Pipeline — Planned)  
-  *Previsione flussi di cassa, proiezione liquidità aziendale con inferenza statistica locale e stress test.*
-- **ZUKWEND AI Suite** (Pipeline — Planned)  
-  *Orchestratore desktop integrato per la gestione autonoma end-to-end del ciclo finanziario d'impresa.*
 
 ---
 
