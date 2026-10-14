@@ -56,11 +56,9 @@ ZUKWEND è sicuro al 100%: opera esclusivamente in locale sui documenti selezion
 | Piano | Prezzo | Condizioni |
 | :--- | :--- | :--- |
 | **Licenza a Vita (Lifetime License)** | **~~349 €~~ 249 € una tantum** | **[OFFERTA DI LANCIO — LICENZA A VITA]** (Pagamento unico una tantum. Zero abbonamenti). Zero costi ricorrenti, nessun canone o abbonamento mensile. Include **2 attivazioni con vincolo hardware** (Hardware-locked Machine ID) per workstation principale e laptop aziendale. |
-| **Versione DEMO Gratuita** | Gratuita (7 giorni) | Fino a 10 fatture elaborate con sample fac-simile inclusi per testare immediatamente il flusso di lavoro. |
 
 - **Video Demo Interattiva (40s)**: [https://youtu.be/a6V65LRN4oc](https://youtu.be/a6V65LRN4oc)
 - Acquisto licenza: [https://zukwend.com](https://zukwend.com)
-- Download pacchetto demo: [https://zukwend.com/downloads/ZUKWEND_DEMO_Setup.zip](https://zukwend.com/downloads/ZUKWEND_DEMO_Setup.zip)
 
 ---
 
