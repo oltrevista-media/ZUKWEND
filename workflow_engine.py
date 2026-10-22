@@ -30,6 +30,22 @@ except ImportError:  # pragma: no cover - esecuzione isolata del modulo
         os.makedirs(folder, exist_ok=True)
         return folder
 
+try:
+    from report_generator import clean_path
+except ImportError:
+    def clean_path(p, basename_only=False):
+        if isinstance(p, (list, tuple)):
+            raw = str(p[0]) if p else ""
+        elif isinstance(p, dict):
+            raw = str(next(iter(p.values()))) if p else ""
+        else:
+            raw = str(p or "")
+        raw = raw.strip()
+        if raw.startswith("[") and raw.endswith("]"):
+            raw = raw.strip("[]'\" ")
+        norm = os.path.normpath(raw) if raw else ""
+        return os.path.basename(norm) if basename_only else norm
+
 if getattr(sys, "frozen", False):
     ROOT_DIR = Path(sys.executable).parent
 else:
@@ -657,7 +673,7 @@ def run_pipeline(
         _audit("EXPORT", "FAILED", str(err))
         export_paths = []
     else:
-        _audit("EXPORT", "OK", f"percorsi={export_paths}")
+        _audit("EXPORT", "OK", f"percorso={clean_path(export_paths)}")
 
     elapsed = round(time.time() - start_time, 2)
     _audit("PIPELINE_END", "OK" if not errors else "PARTIAL", f"elapsed={elapsed}s | errors={len(errors)}")

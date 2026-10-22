@@ -320,8 +320,8 @@ def _write_export_audit_log(
         entry_lines = [
             f"[{datetime.now().isoformat()}] [EXPORT] [INFO]",
             f"  Base:    {base_name}",
-            f"  Dir:     {dest_dir}",
-            f"  Files:   {exported_paths}",
+            f"  Dir:     {os.path.normpath(str(dest_dir))}",
+            f"  Files:   {', '.join(os.path.normpath(p) for p in exported_paths) if exported_paths else 'none'}",
             f"  Errors:  {errors}",
             f"  External: NO",
             "",

@@ -2,7 +2,7 @@
 ZUKWEND — Multilingual Billing Agent
 Modulo: report_generator.py
 Ruolo: Generazione report AR in formato PDF, DOCX, JSON, HTML
-Versione: 2.1.4-ENTERPRISE (Full 6-Language Native Edition)
+Versione: 2.1.5-ENTERPRISE (Full 6-Language Native Edition)
 REPTANA MODE | OLTREVISTA 2030 | Offline-First
 """
 
@@ -14,13 +14,13 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union, List
 from xml.sax.saxutils import escape as _xml_escape
 
 try:
     from resource_utils import APP_VERSION, get_output_dir, _is_inside_meipass
 except ImportError:  # pragma: no cover - esecuzione isolata del modulo
-    APP_VERSION = "2.1.4"
+    APP_VERSION = "2.1.5"
 
     def get_output_dir() -> str:
         folder = os.path.abspath("output")
@@ -33,6 +33,42 @@ except ImportError:  # pragma: no cover - esecuzione isolata del modulo
 logger = logging.getLogger("zukwend.report_generator")
 
 _TS_SUFFIX_RE = re.compile(r"_\d{8}_\d{6}(?:_\d+)?$")
+
+# ---------------------------------------------------------------------------
+# Sanificazione Percorsi (Clean Path)
+# ---------------------------------------------------------------------------
+def clean_path(percorsi: Union[str, List, tuple, dict, Path, None], basename_only: bool = False) -> str:
+    """
+    Sanifica la variabile percorso:
+    - Se la variabile e' una lista o tupla, estrae la stringa del primo percorso.
+    - Se e' un dict, estrae il primo valore stringa.
+    - Rimuove eventuali stringhe grezze tipo "['C:\\...']".
+    - Applica os.path.normpath() per rimuovere il raddoppio dei backslash.
+    - Se basename_only=True, restituisce direttamente os.path.basename(norm).
+    """
+    if percorsi is None:
+        return ""
+    if isinstance(percorsi, Path):
+        raw = str(percorsi)
+    elif isinstance(percorsi, (list, tuple)):
+        raw = str(percorsi[0]) if percorsi else ""
+    elif isinstance(percorsi, dict):
+        raw = str(next(iter(percorsi.values()))) if percorsi else ""
+    else:
+        raw = str(percorsi)
+
+    raw = raw.strip()
+    if raw.startswith("[") and raw.endswith("]"):
+        inner = raw.strip("[]'\" ")
+        parts = [p.strip("'\" ") for p in inner.split(",") if p.strip("'\" ")]
+        raw = parts[0] if parts else ""
+
+    if not raw:
+        return ""
+
+    norm = os.path.normpath(raw)
+    return os.path.basename(norm) if basename_only else norm
+
 
 def _is_lock_error(exc: BaseException) -> bool:
     """
@@ -58,14 +94,14 @@ def _get_unique_fallback_path(target_path: Path) -> Path:
     while alt_path.exists() or alt_path == target_path:
         alt_path = parent / f"{stem}_{ts}_{counter}{ext}"
         counter += 1
-    return alt_path
+    return Path(clean_path(alt_path))
 
 def _write_bytes_with_fallback(path: Path, data: bytes) -> Path:
     """Scrive `data` su `path`; se il file e' bloccato salva con timestamp univoco."""
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         path.write_bytes(data)
-        return path
+        return Path(clean_path(path))
     except OSError as e:
         alt = _get_unique_fallback_path(path)
         logger.warning(
@@ -73,7 +109,7 @@ def _write_bytes_with_fallback(path: Path, data: bytes) -> Path:
             f"Salvataggio automatico con timestamp univoco: '{alt.name}'"
         )
         alt.write_bytes(data)
-        return alt
+        return Path(clean_path(alt))
 
 # ---------------------------------------------------------------------------
 # Import librerie opzionali con fallback
@@ -98,7 +134,7 @@ PDF_FONT_BOLD = "Helvetica-Bold"
 PDF_UNICODE_FONT = False
 
 def _register_pdf_fonts() -> None:
-    """Registra una famiglia TrueType Unicode di sistema; fallback su Helvetica (WinAnsi)."""
+    """Registra una famiglia TrueType Unicode di sistema; fallback su Helvetica (WinAnsi/Latin-1)."""
     global PDF_FONT_REGULAR, PDF_FONT_BOLD, PDF_UNICODE_FONT
     if not REPORTLAB_AVAILABLE:
         return
@@ -129,7 +165,7 @@ def _register_pdf_fonts() -> None:
             PDF_FONT_REGULAR, PDF_FONT_BOLD, PDF_UNICODE_FONT = "ZukSans", "ZukSans-Bold", True
             logger.info(f"Font PDF Unicode registrato: {os.path.basename(regular)}")
             return
-        except Exception as e:  # font corrotto / non leggibile
+        except Exception as e:
             logger.warning(f"Registrazione font '{regular}' fallita: {e}")
     logger.warning("Nessun font TrueType Unicode disponibile: uso Helvetica (WinAnsi, copre €, £, accenti latini)")
 
@@ -139,12 +175,12 @@ def _pdf_text_raw(value) -> str:
     """
     Normalizza un testo per il rendering PDF (senza escape XML, per canvas.drawString):
     - rimuove i glifi emoji/simboli non presenti nei font (⚠ U+26A0 + VS16)
-    - con il fallback Helvetica sostituisce i caratteri non codificabili in cp1252
+    - con il fallback Helvetica converte garantendo preservazione dei caratteri latini/accentati
     """
     s = "" if value is None else str(value)
     s = s.replace("\u26a0\ufe0f", "(!)").replace("\u26a0", "(!)")
     if not PDF_UNICODE_FONT:
-        s = s.encode("cp1252", errors="replace").decode("cp1252")
+        s = s.encode("latin-1", errors="replace").decode("latin-1")
     return s
 
 def _pdf_text(value) -> str:
@@ -173,15 +209,8 @@ except ImportError:
     DOCX_AVAILABLE = False
     logger.warning("python-docx non disponibile — DOCX disabilitato")
 
-try:
-    from jinja2 import Template as Jinja2Template
-    JINJA2_AVAILABLE = True
-except ImportError:
-    JINJA2_AVAILABLE = False
-    logger.info("jinja2 non disponibile — HTML usa template inline")
-
 # ---------------------------------------------------------------------------
-# Costanti e Dizionari Multilingua Completi (6 Lingue)
+# Costanti e Dizionari Multilingua Completi (6 Lingue: IT, EN, DE, FR, ES, PT)
 # ---------------------------------------------------------------------------
 BRAND_COLOR_HEX = "#FF6B00"   # Arancione OLTREVISTA
 TEXT_COLOR      = "#1A1A1A"
@@ -191,23 +220,33 @@ MEDIUM_GRAY     = "#CCCCCC"
 DISCLAIMER_TEXT = {
     "it": "Il software fornisce suggerimenti, non decisioni. Output da verificare prima dell'uso operativo. Nessun dato inviato a server esterni.",
     "en": "This software provides suggestions, not decisions. Output must be verified before operational use. No data sent to external servers.",
-    "fr": "Ce logiciel fournit des suggestions, pas des décisions. La sortie doit être vérifiée avant utilisation opérationnelle. Aucune donnée envoyée à des serveurs externes.",
     "de": "Diese Software liefert Vorschläge, keine Entscheidungen. Die Ausgabe muss vor dem operativen Einsatz geprüft werden. Keine Daten an externe Server gesendet.",
+    "fr": "Ce logiciel fournit des suggestions, pas des décisions. La sortie doit être vérifiée avant utilisation opérationnelle. Aucune donnée envoyée à des serveurs externes.",
     "es": "Este software proporciona sugerencias, no decisiones. La salida debe verificarse antes del uso operativo. Ningún dato enviado a servidores externos.",
     "pt": "Este software fornece sugestões, não decisões. A saída deve ser verificada antes do uso operacional. Nenhum dado enviado a servidores externos.",
+}
+
+STATUS_LABELS = {
+    "it": {"OVERDUE": "SCADUTA", "PENDING": "IN ATTESA", "PAID": "PAGATA", "DISPUTED": "CONTESTATA", "UNKNOWN": "N/D"},
+    "en": {"OVERDUE": "OVERDUE", "PENDING": "PENDING", "PAID": "PAID", "DISPUTED": "DISPUTED", "UNKNOWN": "N/A"},
+    "de": {"OVERDUE": "ÜBERFÄLLIG", "PENDING": "AUSSTEHEND", "PAID": "BEZAHLT", "DISPUTED": "BEANSTANDET", "UNKNOWN": "N/B"},
+    "fr": {"OVERDUE": "EN RETARD", "PENDING": "EN ATTENTE", "PAID": "PAYÉE", "DISPUTED": "CONTESTÉE", "UNKNOWN": "N/D"},
+    "es": {"OVERDUE": "VENCIDA", "PENDING": "PENDIENTE", "PAID": "PAGADA", "DISPUTED": "EN DISPUTA", "UNKNOWN": "N/D"},
+    "pt": {"OVERDUE": "VENCIDA", "PENDING": "PENDENTE", "PAID": "PAGA", "DISPUTED": "CONTESTADA", "UNKNOWN": "N/D"},
 }
 
 RISK_LABELS = {
     "it": {"LOW": "BASSO", "MEDIUM": "MEDIO", "HIGH": "ALTO", "NONE": "NESSUNO", "UNKNOWN": "N/D"},
     "en": {"LOW": "LOW", "MEDIUM": "MEDIUM", "HIGH": "HIGH", "NONE": "NONE", "UNKNOWN": "N/A"},
-    "fr": {"LOW": "FAIBLE", "MEDIUM": "MOYEN", "HIGH": "ÉLEVÉ", "NONE": "AUCUN", "UNKNOWN": "N/D"},
     "de": {"LOW": "NIEDRIG", "MEDIUM": "MITTEL", "HIGH": "HOCH", "NONE": "KEIN", "UNKNOWN": "N/B"},
+    "fr": {"LOW": "FAIBLE", "MEDIUM": "MOYEN", "HIGH": "ÉLEVÉ", "NONE": "AUCUN", "UNKNOWN": "N/D"},
     "es": {"LOW": "BAJO", "MEDIUM": "MEDIO", "HIGH": "ALTO", "NONE": "NINGUNO", "UNKNOWN": "N/D"},
     "pt": {"LOW": "BAIXO", "MEDIUM": "MÉDIO", "HIGH": "ALTO", "NONE": "NENHUM", "UNKNOWN": "N/D"},
 }
 
 REPORT_LABELS = {
     "it": {
+        "report_title": "Rapporto Analisi Aging Crediti",
         "title": "Dati Fattura",
         "inv_num": "Numero Fattura",
         "issue_date": "Data Emissione",
@@ -215,19 +254,24 @@ REPORT_LABELS = {
         "amount": "Importo",
         "client": "Cliente",
         "client_address": "Indirizzo",
-        "status": "Stato",
+        "status": "Stato Fattura",
         "overdue": "Giorni Scaduta",
-        "risk": "Livello Rischio",
+        "risk": "Rischio Inesigibilità",
         "reminder_lvl": "Livello Sollecito",
         "rem_title": "Sollecito Generato",
-        "recs_title": "Raccomandazioni",
+        "recs_title": "Azioni Raccomandate",
         "audit_title": "Riepilogo Elaborazione",
         "no_anomalies": "Nessuna anomalia rilevata.",
-        "processed": "Elaborato",
+        "processed": "Data Generazione",
         "offline_tag": "Dati inviati esternamente: NO | Offline-First",
-        "demo_banner": ""
+        "field": "Campo",
+        "value": "Valore",
+        "notice_prefix": "Livello",
+        "software_name": "ZUKWEND — Agente di Fatturazione Multilingua",
+        "demo_banner": "",
     },
     "en": {
+        "report_title": "Accounts Receivable Aging Report",
         "title": "Invoice Details",
         "inv_num": "Invoice Number",
         "issue_date": "Issue Date",
@@ -235,19 +279,24 @@ REPORT_LABELS = {
         "amount": "Amount",
         "client": "Client",
         "client_address": "Address",
-        "status": "Status",
+        "status": "Invoice Status",
         "overdue": "Days Overdue",
-        "risk": "Risk Level",
-        "reminder_lvl": "Notice Level",
+        "risk": "Bad Debt Risk",
+        "reminder_lvl": "Reminder Level",
         "rem_title": "Generated Collection Notice",
-        "recs_title": "Recommendations",
+        "recs_title": "Recommended Actions",
         "audit_title": "Processing Audit",
         "no_anomalies": "No anomalies detected.",
-        "processed": "Processed",
+        "processed": "Generation Date",
         "offline_tag": "Data sent externally: NO | Offline-First",
-        "demo_banner": ""
+        "field": "Field",
+        "value": "Value",
+        "notice_prefix": "Level",
+        "software_name": "ZUKWEND — Multilingual Billing Agent",
+        "demo_banner": "",
     },
     "de": {
+        "report_title": "Debitorenalter-Analysebericht",
         "title": "Rechnungsdaten",
         "inv_num": "Rechnungsnummer",
         "issue_date": "Rechnungsdatum",
@@ -255,39 +304,49 @@ REPORT_LABELS = {
         "amount": "Betrag",
         "client": "Kunde",
         "client_address": "Adresse",
-        "status": "Status",
+        "status": "Rechnungsstatus",
         "overdue": "Tage überfällig",
-        "risk": "Risikostufe",
+        "risk": "Ausfallrisiko",
         "reminder_lvl": "Mahnstufe",
         "rem_title": "Erstelltes Mahnschreiben",
-        "recs_title": "Empfehlungen",
+        "recs_title": "Empfohlene Massnahmen",
         "audit_title": "Verarbeitungsprotokoll",
         "no_anomalies": "Keine Unregelmäßigkeiten festgestellt.",
-        "processed": "Verarbeitet",
+        "processed": "Erstellungsdatum",
         "offline_tag": "Daten extern gesendet: NEIN | Offline-First",
-        "demo_banner": ""
+        "field": "Feld",
+        "value": "Wert",
+        "notice_prefix": "Stufe",
+        "software_name": "ZUKWEND — Mehrsprachiger Rechnungsagent",
+        "demo_banner": "",
     },
     "fr": {
-        "title": "Détails Facture",
-        "inv_num": "Numéro Facture",
-        "issue_date": "Date Émission",
-        "due_date": "Date Échéance",
+        "report_title": "Rapport d'Analyse de Solvabilité",
+        "title": "Détails de la Facture",
+        "inv_num": "Numéro de Facture",
+        "issue_date": "Date d'Émission",
+        "due_date": "Date d'Échéance",
         "amount": "Montant",
         "client": "Client",
         "client_address": "Adresse",
-        "status": "Statut",
+        "status": "Statut de la Facture",
         "overdue": "Jours de Retard",
-        "risk": "Niveau de Risque",
+        "risk": "Risque d'Insolvabilité",
         "reminder_lvl": "Niveau de Relance",
         "rem_title": "Relance Générée",
-        "recs_title": "Recommandations",
+        "recs_title": "Actions Recommandées",
         "audit_title": "Journal de Traitement",
         "no_anomalies": "Aucune anomalie détectée.",
-        "processed": "Traité le",
-        "offline_tag": "Données envoyées à l'extérieur: NON | Offline-First",
-        "demo_banner": ""
+        "processed": "Date de Génération",
+        "offline_tag": "Données envoyées à l'extérieur : NON | Offline-First",
+        "field": "Champ",
+        "value": "Valeur",
+        "notice_prefix": "Niveau",
+        "software_name": "ZUKWEND — Agent de Facturation Multilingue",
+        "demo_banner": "",
     },
     "es": {
+        "report_title": "Informe de Análisis de Vencimientos",
         "title": "Datos de la Factura",
         "inv_num": "Número de Factura",
         "issue_date": "Fecha de Emisión",
@@ -295,19 +354,24 @@ REPORT_LABELS = {
         "amount": "Importe",
         "client": "Cliente",
         "client_address": "Dirección",
-        "status": "Estado",
+        "status": "Estado de la Factura",
         "overdue": "Días Vencida",
-        "risk": "Nivel de Riesgo",
+        "risk": "Riesgo de Impago",
         "reminder_lvl": "Nivel de Reclamación",
         "rem_title": "Aviso de Pago Generado",
-        "recs_title": "Recomendaciones",
+        "recs_title": "Acciones Recomendadas",
         "audit_title": "Registro de Procesamiento",
         "no_anomalies": "No se detectaron anomalías.",
-        "processed": "Procesado",
+        "processed": "Fecha de Generación",
         "offline_tag": "Datos enviados externamente: NO | Offline-First",
-        "demo_banner": ""
+        "field": "Campo",
+        "value": "Valor",
+        "notice_prefix": "Nivel",
+        "software_name": "ZUKWEND — Agente de Facturación Multilingüe",
+        "demo_banner": "",
     },
     "pt": {
+        "report_title": "Relatório de Análise de Aging",
         "title": "Dados da Fatura",
         "inv_num": "Número da Fatura",
         "issue_date": "Data de Emissão",
@@ -315,18 +379,67 @@ REPORT_LABELS = {
         "amount": "Valor",
         "client": "Cliente",
         "client_address": "Endereço",
-        "status": "Estado",
+        "status": "Estado da Fatura",
         "overdue": "Dias em Atraso",
-        "risk": "Nível de Risco",
+        "risk": "Risco de Inadimplência",
         "reminder_lvl": "Nível de Cobrança",
         "rem_title": "Aviso de Cobrança Gerado",
-        "recs_title": "Recomendações",
+        "recs_title": "Ações Recomendadas",
         "audit_title": "Registo de Processamento",
         "no_anomalies": "Nenhuma anomalia detetada.",
-        "processed": "Processado",
+        "processed": "Data de Geração",
         "offline_tag": "Dados enviados externamente: NÃO | Offline-First",
-        "demo_banner": ""
+        "field": "Campo",
+        "value": "Valor",
+        "notice_prefix": "Nível",
+        "software_name": "ZUKWEND — Agente de Faturação Multilíngue",
+        "demo_banner": "",
     },
+}
+
+RECOMMENDATIONS_I18N = {
+    "it": {
+        "threshold": "Importo superiore alla soglia di conformità: richiesta autorizzazione.",
+        "legal": "Sollecito livello 3: consultare l'ufficio legale prima di un'azione formale.",
+        "overdue_90": "Scaduta da oltre 90 giorni: valutare recupero crediti o svalutazione.",
+        "kyc": "Importo elevato: verificare le procedure antiriciclaggio KYC/AML.",
+        "none": "Nessuna anomalia rilevata."
+    },
+    "en": {
+        "threshold": "Amount exceeds compliance threshold: authorization required.",
+        "legal": "Notice level 3: consult legal counsel prior to formal escalation.",
+        "overdue_90": "Overdue exceeds 90 days: evaluate debt recovery or bad debt provisioning.",
+        "kyc": "High value amount: verify KYC/AML procedures.",
+        "none": "No anomalies detected."
+    },
+    "de": {
+        "threshold": "Betrag überschreitet Compliance-Schwelle: Genehmigung erforderlich.",
+        "legal": "Mahnstufe 3: Vor formellen Schritten Rechtsberatung hinzuziehen.",
+        "overdue_90": "Über 90 Tage überfällig: Inkassoverfahren oder Wertberichtigung prüfen.",
+        "kyc": "Hoher Betrag: KYC/AML-Compliance-Verfahren überprüfen.",
+        "none": "Keine Unregelmäßigkeiten festgestellt."
+    },
+    "fr": {
+        "threshold": "Montant supérieur au seuil de conformité : autorisation requise.",
+        "legal": "Relance niveau 3 : consulter le service juridique avant toute procédure formelle.",
+        "overdue_90": "Retard supérieur à 90 jours : évaluer le recouvrement ou la provision pour créance douteuse.",
+        "kyc": "Montant élevé : vérifier les procédures de conformité KYC/AML.",
+        "none": "Aucune anomalie détectée."
+    },
+    "es": {
+        "threshold": "Importe superior al umbral de cumplimiento: autorización requerida.",
+        "legal": "Nivel de reclamación 3: consultar con asesoría jurídica antes de proceder formalmente.",
+        "overdue_90": "Vencimiento superior a 90 días: evaluar cobro de deudas o provisión por insolvencia.",
+        "kyc": "Importe elevado: verificar procedimientos KYC/AML.",
+        "none": "No se detectaron anomalías."
+    },
+    "pt": {
+        "threshold": "Valor excede o limite de conformidade: autorização necessária.",
+        "legal": "Aviso nível 3: consultar o departamento jurídico antes de qualquer ação formal.",
+        "overdue_90": "Vencimento superior a 90 dias: avaliar recuperação de crédito ou imparidade.",
+        "kyc": "Valor elevado: verificar procedimentos KYC/AML.",
+        "none": "Nenhuma anomalia detetada."
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -350,17 +463,14 @@ def generate(
     if lang_code not in REPORT_LABELS:
         lang_code = "en"
 
-    # Creazione automatica preventiva della directory di destinazione prima di qualsiasi operazione di scrittura file
-    # (SEMPRE os.getcwd()/output, MAI dentro sys._MEIPASS)
     default_output = get_output_dir()
     if output_dir and not _is_inside_meipass(str(output_dir)):
-        out_dir = Path(output_dir)
+        out_dir = Path(clean_path(output_dir))
     else:
-        out_dir = Path(default_output)
+        out_dir = Path(clean_path(default_output))
     out_dir.mkdir(parents=True, exist_ok=True)
 
     inv_num_raw = str(invoice.get("invoice_number") or "UNKNOWN")
-    # Caratteri non ammessi nei nomi file Windows (\ / : * ? " < > |) e spazi -> "-"
     inv_num = re.sub(r"[^\w.\-]+", "-", inv_num_raw).strip("-.") or "UNKNOWN"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_name = f"report_AR_{inv_num}_{timestamp}"
@@ -377,16 +487,16 @@ def generate(
         try:
             if fmt == "pdf":
                 p = _generate_pdf(report_data, out_dir / f"{base_name}.pdf", is_demo)
-                paths["pdf"] = str(p)
+                paths["pdf"] = clean_path(p)
             elif fmt == "docx":
                 p = _generate_docx(report_data, out_dir / f"{base_name}.docx", is_demo)
-                paths["docx"] = str(p)
+                paths["docx"] = clean_path(p)
             elif fmt == "json":
                 p = _generate_json(report_data, out_dir / f"{base_name}.json")
-                paths["json"] = str(p)
+                paths["json"] = clean_path(p)
             elif fmt == "html":
                 p = _generate_html(report_data, out_dir / f"{base_name}.html", is_demo)
-                paths["html"] = str(p)
+                paths["html"] = clean_path(p)
             else:
                 logger.warning(f"Formato non supportato: {fmt}")
                 errors.append(f"formato_non_supportato:{fmt}")
@@ -394,7 +504,7 @@ def generate(
             if _is_lock_error(e):
                 logger.error(
                     f"[LOCK_ERROR] Errore di permesso o file bloccato (WinError 5 / PermissionError) "
-                    f"durante generazione {fmt}: {e}. La pipeline continua senza interruzioni."
+                    f"durante generazione {fmt}: {e}."
                 )
                 errors.append(f"file_locked:{fmt}:{e}")
             else:
@@ -404,8 +514,14 @@ def generate(
             logger.error(f"Errore generazione {fmt}: {e}")
             errors.append(f"{fmt}:{e}")
 
-    logger.info(f"Report generati: {list(paths.keys())} in {out_dir}")
-    return {"paths": paths, "base_name": base_name, "output_dir": str(out_dir), "errors": errors}
+    clean_out_dir = clean_path(out_dir)
+    logger.info(f"Report generati: {list(paths.keys())} in {clean_out_dir}")
+    return {
+        "paths": paths,
+        "base_name": base_name,
+        "output_dir": clean_out_dir,
+        "errors": errors
+    }
 
 def _clean_layout_tokens(raw: Optional[str]) -> str:
     if not raw:
@@ -416,48 +532,46 @@ def _clean_layout_tokens(raw: Optional[str]) -> str:
     s = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", s)
     return re.sub(r"\s+", " ", s).strip()
 
-DEMO_FOOTER = {
-    "it": "",
-    "en": "",
-    "de": "",
-    "fr": "",
-    "es": "",
-    "pt": ""
-}
-
 # ---------------------------------------------------------------------------
 # Builder dati report
 # ---------------------------------------------------------------------------
 def _build_report_data(invoice, classification, compliance, billing, reminder_text, language, is_demo):
-    risk_map = RISK_LABELS.get(language, RISK_LABELS["en"])
-    risk_raw  = classification.get("risk_level", "UNKNOWN")
+    lang_code = (language or "en").lower()
+    if lang_code not in REPORT_LABELS:
+        lang_code = "en"
+
+    labels = REPORT_LABELS.get(lang_code, REPORT_LABELS["en"])
+
+    risk_map = RISK_LABELS.get(lang_code, RISK_LABELS["en"])
+    risk_raw = str(classification.get("risk_level", "UNKNOWN")).upper()
     risk_label = risk_map.get(risk_raw, risk_raw)
 
+    status_map = STATUS_LABELS.get(lang_code, STATUS_LABELS["en"])
+    status_raw = str(classification.get("payment_status", "UNKNOWN")).upper()
+    status_label = status_map.get(status_raw, status_raw)
+
     safe_amount = float(invoice.get("amount") or 0.0)
-    labels = REPORT_LABELS.get(language, REPORT_LABELS["en"])
 
     recommendations = compliance.get("recommendations", [])
-    lang_clean = (language or "en").lower()
-    if lang_clean != "it":
-        translated_recs = []
-        for rec in recommendations:
-            rec_str = str(rec).strip()
-            if "superiore alla soglia" in rec_str:
-                translated_recs.append("Amount exceeds compliance threshold: authorization required.")
-            elif "consultare" in rec_str and ("legale" in rec_str or "diffida" in rec_str or "Livello 3" in rec_str):
-                translated_recs.append("Notice level 3: consult legal counsel prior to formal escalation.")
-            elif "90 giorni" in rec_str or "recupero crediti" in rec_str:
-                translated_recs.append("Overdue exceeds 90 days: evaluate debt recovery or bad debt provisioning.")
-            elif "KYC/AML" in rec_str or "Importo elevato" in rec_str:
-                translated_recs.append("High value amount: verify KYC/AML procedures.")
-            elif "Nessuna anomalia" in rec_str:
-                translated_recs.append(labels.get("no_anomalies", "No anomalies detected."))
-            else:
-                translated_recs.append(rec_str)
-        recommendations = translated_recs
+    rec_dict = RECOMMENDATIONS_I18N.get(lang_code, RECOMMENDATIONS_I18N["en"])
+    translated_recs = []
+    for rec in recommendations:
+        rec_str = str(rec).strip()
+        if "superiore alla soglia" in rec_str or "exceeds compliance threshold" in rec_str or "Compliance-Schwelle" in rec_str:
+            translated_recs.append(rec_dict["threshold"])
+        elif ("consultare" in rec_str or "consult legal" in rec_str or "Rechtsberatung" in rec_str) and ("legale" in rec_str or "diffida" in rec_str or "3" in rec_str):
+            translated_recs.append(rec_dict["legal"])
+        elif "90" in rec_str and ("giorni" in rec_str or "days" in rec_str or "Tage" in rec_str or "jours" in rec_str or "días" in rec_str or "dias" in rec_str):
+            translated_recs.append(rec_dict["overdue_90"])
+        elif "KYC" in rec_str or "AML" in rec_str or "Importo elevato" in rec_str or "High value" in rec_str:
+            translated_recs.append(rec_dict["kyc"])
+        elif "Nessuna anomalia" in rec_str or "No anomalies" in rec_str or "Keine Unregelmäßigkeiten" in rec_str:
+            translated_recs.append(rec_dict["none"])
+        else:
+            translated_recs.append(rec_str)
 
-    if not recommendations:
-        recommendations = [labels["no_anomalies"]]
+    if not translated_recs:
+        translated_recs = [rec_dict["none"]]
 
     client_name = _clean_layout_tokens(invoice.get("client_name") or "N/A")
     client_address = _clean_layout_tokens(invoice.get("client_address") or invoice.get("address") or "")
@@ -465,9 +579,9 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
 
     return {
         "generated_at": datetime.now().isoformat(),
-        "software": "ZUKWEND Multilingual Billing Agent",
+        "software": labels["software_name"],
         "version": APP_VERSION,
-        "language": language,
+        "language": lang_code,
         "labels": labels,
         "is_demo": is_demo,
         "invoice": {
@@ -481,42 +595,38 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "vendor":         vendor_name or "N/A",
         },
         "classification": {
-            "payment_status":   str(classification.get("payment_status") or "N/A"),
-            "days_overdue":     int(classification.get("days_overdue") or 0),
-            "risk_level_raw":   risk_raw,
-            "risk_level_label": risk_label,
-            "reminder_level":   int(classification.get("reminder_level") or 1),
-            "compliance_flag":  bool(classification.get("compliance_flag") or False),
-            "rationale":        str(classification.get("classification_rationale") or ""),
-            "next_escalation":  str(classification.get("next_escalation_date") or "N/A"),
+            "payment_status":     status_label,
+            "payment_status_raw": status_raw,
+            "days_overdue":       int(classification.get("days_overdue") or 0),
+            "risk_level_raw":     risk_raw,
+            "risk_level_label":   risk_label,
+            "reminder_level":     int(classification.get("reminder_level") or 1),
+            "compliance_flag":    bool(classification.get("compliance_flag") or False),
+            "rationale":          str(classification.get("classification_rationale") or ""),
+            "next_escalation":    str(classification.get("next_escalation_date") or "N/A"),
         },
         "compliance": {
             "flags":           compliance.get("flags", []),
-            "recommendations": recommendations,
-            "disclaimer":       str(compliance.get("disclaimer") or DISCLAIMER_TEXT.get(language, DISCLAIMER_TEXT["en"])),
+            "recommendations": translated_recs,
+            "disclaimer":       str(compliance.get("disclaimer") or DISCLAIMER_TEXT.get(lang_code, DISCLAIMER_TEXT["en"])),
         },
         "billing": {
             "action":     str(billing.get("action") or "N/A"),
             "channel":    str(billing.get("recommended_channel") or "N/A"),
             "grace_days": int(billing.get("grace_days") or 5),
         },
-        "reminder_text": (
-            str(reminder_text or "") + (
-                f"\n\n---\n{DEMO_FOOTER.get(language, DEMO_FOOTER['en'])}"
-                if is_demo else ""
-            )
-        ),
+        "reminder_text": str(reminder_text or ""),
         "audit": {
             "processed_at": datetime.now().isoformat(),
             "software_version": APP_VERSION,
             "is_demo": is_demo,
             "data_sent_externally": False,
-            "disclaimer": DISCLAIMER_TEXT.get(language, DISCLAIMER_TEXT["en"]),
+            "disclaimer": DISCLAIMER_TEXT.get(lang_code, DISCLAIMER_TEXT["en"]),
         },
     }
 
 # ---------------------------------------------------------------------------
-# Generatore PDF
+# Generatore PDF (ReportLab con fallback testuale UTF-8)
 # ---------------------------------------------------------------------------
 def _generate_pdf(data: dict, path: Path, is_demo: bool = False) -> Path:
     if REPORTLAB_AVAILABLE:
@@ -525,26 +635,24 @@ def _generate_pdf(data: dict, path: Path, is_demo: bool = False) -> Path:
         return _generate_pdf_text_fallback(data, path, is_demo)
 
 def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
-    # Creazione preventiva directory destinazione
     path.parent.mkdir(parents=True, exist_ok=True)
 
     styles = getSampleStyleSheet()
-    # Font Unicode su TUTTI gli stili (Helvetica non copre ⚠ e simboli fuori WinAnsi)
     for _st in styles.byName.values():
         _is_bold = "bold" in str(getattr(_st, "fontName", "")).lower()
         _st.fontName = PDF_FONT_BOLD if _is_bold else PDF_FONT_REGULAR
+
     brand_color = colors.HexColor(BRAND_COLOR_HEX)
     labels = data["labels"]
     story = []
 
-    title_style = ParagraphStyle("ZTitle", parent=styles["Title"],
-                                  textColor=brand_color, fontSize=16, spaceAfter=4)
-    story.append(Paragraph(_pdf_text("ZUKWEND — Multilingual Billing Agent"), title_style))
-    story.append(Paragraph(_pdf_text(f"Report AR | {data['generated_at'][:10]}"), styles["Normal"]))
-    if is_demo:
-        demo_style = ParagraphStyle("Demo", parent=styles["Normal"],
-                                     textColor=colors.red, fontSize=10)
-        story.append(Paragraph(_pdf_text(labels["demo_banner"]), demo_style))
+    title_style = ParagraphStyle(
+        "ZTitle", parent=styles["Title"],
+        textColor=brand_color, fontSize=16, spaceAfter=4,
+        fontName=PDF_FONT_BOLD
+    )
+    story.append(Paragraph(_pdf_text(labels["software_name"]), title_style))
+    story.append(Paragraph(_pdf_text(f"{labels['report_title']} | {data['generated_at'][:10]}"), styles["Normal"]))
     story.append(HRFlowable(width="100%", thickness=1, color=brand_color, spaceAfter=8))
 
     inv = data["invoice"]
@@ -558,12 +666,12 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
         [labels["client"],       inv["client"]],
     ]
     if inv.get("client_address"):
-        table_data.append([labels.get("client_address", "Indirizzo"), inv["client_address"]])
+        table_data.append([labels["client_address"], inv["client_address"]])
     table_data.extend([
         [labels["status"],       clf["payment_status"]],
         [labels["overdue"],      str(clf["days_overdue"])],
         [labels["risk"],         clf["risk_level_label"]],
-        [labels["reminder_lvl"], f"L{clf['reminder_level']}"],
+        [labels["reminder_lvl"], f"{labels['notice_prefix']} {clf['reminder_level']}"],
     ])
     cell_style = ParagraphStyle("ZCell", parent=styles["Normal"], fontSize=10, leading=12)
     table_cells = [[Paragraph(_pdf_text(k), cell_style), Paragraph(_pdf_text(v), cell_style)]
@@ -604,8 +712,17 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
                                  textColor=colors.gray, borderPadding=4)
     story.append(Paragraph(_pdf_text(data["audit"]["disclaimer"]), disc_style))
 
-    def _draw_demo_footer(canvas, doc_obj):
-    pass
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=1.5*cm, rightMargin=1.5*cm,
+        topMargin=1.5*cm, bottomMargin=1.5*cm
+    )
+    doc.build(story)
+    pdf_bytes = buffer.getvalue()
+    saved_path = _write_bytes_with_fallback(path, pdf_bytes)
+    logger.info(f"PDF generato: {clean_path(saved_path)}")
+    return Path(clean_path(saved_path))
 
 def _generate_pdf_text_fallback(data: dict, path: Path, is_demo: bool) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -624,8 +741,8 @@ def _generate_pdf_text_fallback(data: dict, path: Path, is_demo: bool) -> Path:
             target_path.write_text(content, encoding="utf-8")
         else:
             raise e
-    logger.warning(f"PDF fallback (testo): {target_path}")
-    return target_path
+    logger.warning(f"PDF fallback (testo): {clean_path(target_path)}")
+    return Path(clean_path(target_path))
 
 def _build_text_report(data: dict, is_demo: bool) -> str:
     sep = "=" * 60
@@ -634,18 +751,17 @@ def _build_text_report(data: dict, is_demo: bool) -> str:
     labels = data["labels"]
     lines = [
         sep,
-        "ZUKWEND — Multilingual Billing Agent",
-        f"Report AR | {data['generated_at'][:10]}",
-        labels["demo_banner"] if is_demo else "FULL ENTERPRISE",
+        labels["software_name"],
+        f"{labels['report_title']} | {data['generated_at'][:10]}",
         sep,
         labels["title"].upper(),
         f"  {labels['inv_num']}:     {inv['number']}",
         f"  {labels['due_date']}:    {inv['due_date']}",
         f"  {labels['amount']}:      {inv['currency']} {inv['amount']:,.2f}",
         f"  {labels['client']}:      {inv['client']}",
-    ] + ([f"  {labels.get('client_address', 'Address')}:     {inv['client_address']}"] if inv.get("client_address") else []) + [
+    ] + ([f"  {labels['client_address']}:     {inv['client_address']}"] if inv.get("client_address") else []) + [
         f"  {labels['status']}:      {clf['payment_status']} ({clf['days_overdue']})",
-        f"  {labels['risk']}:        {clf['risk_level_label']} | L{clf['reminder_level']}",
+        f"  {labels['risk']}:        {clf['risk_level_label']} | {labels['notice_prefix']} {clf['reminder_level']}",
         sep,
         labels["rem_title"].upper(),
         data["reminder_text"],
@@ -671,29 +787,27 @@ def _generate_docx(data: dict, path: Path, is_demo: bool = False) -> Path:
     inv = data["invoice"]
     clf = data["classification"]
 
-    title = doc.add_heading("ZUKWEND — Multilingual Billing Agent", level=1)
+    title = doc.add_heading(labels["software_name"], level=1)
     title.runs[0].font.color.rgb = RGBColor(0xFF, 0x6B, 0x00)
-    doc.add_paragraph(f"Report AR | {data['generated_at'][:10]}")
-    if is_demo:
-        p = doc.add_paragraph(labels["demo_banner"])
-        p.runs[0].font.color.rgb = RGBColor(0xFF, 0, 0)
+    doc.add_paragraph(f"{labels['report_title']} | {data['generated_at'][:10]}")
 
     doc.add_heading(labels["title"], level=2)
     table = doc.add_table(rows=1, cols=2)
     table.style = "Table Grid"
     hdr = table.rows[0].cells
-    hdr[0].text = "Field"
-    hdr[1].text = "Value"
+    hdr[0].text = labels["field"]
+    hdr[1].text = labels["value"]
     rows = [
         (labels["inv_num"],      inv["number"]),
         (labels["issue_date"],   str(inv["issue_date"])),
         (labels["due_date"],     str(inv["due_date"])),
         (labels["amount"],       f"{inv['currency']} {inv['amount']:,.2f}"),
         (labels["client"],       inv["client"]),
-    ] + ([(labels.get("client_address", "Address"), inv["client_address"])] if inv.get("client_address") else []) + [
+    ] + ([(labels["client_address"], inv["client_address"])] if inv.get("client_address") else []) + [
         (labels["status"],       clf["payment_status"]),
         (labels["overdue"],      str(clf["days_overdue"])),
         (labels["risk"],         clf["risk_level_label"]),
+        (labels["reminder_lvl"], f"{labels['notice_prefix']} {clf['reminder_level']}"),
     ]
     for field, value in rows:
         row = table.add_row().cells
@@ -732,8 +846,9 @@ def _generate_docx(data: dict, path: Path, is_demo: bool = False) -> Path:
             doc.save(str(target_path))
         else:
             raise e
-    logger.info(f"DOCX generato: {target_path}")
-    return target_path
+    clean_docx = clean_path(target_path)
+    logger.info(f"DOCX generato: {clean_docx}")
+    return Path(clean_docx)
 
 # ---------------------------------------------------------------------------
 # Generatore JSON
@@ -744,7 +859,7 @@ def _generate_json(data: dict, path: Path) -> Path:
         "zukwend_version": data["version"],
         "generated_at": data["generated_at"],
         "language": data["language"],
-        "is_demo": data["is_demo"],
+        "report_title": data["labels"]["report_title"],
         "invoice": data["invoice"],
         "classification": data["classification"],
         "compliance": data["compliance"],
@@ -766,8 +881,9 @@ def _generate_json(data: dict, path: Path) -> Path:
             target_path.write_text(content, encoding="utf-8")
         else:
             raise e
-    logger.info(f"JSON generato: {target_path}")
-    return target_path
+    clean_json = clean_path(target_path)
+    logger.info(f"JSON generato: {clean_json}")
+    return Path(clean_json)
 
 # ---------------------------------------------------------------------------
 # Generatore HTML
@@ -775,7 +891,7 @@ def _generate_json(data: dict, path: Path) -> Path:
 def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     def _esc_map(src: dict) -> dict:
-        return {k: (_html.escape(v) if isinstance(v, str) else v) for k, v in src.items()}
+        return {k: (_html.escape(v, quote=False) if isinstance(v, str) else v) for k, v in src.items()}
 
     inv = _esc_map(data["invoice"])
     clf = _esc_map(data["classification"])
@@ -783,10 +899,6 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
     data = {**data, "audit": _esc_map(data["audit"])}
     risk_class = {"LOW": "risk-low", "MEDIUM": "risk-medium", "HIGH": "risk-high"}.get(
         data["classification"]["risk_level_raw"], ""
-    )
-    demo_banner = (
-        f'<div class="demo-banner">{labels["demo_banner"]}</div>'
-        if is_demo else ""
     )
     recs_html = "".join(f"<li>{_html.escape(str(r))}</li>" for r in data["compliance"]["recommendations"])
     reminder_html = _html.escape(data["reminder_text"]).replace("\n", "<br>")
@@ -796,14 +908,13 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Report AR — ZUKWEND</title>
+  <title>{labels['report_title']} — ZUKWEND</title>
   <style>
     body {{ font-family: Calibri, 'Segoe UI', sans-serif; color: #1a1a1a; margin: 0; padding: 20px; background: #f9f9f9; }}
     .header {{ background: #ff6b00; color: white; padding: 20px 24px; border-radius: 6px 6px 0 0; }}
     .header h1 {{ margin: 0; font-size: 1.4em; }}
     .header p  {{ margin: 4px 0 0; font-size: 0.9em; opacity: 0.9; }}
     .container {{ background: white; border: 1px solid #e0e0e0; border-radius: 0 0 6px 6px; padding: 24px; }}
-    .demo-banner {{ background: #ffeaea; color: #c00; border: 1px solid #f00; padding: 10px; margin-bottom: 16px; border-radius: 4px; }}
     .section-title {{ color: #ff6b00; border-bottom: 2px solid #ff6b00; padding-bottom: 4px; margin-top: 24px; font-size: 1.1em; }}
     table {{ width: 100%; border-collapse: collapse; margin-top: 12px; }}
     th, td {{ padding: 8px 12px; text-align: left; border: 1px solid #e0e0e0; font-size: 0.95em; }}
@@ -820,11 +931,10 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
 </head>
 <body>
   <div class="header">
-    <h1>ZUKWEND — Multilingual Billing Agent</h1>
-    <p>Report AR | {data['generated_at'][:10]} | {data['software']} {data['version']}</p>
+    <h1>{labels['software_name']}</h1>
+    <p>{labels['report_title']} | {data['generated_at'][:10]} | {data['version']}</p>
   </div>
   <div class="container">
-    {demo_banner}
     <div class="section-title">{labels['title']}</div>
     <table>
       <tr><th>{labels['inv_num']}</th><td>{inv['number']}</td></tr>
@@ -832,11 +942,11 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
       <tr><th>{labels['due_date']}</th><td>{inv['due_date']}</td></tr>
       <tr><th>{labels['amount']}</th><td><strong>{inv['currency']} {inv['amount']:,.2f}</strong></td></tr>
       <tr><th>{labels['client']}</th><td>{inv['client']}</td></tr>
-      {f"<tr><th>{labels.get('client_address', 'Address')}</th><td>{inv['client_address']}</td></tr>" if inv.get("client_address") else ""}
+      {f"<tr><th>{labels['client_address']}</th><td>{inv['client_address']}</td></tr>" if inv.get("client_address") else ""}
       <tr><th>{labels['status']}</th><td>{clf['payment_status']}</td></tr>
       <tr><th>{labels['overdue']}</th><td>{clf['days_overdue']}</td></tr>
       <tr><th>{labels['risk']}</th><td class="{risk_class}">{clf['risk_level_label']}</td></tr>
-      <tr><th>{labels['reminder_lvl']}</th><td>L{clf['reminder_level']}</td></tr>
+      <tr><th>{labels['reminder_lvl']}</th><td>{labels['notice_prefix']} {clf['reminder_level']}</td></tr>
     </table>
     <div class="section-title">{labels['rem_title']}</div>
     <div class="reminder-box">{reminder_html}</div>
@@ -847,8 +957,8 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
       {labels['processed']}: {data['audit']['processed_at']} | {labels['offline_tag']}
     </div>
   </div>
- </body>
- </html>"""
+</body>
+</html>"""
 
     target_path = path
     try:
@@ -863,5 +973,6 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
             target_path.write_text(html, encoding="utf-8")
         else:
             raise e
-    logger.info(f"HTML generato: {target_path}")
-    return target_path
+    clean_html = clean_path(target_path)
+    logger.info(f"HTML generato: {clean_html}")
+    return Path(clean_html)

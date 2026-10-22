@@ -548,6 +548,10 @@ def launch_gui_launcher():
         if val is not None:
             progress_bar.set(val)
         
+        # Clean any raw list notation in detail
+        if "=[" in detail or "=['" in detail:
+            detail = re.sub(r'=[\'"]?\[[\'"]?([^\'"\]]+)[\'"]?\]', r'=\1', detail)
+        
         append_log(f"[{step}] {status}: {detail}")
 
         if step == "PIPELINE_END" and status == "OK":
