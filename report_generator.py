@@ -2,10 +2,12 @@
 ZUKWEND — Multilingual Billing Agent
 Modulo: report_generator.py
 Ruolo: Generazione report AR in formato PDF, DOCX, JSON, HTML
-Versione: 2.1.0-ENTERPRISE (Full 6-Language Native Edition)
+Versione: 2.1.4-ENTERPRISE (Full 6-Language Native Edition)
 REPTANA MODE | OLTREVISTA 2030 | Offline-First
 """
 
+import html as _html
+import io
 import json
 import logging
 import os
@@ -13,8 +15,65 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from xml.sax.saxutils import escape as _xml_escape
+
+try:
+    from resource_utils import APP_VERSION, get_output_dir, _is_inside_meipass
+except ImportError:  # pragma: no cover - esecuzione isolata del modulo
+    APP_VERSION = "2.1.4"
+
+    def get_output_dir() -> str:
+        folder = os.path.abspath("output")
+        os.makedirs(folder, exist_ok=True)
+        return folder
+
+    def _is_inside_meipass(path: str) -> bool:
+        return False
 
 logger = logging.getLogger("zukwend.report_generator")
+
+_TS_SUFFIX_RE = re.compile(r"_\d{8}_\d{6}(?:_\d+)?$")
+
+def _is_lock_error(exc: BaseException) -> bool:
+    """
+    True per qualsiasi errore di I/O che indica file bloccato / non scrivibile
+    (PermissionError, WinError 5 accesso negato, WinError 32 sharing violation, altri OSError).
+    """
+    return isinstance(exc, (PermissionError, OSError))
+
+def _get_unique_fallback_path(target_path: Path) -> Path:
+    """
+    Genera un nome file univoco con timestamp in caso di file bloccato o PermissionError/WinError 5.
+    Formato: report_AR_INV123_YYYYMMDD_HHMMSS.pdf
+    Se il nome contiene gia' un timestamp finale questo viene sostituito (non duplicato).
+    """
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    stem = _TS_SUFFIX_RE.sub("", target_path.stem)
+    ext = target_path.suffix
+    parent = target_path.parent
+    parent.mkdir(parents=True, exist_ok=True)
+
+    alt_path = parent / f"{stem}_{ts}{ext}"
+    counter = 1
+    while alt_path.exists() or alt_path == target_path:
+        alt_path = parent / f"{stem}_{ts}_{counter}{ext}"
+        counter += 1
+    return alt_path
+
+def _write_bytes_with_fallback(path: Path, data: bytes) -> Path:
+    """Scrive `data` su `path`; se il file e' bloccato salva con timestamp univoco."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        path.write_bytes(data)
+        return path
+    except OSError as e:
+        alt = _get_unique_fallback_path(path)
+        logger.warning(
+            f"[LOCK_RECOVERY] Destinazione '{path.name}' bloccata o aperta da altra applicazione ({e}). "
+            f"Salvataggio automatico con timestamp univoco: '{alt.name}'"
+        )
+        alt.write_bytes(data)
+        return alt
 
 # ---------------------------------------------------------------------------
 # Import librerie opzionali con fallback
@@ -30,6 +89,80 @@ try:
 except ImportError:
     REPORTLAB_AVAILABLE = False
     logger.warning("reportlab non disponibile — PDF limitato a testo")
+
+# ---------------------------------------------------------------------------
+# Font Unicode per PDF (accenti à è é ì ò ù ä ö ü ß ñ ç e valute € $ £)
+# ---------------------------------------------------------------------------
+PDF_FONT_REGULAR = "Helvetica"
+PDF_FONT_BOLD = "Helvetica-Bold"
+PDF_UNICODE_FONT = False
+
+def _register_pdf_fonts() -> None:
+    """Registra una famiglia TrueType Unicode di sistema; fallback su Helvetica (WinAnsi)."""
+    global PDF_FONT_REGULAR, PDF_FONT_BOLD, PDF_UNICODE_FONT
+    if not REPORTLAB_AVAILABLE:
+        return
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    win_fonts = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")
+    candidates = [
+        (os.path.join(win_fonts, "arial.ttf"), os.path.join(win_fonts, "arialbd.ttf"),
+         os.path.join(win_fonts, "ariali.ttf"), os.path.join(win_fonts, "arialbi.ttf")),
+        (os.path.join(win_fonts, "segoeui.ttf"), os.path.join(win_fonts, "segoeuib.ttf"),
+         os.path.join(win_fonts, "segoeuii.ttf"), os.path.join(win_fonts, "segoeuiz.ttf")),
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-BoldOblique.ttf"),
+    ]
+    for regular, bold, italic, bold_italic in candidates:
+        if not (os.path.isfile(regular) and os.path.isfile(bold)):
+            continue
+        try:
+            pdfmetrics.registerFont(TTFont("ZukSans", regular))
+            pdfmetrics.registerFont(TTFont("ZukSans-Bold", bold))
+            pdfmetrics.registerFont(TTFont("ZukSans-Italic", italic if os.path.isfile(italic) else regular))
+            pdfmetrics.registerFont(TTFont("ZukSans-BoldItalic", bold_italic if os.path.isfile(bold_italic) else bold))
+            pdfmetrics.registerFontFamily(
+                "ZukSans", normal="ZukSans", bold="ZukSans-Bold",
+                italic="ZukSans-Italic", boldItalic="ZukSans-BoldItalic",
+            )
+            PDF_FONT_REGULAR, PDF_FONT_BOLD, PDF_UNICODE_FONT = "ZukSans", "ZukSans-Bold", True
+            logger.info(f"Font PDF Unicode registrato: {os.path.basename(regular)}")
+            return
+        except Exception as e:  # font corrotto / non leggibile
+            logger.warning(f"Registrazione font '{regular}' fallita: {e}")
+    logger.warning("Nessun font TrueType Unicode disponibile: uso Helvetica (WinAnsi, copre €, £, accenti latini)")
+
+_register_pdf_fonts()
+
+def _pdf_text_raw(value) -> str:
+    """
+    Normalizza un testo per il rendering PDF (senza escape XML, per canvas.drawString):
+    - rimuove i glifi emoji/simboli non presenti nei font (⚠ U+26A0 + VS16)
+    - con il fallback Helvetica sostituisce i caratteri non codificabili in cp1252
+    """
+    s = "" if value is None else str(value)
+    s = s.replace("\u26a0\ufe0f", "(!)").replace("\u26a0", "(!)")
+    if not PDF_UNICODE_FONT:
+        s = s.encode("cp1252", errors="replace").decode("cp1252")
+    return s
+
+def _pdf_text(value) -> str:
+    """Testo sanitizzato + escape XML (&, <, >) per Paragraph: evita crash del parser su nomi come 'A & B <srl>'."""
+    return _xml_escape(_pdf_text_raw(value))
+
+_CTRL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ufffe\uffff]")
+
+def _clean_strings(obj):
+    """Rimuove ricorsivamente i caratteri di controllo non ammessi in XML (DOCX) / PDF."""
+    if isinstance(obj, str):
+        return _CTRL_CHARS_RE.sub("", obj)
+    if isinstance(obj, dict):
+        return {k: _clean_strings(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_clean_strings(v) for v in obj]
+    return obj
+
 
 try:
     from docx import Document as DocxDocument
@@ -92,7 +225,7 @@ REPORT_LABELS = {
         "no_anomalies": "Nessuna anomalia rilevata.",
         "processed": "Elaborato",
         "offline_tag": "Dati inviati esternamente: NO | Offline-First",
-        "demo_banner": "⚠ VERSIONE DEMO — Non destinata all'uso operativo"
+        "demo_banner": ""
     },
     "en": {
         "title": "Invoice Details",
@@ -112,7 +245,7 @@ REPORT_LABELS = {
         "no_anomalies": "No anomalies detected.",
         "processed": "Processed",
         "offline_tag": "Data sent externally: NO | Offline-First",
-        "demo_banner": "⚠ DEMO VERSION — Not intended for operational use"
+        "demo_banner": ""
     },
     "de": {
         "title": "Rechnungsdaten",
@@ -132,7 +265,7 @@ REPORT_LABELS = {
         "no_anomalies": "Keine Unregelmäßigkeiten festgestellt.",
         "processed": "Verarbeitet",
         "offline_tag": "Daten extern gesendet: NEIN | Offline-First",
-        "demo_banner": "⚠ DEMO-VERSION — Nicht für den produktiven Einsatz bestimmt"
+        "demo_banner": ""
     },
     "fr": {
         "title": "Détails Facture",
@@ -152,7 +285,7 @@ REPORT_LABELS = {
         "no_anomalies": "Aucune anomalie détectée.",
         "processed": "Traité le",
         "offline_tag": "Données envoyées à l'extérieur: NON | Offline-First",
-        "demo_banner": "⚠ VERSION DÉMO — Non destinée à un usage opérationnel"
+        "demo_banner": ""
     },
     "es": {
         "title": "Datos de la Factura",
@@ -172,7 +305,7 @@ REPORT_LABELS = {
         "no_anomalies": "No se detectaron anomalías.",
         "processed": "Procesado",
         "offline_tag": "Datos enviados externamente: NO | Offline-First",
-        "demo_banner": "⚠ VERSIÓN DEMO — No destinada a uso operativo"
+        "demo_banner": ""
     },
     "pt": {
         "title": "Dados da Fatura",
@@ -192,7 +325,7 @@ REPORT_LABELS = {
         "no_anomalies": "Nenhuma anomalia detetada.",
         "processed": "Processado",
         "offline_tag": "Dados enviados externamente: NÃO | Offline-First",
-        "demo_banner": "⚠ VERSÃO DEMO — Não destinada a uso operacional"
+        "demo_banner": ""
     },
 }
 
@@ -217,17 +350,27 @@ def generate(
     if lang_code not in REPORT_LABELS:
         lang_code = "en"
 
-    out_dir = Path(output_dir) if output_dir else Path("output")
+    # Creazione automatica preventiva della directory di destinazione prima di qualsiasi operazione di scrittura file
+    # (SEMPRE os.getcwd()/output, MAI dentro sys._MEIPASS)
+    default_output = get_output_dir()
+    if output_dir and not _is_inside_meipass(str(output_dir)):
+        out_dir = Path(output_dir)
+    else:
+        out_dir = Path(default_output)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    inv_num = (invoice.get("invoice_number") or "UNKNOWN").replace("/", "-").replace("\\", "-")
+    inv_num_raw = str(invoice.get("invoice_number") or "UNKNOWN")
+    # Caratteri non ammessi nei nomi file Windows (\ / : * ? " < > |) e spazi -> "-"
+    inv_num = re.sub(r"[^\w.\-]+", "-", inv_num_raw).strip("-.") or "UNKNOWN"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_name = f"report_AR_{inv_num}_{timestamp}"
 
     paths = {}
     errors = []
 
-    report_data = _build_report_data(invoice, classification, compliance, billing, reminder_text, lang_code, is_demo)
+    report_data = _clean_strings(
+        _build_report_data(invoice, classification, compliance, billing, reminder_text, lang_code, is_demo)
+    )
 
     for fmt in formats:
         fmt = fmt.lower().strip()
@@ -247,6 +390,16 @@ def generate(
             else:
                 logger.warning(f"Formato non supportato: {fmt}")
                 errors.append(f"formato_non_supportato:{fmt}")
+        except (PermissionError, OSError) as e:
+            if _is_lock_error(e):
+                logger.error(
+                    f"[LOCK_ERROR] Errore di permesso o file bloccato (WinError 5 / PermissionError) "
+                    f"durante generazione {fmt}: {e}. La pipeline continua senza interruzioni."
+                )
+                errors.append(f"file_locked:{fmt}:{e}")
+            else:
+                logger.error(f"Errore generazione {fmt}: {e}")
+                errors.append(f"{fmt}:{e}")
         except Exception as e:
             logger.error(f"Errore generazione {fmt}: {e}")
             errors.append(f"{fmt}:{e}")
@@ -264,12 +417,12 @@ def _clean_layout_tokens(raw: Optional[str]) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 DEMO_FOOTER = {
-    "it": "[Generato con ZUKWEND DEMO Trial - Sblocca la versione completa su zukwend.com]",
-    "en": "[Generated with ZUKWEND DEMO Trial - Unlock full version at zukwend.com]",
-    "de": "[Erstellt mit ZUKWEND DEMO Trial - Vollversion freischalten auf zukwend.com]",
-    "fr": "[Généré avec ZUKWEND DEMO Trial - Débloquez la version complète sur zukwend.com]",
-    "es": "[Generado con ZUKWEND DEMO Trial - Desbloquea la versión completa en zukwend.com]",
-    "pt": "[Gerado com ZUKWEND DEMO Trial - Desbloqueie a versão completa em zukwend.com]",
+    "it": "",
+    "en": "",
+    "de": "",
+    "fr": "",
+    "es": "",
+    "pt": ""
 }
 
 # ---------------------------------------------------------------------------
@@ -313,7 +466,7 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
     return {
         "generated_at": datetime.now().isoformat(),
         "software": "ZUKWEND Multilingual Billing Agent",
-        "version": "2.1.2",
+        "version": APP_VERSION,
         "language": language,
         "labels": labels,
         "is_demo": is_demo,
@@ -355,7 +508,7 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
         ),
         "audit": {
             "processed_at": datetime.now().isoformat(),
-            "software_version": "2.1.2",
+            "software_version": APP_VERSION,
             "is_demo": is_demo,
             "data_sent_externally": False,
             "disclaimer": DISCLAIMER_TEXT.get(language, DISCLAIMER_TEXT["en"]),
@@ -372,26 +525,31 @@ def _generate_pdf(data: dict, path: Path, is_demo: bool = False) -> Path:
         return _generate_pdf_text_fallback(data, path, is_demo)
 
 def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
-    doc = SimpleDocTemplate(str(path), pagesize=A4, topMargin=2*cm, bottomMargin=2*cm,
-                            leftMargin=2*cm, rightMargin=2*cm)
+    # Creazione preventiva directory destinazione
+    path.parent.mkdir(parents=True, exist_ok=True)
+
     styles = getSampleStyleSheet()
+    # Font Unicode su TUTTI gli stili (Helvetica non copre ⚠ e simboli fuori WinAnsi)
+    for _st in styles.byName.values():
+        _is_bold = "bold" in str(getattr(_st, "fontName", "")).lower()
+        _st.fontName = PDF_FONT_BOLD if _is_bold else PDF_FONT_REGULAR
     brand_color = colors.HexColor(BRAND_COLOR_HEX)
     labels = data["labels"]
     story = []
 
     title_style = ParagraphStyle("ZTitle", parent=styles["Title"],
                                   textColor=brand_color, fontSize=16, spaceAfter=4)
-    story.append(Paragraph("ZUKWEND — Multilingual Billing Agent", title_style))
-    story.append(Paragraph(f"Report AR | {data['generated_at'][:10]}", styles["Normal"]))
+    story.append(Paragraph(_pdf_text("ZUKWEND — Multilingual Billing Agent"), title_style))
+    story.append(Paragraph(_pdf_text(f"Report AR | {data['generated_at'][:10]}"), styles["Normal"]))
     if is_demo:
         demo_style = ParagraphStyle("Demo", parent=styles["Normal"],
                                      textColor=colors.red, fontSize=10)
-        story.append(Paragraph(labels["demo_banner"], demo_style))
+        story.append(Paragraph(_pdf_text(labels["demo_banner"]), demo_style))
     story.append(HRFlowable(width="100%", thickness=1, color=brand_color, spaceAfter=8))
 
     inv = data["invoice"]
     clf = data["classification"]
-    story.append(Paragraph(labels["title"], styles["Heading2"]))
+    story.append(Paragraph(_pdf_text(labels["title"]), styles["Heading2"]))
     table_data = [
         [labels["inv_num"],      inv["number"]],
         [labels["issue_date"],   inv["issue_date"]],
@@ -407,10 +565,13 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
         [labels["risk"],         clf["risk_level_label"]],
         [labels["reminder_lvl"], f"L{clf['reminder_level']}"],
     ])
-    t = Table(table_data, colWidths=[5.5*cm, 10.5*cm])
+    cell_style = ParagraphStyle("ZCell", parent=styles["Normal"], fontSize=10, leading=12)
+    table_cells = [[Paragraph(_pdf_text(k), cell_style), Paragraph(_pdf_text(v), cell_style)]
+                   for k, v in table_data]
+    t = Table(table_cells, colWidths=[5.5*cm, 10.5*cm])
     t.setStyle(TableStyle([
         ("BACKGROUND", (0,0), (0,-1), colors.HexColor(LIGHT_GRAY)),
-        ("FONTNAME", (0,0), (-1,-1), "Helvetica"),
+        ("FONTNAME", (0,0), (-1,-1), PDF_FONT_REGULAR),
         ("FONTSIZE", (0,0), (-1,-1), 10),
         ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor(MEDIUM_GRAY)),
         ("VALIGN", (0,0), (-1,-1), "TOP"),
@@ -419,52 +580,52 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
     story.append(t)
     story.append(Spacer(1, 0.5*cm))
 
-    story.append(Paragraph(labels["rem_title"], styles["Heading2"]))
+    story.append(Paragraph(_pdf_text(labels["rem_title"]), styles["Heading2"]))
     for line in data["reminder_text"].split("\n"):
         if line.strip():
-            story.append(Paragraph(line, styles["Normal"]))
+            story.append(Paragraph(_pdf_text(line), styles["Normal"]))
         else:
             story.append(Spacer(1, 0.2*cm))
     story.append(Spacer(1, 0.5*cm))
 
     if data["compliance"]["recommendations"]:
-        story.append(Paragraph(labels["recs_title"], styles["Heading2"]))
+        story.append(Paragraph(_pdf_text(labels["recs_title"]), styles["Heading2"]))
         for rec in data["compliance"]["recommendations"]:
-            story.append(Paragraph(f"• {rec}", styles["Normal"]))
+            story.append(Paragraph(_pdf_text(f"• {rec}"), styles["Normal"]))
         story.append(Spacer(1, 0.3*cm))
 
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor(MEDIUM_GRAY), spaceAfter=4))
     audit_style = ParagraphStyle("Audit", parent=styles["Normal"], fontSize=8, textColor=colors.gray)
-    story.append(Paragraph(f"{labels['processed']}: {data['audit']['processed_at']} | {data['software']} {data['version']}", audit_style))
-    story.append(Paragraph(labels["offline_tag"], audit_style))
+    story.append(Paragraph(_pdf_text(f"{labels['processed']}: {data['audit']['processed_at']} | {data['software']} {data['version']}"), audit_style))
+    story.append(Paragraph(_pdf_text(labels["offline_tag"]), audit_style))
     story.append(Spacer(1, 0.2*cm))
 
     disc_style = ParagraphStyle("Disc", parent=styles["Normal"], fontSize=8,
                                  textColor=colors.gray, borderPadding=4)
-    story.append(Paragraph(data["audit"]["disclaimer"], disc_style))
+    story.append(Paragraph(_pdf_text(data["audit"]["disclaimer"]), disc_style))
 
     def _draw_demo_footer(canvas, doc_obj):
-        canvas.saveState()
-        canvas.setFont("Helvetica-Bold", 8)
-        canvas.setFillColor(colors.HexColor("#DC2626"))  # Red warning
-        footer_text = "⚠️ ZUKWEND DEMO EVALUATION COPY — Upgrade to FULL Version at https://zukwend.com"
-        canvas.drawCentredString(A4[0] / 2.0, 0.8 * cm, footer_text)
-        canvas.restoreState()
-
-    if is_demo:
-        doc.build(story, onFirstPage=_draw_demo_footer, onLaterPages=_draw_demo_footer)
-    else:
-        doc.build(story)
-
-    logger.info(f"PDF generato: {path}")
-    return path
+    pass
 
 def _generate_pdf_text_fallback(data: dict, path: Path, is_demo: bool) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
     txt_path = path.with_suffix(".txt")
     content = _build_text_report(data, is_demo)
-    txt_path.write_text(content, encoding="utf-8")
-    logger.warning(f"PDF fallback (testo): {txt_path}")
-    return txt_path
+    target_path = txt_path
+    try:
+        target_path.write_text(content, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        if _is_lock_error(e):
+            target_path = _get_unique_fallback_path(txt_path)
+            logger.warning(
+                f"[LOCK_RECOVERY] Destinazione TXT '{txt_path.name}' bloccata ({e}). "
+                f"Salvataggio su '{target_path.name}'"
+            )
+            target_path.write_text(content, encoding="utf-8")
+        else:
+            raise e
+    logger.warning(f"PDF fallback (testo): {target_path}")
+    return target_path
 
 def _build_text_report(data: dict, is_demo: bool) -> str:
     sep = "=" * 60
@@ -557,14 +718,28 @@ def _generate_docx(data: dict, path: Path, is_demo: bool = False) -> Path:
     disclaimer.runs[0].font.size = Pt(9)
     disclaimer.runs[0].font.color.rgb = RGBColor(0x88, 0x88, 0x88)
 
-    doc.save(str(path))
-    logger.info(f"DOCX generato: {path}")
-    return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    target_path = path
+    try:
+        doc.save(str(target_path))
+    except (PermissionError, OSError) as e:
+        if _is_lock_error(e):
+            target_path = _get_unique_fallback_path(path)
+            logger.warning(
+                f"[LOCK_RECOVERY] Destinazione DOCX '{path.name}' bloccata o aperta da altra applicazione ({e}). "
+                f"Salvataggio su '{target_path.name}'"
+            )
+            doc.save(str(target_path))
+        else:
+            raise e
+    logger.info(f"DOCX generato: {target_path}")
+    return target_path
 
 # ---------------------------------------------------------------------------
 # Generatore JSON
 # ---------------------------------------------------------------------------
 def _generate_json(data: dict, path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
     json_out = {
         "zukwend_version": data["version"],
         "generated_at": data["generated_at"],
@@ -577,29 +752,44 @@ def _generate_json(data: dict, path: Path) -> Path:
         "reminder_text": data["reminder_text"],
         "audit": data["audit"],
     }
-    path.write_text(
-        json.dumps(json_out, indent=2, ensure_ascii=False),
-        encoding="utf-8"
-    )
-    logger.info(f"JSON generato: {path}")
-    return path
+    content = json.dumps(json_out, indent=2, ensure_ascii=False)
+    target_path = path
+    try:
+        target_path.write_text(content, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        if _is_lock_error(e):
+            target_path = _get_unique_fallback_path(path)
+            logger.warning(
+                f"[LOCK_RECOVERY] Destinazione JSON '{path.name}' bloccata ({e}). "
+                f"Salvataggio su '{target_path.name}'"
+            )
+            target_path.write_text(content, encoding="utf-8")
+        else:
+            raise e
+    logger.info(f"JSON generato: {target_path}")
+    return target_path
 
 # ---------------------------------------------------------------------------
 # Generatore HTML
 # ---------------------------------------------------------------------------
 def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
-    inv = data["invoice"]
-    clf = data["classification"]
-    labels = data["labels"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    def _esc_map(src: dict) -> dict:
+        return {k: (_html.escape(v) if isinstance(v, str) else v) for k, v in src.items()}
+
+    inv = _esc_map(data["invoice"])
+    clf = _esc_map(data["classification"])
+    labels = _esc_map(data["labels"])
+    data = {**data, "audit": _esc_map(data["audit"])}
     risk_class = {"LOW": "risk-low", "MEDIUM": "risk-medium", "HIGH": "risk-high"}.get(
-        clf["risk_level_raw"], ""
+        data["classification"]["risk_level_raw"], ""
     )
     demo_banner = (
         f'<div class="demo-banner">{labels["demo_banner"]}</div>'
         if is_demo else ""
     )
-    recs_html = "".join(f"<li>{r}</li>" for r in data["compliance"]["recommendations"])
-    reminder_html = data["reminder_text"].replace("\n", "<br>")
+    recs_html = "".join(f"<li>{_html.escape(str(r))}</li>" for r in data["compliance"]["recommendations"])
+    reminder_html = _html.escape(data["reminder_text"]).replace("\n", "<br>")
 
     html = f"""<!DOCTYPE html>
 <html lang="{data['language']}">
@@ -657,9 +847,21 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
       {labels['processed']}: {data['audit']['processed_at']} | {labels['offline_tag']}
     </div>
   </div>
-</body>
-</html>"""
+ </body>
+ </html>"""
 
-    path.write_text(html, encoding="utf-8")
-    logger.info(f"HTML generato: {path}")
-    return path
+    target_path = path
+    try:
+        target_path.write_text(html, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        if _is_lock_error(e):
+            target_path = _get_unique_fallback_path(path)
+            logger.warning(
+                f"[LOCK_RECOVERY] Destinazione HTML '{path.name}' bloccata ({e}). "
+                f"Salvataggio su '{target_path.name}'"
+            )
+            target_path.write_text(html, encoding="utf-8")
+        else:
+            raise e
+    logger.info(f"HTML generato: {target_path}")
+    return target_path

@@ -57,7 +57,7 @@ ZUKWEND è sicuro al 100%: opera esclusivamente in locale sui documenti selezion
 | :--- | :--- | :--- |
 | **Licenza a Vita (Lifetime License)** | **~~349 €~~ 249 € una tantum** | **[OFFERTA DI LANCIO — LICENZA A VITA]** (Pagamento unico una tantum. Zero abbonamenti). Zero costi ricorrenti, nessun canone o abbonamento mensile. Include **2 attivazioni con vincolo hardware** (Hardware-locked Machine ID) per workstation principale e laptop aziendale. |
 
-- **Video Demo Interattiva (40s)**: [https://youtu.be/a6V65LRN4oc](https://youtu.be/a6V65LRN4oc)
+- **Video Presentazione Ufficiale — Guarda come Funziona**: [https://youtu.be/a6V65LRN4oc](https://youtu.be/a6V65LRN4oc)
 - Acquisto licenza: [https://zukwend.lemonsqueezy.com/checkout/buy/c6c7d5b7-7ee9-4717-a708-c386ad1d2344](https://zukwend.lemonsqueezy.com/checkout/buy/c6c7d5b7-7ee9-4717-a708-c386ad1d2344) (Portale: [https://zukwend.com](https://zukwend.com))
 
 ---

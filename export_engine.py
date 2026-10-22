@@ -1,19 +1,57 @@
-﻿"""
+"""
 ZUKWEND — Multilingual Billing Agent
 Modulo: export_engine.py
 Ruolo: Engine export multi-formato, batch export, audit log, struttura cartelle
-Versione: 1.0.0
+Versione: 2.1.3
 REPTANA MODE | OLTREVISTA 2030 | Offline-First
 """
 
 import json
 import logging
+import os
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+try:
+    from resource_utils import get_output_dir, get_writable_dir
+except ImportError:  # pragma: no cover - esecuzione isolata del modulo
+    def get_output_dir() -> str:
+        folder = os.path.abspath("output")
+        os.makedirs(folder, exist_ok=True)
+        return folder
+
+    def get_writable_dir(preferred: Path, fallback_name: str) -> Path:
+        preferred.mkdir(parents=True, exist_ok=True)
+        return preferred
+
 logger = logging.getLogger("zukwend.export_engine")
+
+_TS_SUFFIX_RE = re.compile(r"_\d{8}_\d{6}(?:_\d+)?$")
+
+def _is_lock_error(exc: BaseException) -> bool:
+    """True per PermissionError / WinError 5 / WinError 32 / qualsiasi OSError di scrittura."""
+    return isinstance(exc, (PermissionError, OSError))
+
+def _get_unique_fallback_path(target_path: Path) -> Path:
+    """
+    Genera un nome file univoco con timestamp in caso di file bloccato o PermissionError/WinError 5.
+    Formato: report_AR_INV123_YYYYMMDD_HHMMSS.pdf (un eventuale timestamp finale viene sostituito).
+    """
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    stem = _TS_SUFFIX_RE.sub("", target_path.stem)
+    ext = target_path.suffix
+    parent = target_path.parent
+    parent.mkdir(parents=True, exist_ok=True)
+
+    alt_path = parent / f"{stem}_{ts}{ext}"
+    counter = 1
+    while alt_path.exists() or alt_path == target_path:
+        alt_path = parent / f"{stem}_{ts}_{counter}{ext}"
+        counter += 1
+    return alt_path
 
 # ---------------------------------------------------------------------------
 # Costanti
@@ -43,14 +81,15 @@ def export(
     exported_paths = []
     errors = []
 
-    # Cartella output principale
-    out_root = Path(output_dir) if output_dir else Path("output")
+    # Cartella output principale con creazione automatica preventiva
+    outputFolder = get_output_dir()
+    out_root = Path(output_dir) if output_dir else Path(outputFolder)
     out_root.mkdir(parents=True, exist_ok=True)
 
     # Sottocartella per data (opzionale)
     if organize_by_date:
         date_folder = out_root / datetime.now().strftime("%Y-%m-%d")
-        date_folder.mkdir(exist_ok=True)
+        date_folder.mkdir(parents=True, exist_ok=True)
         dest_dir = date_folder
     else:
         dest_dir = out_root
@@ -78,6 +117,28 @@ def export(
             try:
                 shutil.copy2(str(src), str(dest))
                 logger.info(f"Export {fmt.upper()}: {src.name} -> {dest}")
+            except (PermissionError, OSError) as e:
+                if _is_lock_error(e):
+                    alt_dest = _get_unique_fallback_path(dest)
+                    logger.warning(
+                        f"[LOCK_RECOVERY] Destinazione export '{dest.name}' aperta o bloccata da altra applicazione ({e}). "
+                        f"Salvataggio automatico con timestamp univoco su '{alt_dest.name}'..."
+                    )
+                    try:
+                        shutil.copy2(str(src), str(alt_dest))
+                        dest = alt_dest
+                        logger.info(f"Export {fmt.upper()} (recupero): {src.name} -> {dest}")
+                    except Exception as e2:
+                        logger.error(
+                            f"[LOCK_ERROR] Errore informativo: impossibile scrivere file bloccato né copia alternativa ({e2}). "
+                            f"La pipeline continua senza interruzioni."
+                        )
+                        errors.append(f"copy_error_locked:{fmt}:{e2}")
+                        dest = src  # usa percorso originale
+                else:
+                    logger.error(f"Errore copia {fmt}: {e}")
+                    errors.append(f"copy_error:{fmt}:{e}")
+                    dest = src
             except Exception as e:
                 logger.error(f"Errore copia {fmt}: {e}")
                 errors.append(f"copy_error:{fmt}:{e}")
@@ -111,7 +172,8 @@ def export_batch(
         dict con 'all_paths', 'batch_dir', 'aging_summary_path', 'errors'
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_root = Path(output_dir) if output_dir else Path("output")
+    outputFolder = get_output_dir()
+    out_root = Path(output_dir) if output_dir else Path(outputFolder)
     batch_dir = out_root / f"batch_{timestamp}"
     batch_dir.mkdir(parents=True, exist_ok=True)
 
@@ -212,9 +274,18 @@ def _generate_aging_summary(reports: list, dest_dir: Path, timestamp: str) -> Pa
     summary["total_overdue_amount"] = round(summary["total_overdue_amount"], 2)
 
     path = dest_dir / f"aging_summary_{timestamp}.json"
-    path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
-    logger.info(f"Aging summary: {path}")
-    return path
+    target_path = path
+    try:
+        target_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        if _is_lock_error(e):
+            target_path = _get_unique_fallback_path(path)
+            logger.warning(f"[LOCK_RECOVERY] Aging summary bloccato ({e}). Scrittura su: '{target_path.name}'")
+            target_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+        else:
+            raise e
+    logger.info(f"Aging summary: {target_path}")
+    return target_path
 
 
 def _find_json_path(report: dict) -> Optional[str]:
@@ -241,21 +312,26 @@ def _write_export_audit_log(
     report: dict,
 ) -> None:
     """Scrive il log di audit per ogni operazione di export."""
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
-    log_file = log_dir / f"zukwend_audit_{datetime.now().strftime('%Y%m%d')}.log"
+    try:
+        log_dir = get_writable_dir(Path(os.path.abspath("logs")), "logs")
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / f"zukwend_audit_{datetime.now().strftime('%Y%m%d')}.log"
 
-    entry_lines = [
-        f"[{datetime.now().isoformat()}] [EXPORT] [INFO]",
-        f"  Base:    {base_name}",
-        f"  Dir:     {dest_dir}",
-        f"  Files:   {exported_paths}",
-        f"  Errors:  {errors}",
-        f"  External: NO",
-        "",
-    ]
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write("\n".join(entry_lines))
+        entry_lines = [
+            f"[{datetime.now().isoformat()}] [EXPORT] [INFO]",
+            f"  Base:    {base_name}",
+            f"  Dir:     {dest_dir}",
+            f"  Files:   {exported_paths}",
+            f"  Errors:  {errors}",
+            f"  External: NO",
+            "",
+        ]
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write("\n".join(entry_lines))
+    except (PermissionError, OSError) as e:
+        logger.warning(f"Audit log non scrivibile o bloccato ({e}). La pipeline continua.")
+    except Exception as e:
+        logger.warning(f"Errore scrittura audit log: {e}")
 
 
 def _write_batch_log(log_path: Path, batch_meta: list, errors: list, timestamp: str) -> None:
@@ -278,8 +354,18 @@ def _write_batch_log(log_path: Path, batch_meta: list, errors: list, timestamp: 
             lines.append(f"  {err}")
     lines.append("=" * 60)
     lines.append("Nessun dato inviato esternamente. Offline-First.")
-    log_path.write_text("\n".join(lines), encoding="utf-8")
-    logger.info(f"Batch log: {log_path}")
+    
+    target_path = log_path
+    try:
+        target_path.write_text("\n".join(lines), encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        if _is_lock_error(e):
+            target_path = _get_unique_fallback_path(log_path)
+            logger.warning(f"[LOCK_RECOVERY] Batch log bloccato ({e}). Scrittura su '{target_path.name}'")
+            target_path.write_text("\n".join(lines), encoding="utf-8")
+        else:
+            raise e
+    logger.info(f"Batch log: {target_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -292,7 +378,8 @@ def ensure_output_structure(base_dir: Optional[str] = None) -> dict:
     Returns:
         dict con i percorsi delle cartelle create
     """
-    root = Path(base_dir) if base_dir else Path("output")
+    outputFolder = get_output_dir()
+    root = Path(base_dir) if base_dir else Path(outputFolder)
     folders = {
         "root":        root,
         "reports":     root / "reports",

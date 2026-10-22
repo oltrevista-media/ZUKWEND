@@ -1,0 +1,7 @@
+{
+  "mode": "local",
+  "api_key": "",
+  "lang": "en",
+  "output_dir": "./output",
+  "prompts_dir": "./prompts"
+}

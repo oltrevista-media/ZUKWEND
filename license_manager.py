@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import platform
+import sys
 import time
 import uuid
 from datetime import date, datetime, timedelta
@@ -42,11 +43,23 @@ TYPE_INVALID = "INVALID"
 # Percorsi locali
 # ---------------------------------------------------------------------------
 def _get_app_dir() -> Path:
-    """Restituisce la cartella applicazione (~/.zukwend/)."""
-    home = Path.home()
-    app_dir = home / APP_DIR_NAME
-    app_dir.mkdir(exist_ok=True)
-    return app_dir
+    """Restituisce la cartella applicazione (~/.zukwend/), con fallback se non scrivibile."""
+    candidates = [Path.home() / APP_DIR_NAME]
+    local_appdata = os.environ.get("LOCALAPPDATA")
+    if local_appdata:
+        candidates.append(Path(local_appdata) / "ZUKWEND" / APP_DIR_NAME)
+    import tempfile
+    candidates.append(Path(tempfile.gettempdir()) / APP_DIR_NAME)
+
+    last_err: Optional[Exception] = None
+    for app_dir in candidates:
+        try:
+            app_dir.mkdir(parents=True, exist_ok=True)
+            return app_dir
+        except OSError as e:
+            last_err = e
+            logger.warning(f"Cartella licenza '{app_dir}' non disponibile: {e}")
+    raise OSError(f"Nessuna cartella licenza scrivibile: {last_err}")
 
 
 # ---------------------------------------------------------------------------
@@ -65,9 +78,15 @@ def get_machine_id() -> str:
     components = []
 
     # MAC address
+    # Se non esiste alcun adattatore di rete attivo (PC offline / airplane mode) uuid.getnode()
+    # restituisce un numero CASUALE con il bit multicast (0x010000000000) impostato, diverso ad ogni
+    # avvio: va ignorato, altrimenti l'Hardware Lock fallirebbe offline.
     try:
         mac = uuid.getnode()
-        components.append(str(mac))
+        if mac & 0x010000000000:
+            components.append("no_mac")
+        else:
+            components.append(str(mac))
     except Exception:
         components.append("no_mac")
 
@@ -373,7 +392,7 @@ class LicenseManager:
                     "license_key": license_code,
                     "instance_name": get_machine_id_short(),
                 },
-                timeout=5
+                timeout=(3, 5)
             )
             if ls_resp.status_code == 200:
                 ls_data = ls_resp.json()
@@ -507,10 +526,14 @@ class LicenseManager:
         # Accetta sia il checksum corretto sia una licenza di sviluppo (DEVMODE)
         if parts[3] == expected_checksum:
             return True
-        # Licenza sviluppo/test (solo per ambiente di sviluppo)
+        # Licenza sviluppo/test: SOLO in ambiente di sviluppo (mai in un eseguibile PyInstaller)
+        # e solo con ZUKWEND_DEV_MODE=1 esplicito. Nelle build release e' un bypass di licenza.
         if parts[3] == "DEVMODE00":
-            logger.warning("DEVMODE licenza accettata (solo sviluppo)")
-            return True
+            if not getattr(sys, "frozen", False) and os.environ.get("ZUKWEND_DEV_MODE") == "1":
+                logger.warning("DEVMODE licenza accettata (solo sviluppo)")
+                return True
+            logger.warning("DEVMODE licenza RIFIUTATA: non consentita in ambiente di produzione")
+            return False
         return False
 
     def _write_license(self, license_code: str) -> None:

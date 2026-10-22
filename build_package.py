@@ -13,7 +13,9 @@ PACKAGE_NAME = "ZUKWEND_Billing_Agent_v1.0"
 TARGET_DIR = DIST_DIR / PACKAGE_NAME
 
 CORE_FILES = [
+    "resource_utils.py",
     "workflow_engine.py",
+    "gui_launcher.py",
     "parser.py",
     "classifier.py",
     "deducer.py",
@@ -21,7 +23,7 @@ CORE_FILES = [
     "export_engine.py",
     "license_manager.py",
     "normalizer.py",
-    "compliance_checker.py"
+    "version_info.txt",
 ]
 
 def make_package():

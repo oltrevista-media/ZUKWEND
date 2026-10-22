@@ -1,0 +1,91 @@
+================================================================================
+  ZUKWEND — Multilingual Billing Agent (v2.1.5 Enterprise)
+  Offline-First B2B Accounts Receivable & Automated Payment Recovery
+  (c) OLTREVISTA AI — All rights reserved.
+================================================================================
+
+1. OVERVIEW & ARCHITECTURE
+--------------------------------------------------------------------------------
+ZUKWEND is part of the OLTREVISTA AI automation platform: an autonomous
+multilingual desktop agent engineered for B2B accounts receivable (AR)
+management, invoice aging analysis, and automated payment recovery workflows
+across 6 languages (EN, IT, DE, FR, ES, PT).
+
+OPERATIONAL PHILOSOPHY:
+- 100% Offline-First: Corporate data privacy is paramount. Invoices and data
+  remain strictly on your local machine. No background telemetry is sent.
+- Zero External Dependencies: Ready out-of-the-box via the Level 1 Built-in
+  Native AI Engine. No Python, no mandatory Ollama, and no cloud API keys
+  required to start working.
+
+AI EXECUTION TIERS:
+- Tier 1 — Built-in Native AI Engine (Default): 100% offline, deterministic
+  rule-based & local classification without external setup.
+- Tier 2 — Local Ollama Power-Up (Optional): 1-click integration for private,
+  locally hosted open-weights LLMs (Gemma, Mistral, Qwen, DeepSeek).
+- Tier 3 — Cloud BYOC Power-Up (Optional): Bring-Your-Own-Key connection to
+  enterprise frontier models (Claude by Anthropic, GPT-4o by OpenAI, Gemini,
+  Mistral AI EU GDPR, Groq).
+
+
+2. QUICK START GUIDE
+--------------------------------------------------------------------------------
+1. Extract all contents of this ZIP archive into a dedicated local directory
+   (e.g., C:\ZUKWEND\ or Desktop\ZUKWEND).
+2. Double-click "ZUKWEND.exe" to launch the application.
+3. Select the target document language (EN, IT, DE, FR, ES, PT) in the interface.
+4. Select your target invoice PDF (Import invoice PDFs & aging calculation) (a sample invoice is
+   provided in the "demo/" folder: demo/b2b_invoice_sample_en.pdf).
+5. Click "RUN DOCUMENT ANALYSIS".
+6. The generated analysis reports, debt classification, and reminder drafts
+   are automatically saved inside the "output/" directory.
+
+
+3. MICROSOFT DEFENDER SMARTSCREEN & SECURITY NOTICE
+--------------------------------------------------------------------------------
+As a standalone native Windows desktop application with zero external cloud
+telemetry, on the first launch Microsoft Defender SmartScreen may display a
+notification: "Windows protected your PC / Unrecognized app".
+
+HOW TO PROCEED:
+1. Click on "More info" (or "Ulteriori informazioni").
+2. Click on the "Run anyway" (or "Esegui comunque") button.
+
+ZUKWEND is digitally signed and operates strictly on your local files. It never
+transmits customer invoice data to external networks.
+
+
+4. DIRECTORY & FILE STRUCTURE
+--------------------------------------------------------------------------------
+The distribution is organized as follows:
+
+  ZUKWEND.exe            - Main executable application (digitally signed).
+  INSTALLATION_GUIDE.txt - International user setup and architecture guide.
+  LICENSE_EULA.txt       - End User License Agreement and terms of use.
+  zukwend_config.json    - Runtime configuration (language, paths, execution mode).
+  demo/                  - Contains ready-to-test sample B2B invoices.
+                           File: demo/b2b_invoice_sample_en.pdf
+  output/                - Target destination directory for all generated PDF
+                           audit reports, aging sheets, and reminder drafts.
+  prompts/               - System prompt templates and multilingual deduction rules.
+  _internal/             - Native execution binaries, dependencies, and libraries.
+
+
+5. SYSTEM REQUIREMENTS
+--------------------------------------------------------------------------------
+- Operating System: Microsoft Windows 10 / Windows 11 (64-bit).
+- Hardware: Minimum 4 GB RAM, 500 MB free disk space.
+- Dependencies: None (fully self-contained, no Python installation required).
+
+
+6. LEGAL & TRANSPARENCY NOTICE
+--------------------------------------------------------------------------------
+ZUKWEND is an administrative desktop agent designed for Accounts Receivable (AR)
+automation, overdue invoice tracking, and reminder draft generation. It is NOT
+an active billing tool (it does not generate XML/SDI electronic invoices or file
+taxes) nor a debt collection agency or legal counsel. All outputs must be
+reviewed and validated by qualified human personnel prior to business dispatch.
+
+For license activations, support, or documentation, visit:
+https://oltrevista.com
+================================================================================

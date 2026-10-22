@@ -14,6 +14,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+try:
+    from resource_utils import get_resource_path, is_local_llm_available
+except ImportError:  # pragma: no cover - esecuzione isolata del modulo
+    def get_resource_path(relative_path: str) -> str:
+        return str(Path(__file__).parent / relative_path)
+
+    def is_local_llm_available(*_args, **_kwargs) -> bool:
+        return True
+
 logger = logging.getLogger("zukwend.parser")
 
 # ---------------------------------------------------------------------------
@@ -125,17 +134,19 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
         return {"requires_manual_input": True, "error": "testo insufficiente"}
 
     # TENTATIVO 1: Estrazione Cognitiva (LLM)
-    prompt_path = Path(__file__).parent / "prompts" / "prompt_parser_ar.md"
+    prompt_path = Path(get_resource_path("prompts/prompt_parser_ar.md"))
     if prompt_path.exists():
         try:
             system_prompt = prompt_path.read_text(encoding="utf-8")
             full_prompt = f"{system_prompt}\n\nTESTO DELLA FATTURA:\n{raw_text}"
 
             if mode == "local":
+                if not is_local_llm_available():
+                    raise ConnectionError("Motore LLM locale (Ollama) non attivo")
                 resp = requests.post(
                     "http://localhost:11434/api/generate",
                     json={"model": "qwen3:8b", "prompt": full_prompt, "stream": False, "format": "json"},
-                    timeout=60
+                    timeout=(3, 60)
                 )
                 resp.raise_for_status()
                 response_text = resp.json().get("response", "")
@@ -145,7 +156,7 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
                     "https://api.anthropic.com/v1/messages",
                     headers=headers,
                     json={"model": "claude-3-5-haiku-20241022", "max_tokens": 1024, "messages": [{"role": "user", "content": full_prompt}]},
-                    timeout=60
+                    timeout=(5, 60)
                 )
                 resp.raise_for_status()
                 response_text = resp.json()["content"][0]["text"]

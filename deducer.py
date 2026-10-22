@@ -13,6 +13,15 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
+try:
+    from resource_utils import get_resource_path, is_local_llm_available
+except ImportError:  # pragma: no cover - esecuzione isolata del modulo
+    def get_resource_path(relative_path: str) -> str:
+        return str(Path(__file__).parent / relative_path)
+
+    def is_local_llm_available(*_args, **_kwargs) -> bool:
+        return True
+
 logger = logging.getLogger("zukwend.deducer")
 
 TEMPLATE_DIR = Path(__file__).parent.parent / "billing" / "templates"
@@ -340,7 +349,7 @@ def generate_reminder_text(
     level = billing.get("reminder_level", 1)
     vars_static = _build_vars(invoice, billing, lang, classification)
 
-    prompt_path = Path(__file__).parent / "prompts" / "prompt_deducer_ar.md"
+    prompt_path = Path(get_resource_path("prompts/prompt_deducer_ar.md"))
     if not prompt_path.exists():
         logger.warning("prompt_deducer_ar.md mancante. Uso fallback statico.")
         return _render_static(lang, level, vars_static)
@@ -349,14 +358,16 @@ def generate_reminder_text(
     if classification:
         invoice_data["classification"] = classification
     system_prompt = prompt_path.read_text(encoding="utf-8").replace("{{LANGUAGE}}", lang)
-    full_prompt = f"{system_prompt}\n\nDATI FATTURA E GRAVITÀ:\n{json.dumps(invoice_data, indent=2)}"
+    full_prompt = f"{system_prompt}\n\nDATI FATTURA E GRAVITÀ:\n{json.dumps(invoice_data, indent=2, ensure_ascii=False, default=str)}"
 
     try:
         if mode == "local":
+            if not is_local_llm_available():
+                raise ConnectionError("Motore LLM locale (Ollama) non attivo")
             resp = requests.post(
                 "http://localhost:11434/api/generate",
                 json={"model": "qwen3:8b", "prompt": full_prompt, "stream": False},
-                timeout=45
+                timeout=(3, 45)
             )
             resp.raise_for_status()
             text = resp.json().get("response", "").strip()
@@ -372,7 +383,7 @@ def generate_reminder_text(
                     "max_tokens": 1024, 
                     "messages": [{"role": "user", "content": full_prompt}]
                 },
-                timeout=45
+                timeout=(5, 45)
             )
             resp.raise_for_status()
             text = resp.json()["content"][0]["text"].strip()
