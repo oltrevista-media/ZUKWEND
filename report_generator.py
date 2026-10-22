@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union, List
 from xml.sax.saxutils import escape as _xml_escape
-from i18n_catalog import get_rationale, scan_and_sanitize_text, sanitize_data_recursively
+from i18n_catalog import get_rationale, scan_and_sanitize_text, sanitize_data_recursively, get_legal_disclaimer, get_aging_bucket
 
 try:
     from resource_utils import APP_VERSION, get_output_dir, _is_inside_meipass
@@ -228,12 +228,12 @@ DISCLAIMER_TEXT = {
 }
 
 STATUS_LABELS = {
-    "it": {"OVERDUE": "SCADUTA", "PENDING": "IN ATTESA", "PAID": "PAGATA", "DISPUTED": "CONTESTATA", "UNKNOWN": "N/D"},
-    "en": {"OVERDUE": "OVERDUE", "PENDING": "PENDING", "PAID": "PAID", "DISPUTED": "DISPUTED", "UNKNOWN": "N/A"},
-    "de": {"OVERDUE": "ÜBERFÄLLIG", "PENDING": "AUSSTEHEND", "PAID": "BEZAHLT", "DISPUTED": "BEANSTANDET", "UNKNOWN": "N/B"},
-    "fr": {"OVERDUE": "EN RETARD", "PENDING": "EN ATTENTE", "PAID": "PAYÉE", "DISPUTED": "CONTESTÉE", "UNKNOWN": "N/D"},
-    "es": {"OVERDUE": "VENCIDA", "PENDING": "PENDIENTE", "PAID": "PAGADA", "DISPUTED": "EN DISPUTA", "UNKNOWN": "N/D"},
-    "pt": {"OVERDUE": "VENCIDA", "PENDING": "PENDENTE", "PAID": "PAGA", "DISPUTED": "CONTESTADA", "UNKNOWN": "N/D"},
+    "it": {"OVERDUE": "SCADUTA", "PENDING": "IN ATTESA", "PAID": "PAGATA", "DISPUTED": "CONTESTATA", "SETTLED": "SALDATA", "CREDIT_NOTE": "NOTA DI CREDITO", "UNKNOWN": "N/D"},
+    "en": {"OVERDUE": "OVERDUE", "PENDING": "PENDING", "PAID": "PAID", "DISPUTED": "DISPUTED", "SETTLED": "SETTLED", "CREDIT_NOTE": "CREDIT NOTE", "UNKNOWN": "N/A"},
+    "de": {"OVERDUE": "ÜBERFÄLLIG", "PENDING": "AUSSTEHEND", "PAID": "BEZAHLT", "DISPUTED": "BEANSTANDET", "SETTLED": "BEGLICHEN", "CREDIT_NOTE": "GUTSCHRIFT", "UNKNOWN": "N/B"},
+    "fr": {"OVERDUE": "EN RETARD", "PENDING": "EN ATTENTE", "PAID": "PAYÉE", "DISPUTED": "CONTESTÉE", "SETTLED": "RÉGLÉE", "CREDIT_NOTE": "AVOIR", "UNKNOWN": "N/D"},
+    "es": {"OVERDUE": "VENCIDA", "PENDING": "PENDIENTE", "PAID": "PAGADA", "DISPUTED": "EN DISPUTA", "SETTLED": "Factura Pagada / Settled", "CREDIT_NOTE": "Nota de Crédito / Credit Note", "UNKNOWN": "N/D"},
+    "pt": {"OVERDUE": "VENCIDA", "PENDING": "PENDENTE", "PAID": "PAGA", "DISPUTED": "CONTESTADA", "SETTLED": "LIQUIDADA", "CREDIT_NOTE": "NOTA DE CRÉDITO", "UNKNOWN": "N/D"},
 }
 
 RISK_LABELS = {
@@ -653,7 +653,7 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
         "compliance": {
             "flags":           canonical_flags,
             "recommendations": translated_recs,
-            "disclaimer":       str(compliance.get("disclaimer") or DISCLAIMER_TEXT.get(lang_code, DISCLAIMER_TEXT["en"])),
+            "disclaimer":       str(compliance.get("disclaimer") or get_legal_disclaimer(lang_code)),
         },
         "billing": {
             "action":     str(billing.get("action") or "N/A"),
@@ -666,7 +666,7 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "software_version": APP_VERSION,
             "is_demo": is_demo,
             "data_sent_externally": False,
-            "disclaimer": DISCLAIMER_TEXT.get(lang_code, DISCLAIMER_TEXT["en"]),
+            "disclaimer": get_legal_disclaimer(lang_code),
         },
     }
 
@@ -930,8 +930,7 @@ def _generate_docx(data: dict, path: Path, is_demo: bool = False) -> Path:
 def _generate_json(data: dict, path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     days_od = data["classification"]["days_overdue"]
-    bucket_label = "0-30" if 0 <= days_od <= 30 else ("31-60" if 31 <= days_od <= 60 else ("61-90" if 61 <= days_od <= 90 else "90+"))
-    if days_od < 0: bucket_label = "NOT_DUE"
+    bucket_label = get_aging_bucket(days_od)
 
     json_out = {
         "zukwend_version": data["version"],
@@ -1097,7 +1096,7 @@ def _generate_xlsx(data: dict, path: Path) -> Path:
     ws.row_dimensions[row].height = 24
     row += 1
 
-    bucket_headers = ["Current / Not Due", "0 - 30 Days", "31 - 60 Days", "61 - 90 Days", "90+ Days (Critical)", "Total Overdue"]
+    bucket_headers = ["Current / Not Due", "0-30 Days", "31-60 Days", "61-90 Days", "90+ Days (Critical)", "Total Overdue"]
     for col_idx, b_title in enumerate(bucket_headers, start=1):
         cell = ws.cell(row=row, column=col_idx, value=b_title)
         cell.font = font_header
@@ -1143,8 +1142,7 @@ def _generate_xlsx(data: dict, path: Path) -> Path:
         c.alignment = Alignment(horizontal="center", vertical="center")
         c.border = thin_border
 
-    bucket_str = "0-30" if 0 <= days_od <= 30 else ("31-60" if 31 <= days_od <= 60 else ("61-90" if 61 <= days_od <= 90 else "90+"))
-    if days_od < 0: bucket_str = "NOT_DUE"
+    bucket_str = get_aging_bucket(days_od)
 
     erp_row_data = [
         inv["number"], inv["client"], inv.get("client_address", ""), inv["issue_date"], inv["due_date"],

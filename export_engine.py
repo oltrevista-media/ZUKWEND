@@ -14,6 +14,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from i18n_catalog import get_aging_bucket
 
 try:
     from resource_utils import get_output_dir, get_writable_dir
@@ -80,6 +81,10 @@ def export(
     """
     exported_paths = []
     errors = []
+
+    if not report or not report.get("paths"):
+        logger.warning("export(): no files to export (report or report.paths empty)")
+        return []
 
     # Cartella output principale con creazione automatica preventiva
     outputFolder = get_output_dir()
@@ -267,6 +272,13 @@ def _generate_aging_summary(reports: list, dest_dir: Path, timestamp: str) -> Pa
             "L2": {"count": 0, "total_amount": 0.0, "invoices": []},
             "L3": {"count": 0, "total_amount": 0.0, "invoices": []},
         },
+        "by_bucket": {
+            "Current / Not Due": {"count": 0, "total_amount": 0.0, "invoices": []},
+            "0-30 Days": {"count": 0, "total_amount": 0.0, "invoices": []},
+            "31-60 Days": {"count": 0, "total_amount": 0.0, "invoices": []},
+            "61-90 Days": {"count": 0, "total_amount": 0.0, "invoices": []},
+            "90+ Days (Critical)": {"count": 0, "total_amount": 0.0, "invoices": []},
+        },
         "total_overdue_amount": 0.0,
         "currency": "EUR",
         "compliance_flags_total": 0,
@@ -289,6 +301,15 @@ def _generate_aging_summary(reports: list, dest_dir: Path, timestamp: str) -> Pa
                 summary["by_level"][key]["count"] += 1
                 summary["by_level"][key]["total_amount"] += amount
                 summary["by_level"][key]["invoices"].append(inv.get("number", "N/A"))
+
+                # Aging bucket breakdown
+                b_key = clf.get("aging_bucket") or get_aging_bucket(clf.get("days_overdue", 0))
+                if b_key not in summary["by_bucket"]:
+                    b_key = "Current / Not Due"
+                summary["by_bucket"][b_key]["count"] += 1
+                summary["by_bucket"][b_key]["total_amount"] += amount
+                summary["by_bucket"][b_key]["invoices"].append(inv.get("number", "N/A"))
+
                 if level > 0:
                     summary["total_overdue_amount"] += amount
                 if clf.get("compliance_flag"):
@@ -299,6 +320,8 @@ def _generate_aging_summary(reports: list, dest_dir: Path, timestamp: str) -> Pa
     # Arrotonda
     for k in summary["by_level"]:
         summary["by_level"][k]["total_amount"] = round(summary["by_level"][k]["total_amount"], 2)
+    for k in summary["by_bucket"]:
+        summary["by_bucket"][k]["total_amount"] = round(summary["by_bucket"][k]["total_amount"], 2)
     summary["total_overdue_amount"] = round(summary["total_overdue_amount"], 2)
 
     path = dest_dir / f"aging_summary_{timestamp}.json"

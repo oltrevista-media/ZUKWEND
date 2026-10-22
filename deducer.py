@@ -13,7 +13,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from i18n_catalog import normalize_lang, get_text, get_channel_label
+from i18n_catalog import normalize_lang, get_text, get_channel_label, get_legal_disclaimer
 
 try:
     from resource_utils import get_resource_path, is_local_llm_available
@@ -226,14 +226,26 @@ def deduce(invoice: dict, classification: dict, language: str = "it") -> dict:
     payment_status = classification.get("payment_status", "UNKNOWN")
     invoice_number = invoice.get("invoice_number", "N/A")
 
-    if payment_status in ("PAID", "DISPUTED") or reminder_level == 0:
+    raw_amt = invoice.get("amount")
+    try:
+        amt_val = float(raw_amt) if raw_amt is not None else 0.0
+    except (ValueError, TypeError):
+        amt_val = 0.0
+
+    if (
+        payment_status in ("PAID", "DISPUTED", "SETTLED", "CREDIT_NOTE")
+        or reminder_level == 0
+        or classification.get("action") == "NO_REMINDER_NEEDED"
+        or amt_val <= 0.0
+    ):
         return {
-            "action": "NO_ACTION",
+            "action": "NO_REMINDER_NEEDED",
             "recommended_channel": "none",
             "template_key": None,
             "reminder_level": 0,
             "grace_days": 0,
             "next_escalation_days": 0,
+            "days_overdue": days_overdue,
             "language": lang,
             "deduced_at": datetime.now().isoformat(),
         }
@@ -331,7 +343,7 @@ def check_compliance(invoice: dict, classification: dict, language: Optional[str
         "compliance_flag": compliance_flag,
         "flags": flags,
         "recommendations": recommendations,
-        "disclaimer": DISCLAIMER_BY_LANG.get(lang, DISCLAIMER_BY_LANG["en"]),
+        "disclaimer": get_legal_disclaimer(lang),
         "checked_at": datetime.now().isoformat(),
     }
 
@@ -359,6 +371,16 @@ def generate_reminder_text(
     classification: Optional[dict] = None,
 ) -> str:
     lang = language.lower() if language and language.lower() in SUPPORTED_LANGS else "en"
+
+    # Se non è richiesto sollecito (es. saldo zero, nota di credito, già pagata), ritorna stringa vuota
+    if (
+        billing.get("action") == "NO_REMINDER_NEEDED"
+        or (classification and classification.get("action") == "NO_REMINDER_NEEDED")
+        or (classification and classification.get("payment_status") in ("PAID", "DISPUTED", "SETTLED", "CREDIT_NOTE"))
+    ):
+        logger.info("No reminder needed: invoice settled, paid, credit note, or disputed.")
+        return ""
+
     level = billing.get("reminder_level", 1)
     vars_static = _build_vars(invoice, billing, lang, classification)
 
@@ -466,7 +488,7 @@ def _build_vars(invoice: dict, billing: dict, language: str, classification: Opt
         "iban": branding.get("iban", ""),
         "email": branding.get("email", ""),
         "address": branding.get("address", ""),
-        "disclaimer": DISCLAIMER_BY_LANG.get(language, DISCLAIMER_BY_LANG["en"]),
+        "disclaimer": get_legal_disclaimer(language),
     }
 
 def _render_static(language: str, level: int, vars: dict) -> str:

@@ -9,18 +9,20 @@ import logging
 from datetime import date, datetime, timedelta
 from typing import Optional
 
-from i18n_catalog import get_rationale, normalize_lang
+from i18n_catalog import get_rationale, normalize_lang, get_aging_bucket, get_status_label
 
 logger = logging.getLogger("zukwend.classifier")
 
 # ------------------------------------------------------------
 # Costanti classificazione
 # ------------------------------------------------------------
-STATUS_PENDING   = "PENDING"
-STATUS_OVERDUE   = "OVERDUE"
-STATUS_PAID      = "PAID"
-STATUS_DISPUTED  = "DISPUTED"
-STATUS_UNKNOWN   = "UNKNOWN"
+STATUS_PENDING     = "PENDING"
+STATUS_OVERDUE     = "OVERDUE"
+STATUS_PAID        = "PAID"
+STATUS_DISPUTED    = "DISPUTED"
+STATUS_UNKNOWN     = "UNKNOWN"
+STATUS_SETTLED     = "SETTLED"
+STATUS_CREDIT_NOTE = "CREDIT_NOTE"
 
 RISK_NONE   = "NONE"
 RISK_LOW    = "LOW"
@@ -92,18 +94,72 @@ def classify(
 
     # Campi
     due_date_raw  = invoice.get("due_date")
-    amount        = invoice.get("amount")
+    amount_raw    = invoice.get("amount")
     currency      = invoice.get("currency", "EUR")
     payment_hint  = (invoice.get("payment_status") or "").upper()
     invoice_number = invoice.get("invoice_number", "N/A")
     lang = normalize_lang(language or invoice.get("detected_language") or invoice.get("normalization_locale") or "en")
 
-    # Validazioni base
-    if amount is not None and amount < 0:
-        errors.append("negative_amount")
+    # Sanitizzazione amount rigorosa (zero TypeError su non-numerico o None)
+    try:
+        if amount_raw is None or str(amount_raw).strip() == "":
+            amount = 0.0
+        else:
+            amount = float(amount_raw)
+    except (ValueError, TypeError):
+        amount = 0.0
+        errors.append("invalid_amount_format")
 
     if currency not in SUPPORTED_CURRENCIES:
         errors.append("unsupported_currency")
+
+    # Gestione Importi <= 0 (SETTLED e CREDIT_NOTE)
+    if amount == 0.0:
+        rationale_key = "amount_settled"
+        rationale_params = {}
+        rationale = get_rationale(rationale_key, lang)
+        status_lbl = "Factura Pagada / Settled" if lang == "es" else get_status_label(STATUS_SETTLED, lang)
+        return _build_result(
+            payment_status=STATUS_SETTLED,
+            days_overdue=0,
+            risk_level=RISK_NONE,
+            reminder_level=LEVEL_0,
+            compliance_flag=False,
+            flags=[],
+            rationale_key=rationale_key,
+            rationale_params=rationale_params,
+            rationale=rationale,
+            next_escalation=None,
+            amount=amount,
+            currency=currency,
+            errors=errors,
+            action="NO_REMINDER_NEEDED",
+            status_label=status_lbl,
+        )
+
+    if amount < 0.0:
+        errors.append("negative_amount")
+        rationale_key = "amount_credit_note"
+        rationale_params = {}
+        rationale = get_rationale(rationale_key, lang)
+        status_lbl = "Nota de Crédito / Credit Note" if lang == "es" else get_status_label(STATUS_CREDIT_NOTE, lang)
+        return _build_result(
+            payment_status=STATUS_CREDIT_NOTE,
+            days_overdue=0,
+            risk_level=RISK_NONE,
+            reminder_level=LEVEL_0,
+            compliance_flag=False,
+            flags=["negative_amount"],
+            rationale_key=rationale_key,
+            rationale_params=rationale_params,
+            rationale=rationale,
+            next_escalation=None,
+            amount=amount,
+            currency=currency,
+            errors=errors,
+            action="NO_REMINDER_NEEDED",
+            status_label=status_lbl,
+        )
 
     # Stato dichiarato
     if payment_hint in (STATUS_PAID, STATUS_DISPUTED):
@@ -124,6 +180,8 @@ def classify(
             amount=amount,
             currency=currency,
             errors=errors,
+            action="NO_REMINDER_NEEDED",
+            status_label=get_status_label(payment_hint, lang),
         )
 
     # Parse scadenza
@@ -239,10 +297,14 @@ def _build_result(
     amount: Optional[float],
     currency: str,
     errors: Optional[list] = None,
+    action: Optional[str] = None,
+    status_label: Optional[str] = None,
 ) -> dict:
-    return {
+    bucket = get_aging_bucket(days_overdue)
+    res = {
         "payment_status": payment_status,
         "days_overdue": days_overdue,
+        "aging_bucket": bucket,
         "risk_level": risk_level,
         "reminder_level": reminder_level,
         "compliance_flag": compliance_flag,
@@ -256,6 +318,11 @@ def _build_result(
         "classified_at": datetime.now().isoformat(),
         "errors": errors or [],
     }
+    if action:
+        res["action"] = action
+    if status_label:
+        res["status_label"] = status_label
+    return res
 
 # ------------------------------------------------------------
 # compliance threshold

@@ -14,6 +14,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Callable
+from i18n_catalog import get_legal_disclaimer
 
 # ---------------------------------------------------------------------------
 # Logging setup
@@ -413,7 +414,7 @@ DISCLAIMER_BY_LANG = {
 def check_compliance(normalized: dict, classification: dict, language: Optional[str] = None) -> dict:
     deducer_mod = _import_module("deducer")
     lang = (language or normalized.get("detected_language") or normalized.get("language") or "en").lower()
-    disclaimer_text = DISCLAIMER_BY_LANG.get(lang, DISCLAIMER_BY_LANG["en"])
+    disclaimer_text = get_legal_disclaimer(lang)
     if deducer_mod is None:
         return {
             "compliance_flag": False,
@@ -717,9 +718,14 @@ def run_pipeline(
     _audit("LOAD", "OK", file_meta.get("filename", ""))
 
     raw_fields, err = _safe_step("PARSE", lambda: parse_invoice(pdf_path, mode=mode, api_key=api_key))
-    if err or raw_fields.get("requires_manual_input"):
-        errors.append({"step": "PARSE", "code": ERR_PARSE, "error": str(err or i18n["manual_input_required"])})
-        _audit("PARSE", "FALLBACK", str(err or i18n["manual_input_required"]))
+    if err or not raw_fields or raw_fields.get("requires_manual_input") or raw_fields.get("parse_error"):
+        parse_err_msg = str(err or (i18n["manual_input_required"] if raw_fields and raw_fields.get("requires_manual_input") else "PDF parsing failed"))
+        errors.append({"step": "PARSE", "code": ERR_PARSE, "error": parse_err_msg})
+        _audit("PARSE", "FAILED", parse_err_msg)
+        elapsed = round(time.time() - start_time, 2)
+        _audit("PIPELINE_END", "FAILED", f"elapsed={elapsed}s | errors={len(errors)}")
+        logger.error(f"Pipeline aborted after PARSE failure: {parse_err_msg}")
+        return WorkflowResult({}, {}, {}, {}, "", None, [], audit_log, False, errors)
     else:
         _audit("PARSE", "OK", f"{len(raw_fields)} {i18n['fields_extracted']}")
 

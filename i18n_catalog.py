@@ -30,6 +30,8 @@ CATALOG: Dict[str, Dict[str, Dict[str, str]]] = {
             "overdue_days_l1": "Overdue by {days} days — L1",
             "overdue_days_l2": "Overdue by {days} days — L2",
             "overdue_days_l3": "Overdue by {days} days — L3",
+            "amount_settled": "Invoice settled (amount is zero)",
+            "amount_credit_note": "Credit note (negative amount — no reminder needed)",
         },
         "it": {
             "status_declared": "Stato dichiarato: {status}",
@@ -39,6 +41,8 @@ CATALOG: Dict[str, Dict[str, Dict[str, str]]] = {
             "overdue_days_l1": "Scaduta da {days} giorni — L1",
             "overdue_days_l2": "Scaduta da {days} giorni — L2",
             "overdue_days_l3": "Scaduta da {days} giorni — L3",
+            "amount_settled": "Fattura saldata (importo pari a zero)",
+            "amount_credit_note": "Nota di credito (importo negativo — nessun sollecito)",
         },
         "de": {
             "status_declared": "Angegebener Status: {status}",
@@ -48,6 +52,8 @@ CATALOG: Dict[str, Dict[str, Dict[str, str]]] = {
             "overdue_days_l1": "Überfällig seit {days} Tagen — L1",
             "overdue_days_l2": "Überfällig seit {days} Tagen — L2",
             "overdue_days_l3": "Überfällig seit {days} Tagen — L3",
+            "amount_settled": "Rechnung beglichen (Betrag ist Null)",
+            "amount_credit_note": "Gutschrift (negativer Betrag — keine Mahnung)",
         },
         "fr": {
             "status_declared": "Statut déclaré : {status}",
@@ -57,6 +63,8 @@ CATALOG: Dict[str, Dict[str, Dict[str, str]]] = {
             "overdue_days_l1": "En retard de {days} jours — L1",
             "overdue_days_l2": "En retard de {days} jours — L2",
             "overdue_days_l3": "En retard de {days} jours — L3",
+            "amount_settled": "Facture réglée (montant nul)",
+            "amount_credit_note": "Avoir / Note de crédit (montant négatif — aucune relance)",
         },
         "es": {
             "status_declared": "Estado declarado: {status}",
@@ -66,6 +74,8 @@ CATALOG: Dict[str, Dict[str, Dict[str, str]]] = {
             "overdue_days_l1": "Vencida hace {days} días — L1",
             "overdue_days_l2": "Vencida hace {days} días — L2",
             "overdue_days_l3": "Vencida hace {days} días — L3",
+            "amount_settled": "Factura pagada / saldada (importe cero)",
+            "amount_credit_note": "Nota de crédito (importe negativo — no requiere reclamación)",
         },
         "pt": {
             "status_declared": "Estado declarado: {status}",
@@ -75,6 +85,8 @@ CATALOG: Dict[str, Dict[str, Dict[str, str]]] = {
             "overdue_days_l1": "Vencida há {days} dias — L1",
             "overdue_days_l2": "Vencida há {days} dias — L2",
             "overdue_days_l3": "Vencida há {days} dias — L3",
+            "amount_settled": "Fatura liquidada (montante igual a zero)",
+            "amount_credit_note": "Nota de crédito (montante negativo — sem cobrança)",
         },
     },
 
@@ -215,6 +227,116 @@ CATALOG: Dict[str, Dict[str, Dict[str, str]]] = {
             "none": "Nenhuma anomalia detetada.",
         },
     },
+
+    # 5. DISCLAIMER LEGALE CANONICO (Single Source of Truth)
+    "disclaimer": {
+        "en": {
+            "legal": (
+                "NOTE: This document is software-generated. "
+                "The software provides suggestions, not decisions. "
+                "Consult a legal professional before sending level-3 notices. "
+                "No data sent to external servers."
+            ),
+        },
+        "it": {
+            "legal": (
+                "NOTA: Questo documento è generato da software. "
+                "Il software fornisce suggerimenti, non decisioni. "
+                "Consultare un professionista legale prima di inviare comunicazioni di livello 3. "
+                "Nessun dato inviato a server esterni."
+            ),
+        },
+        "de": {
+            "legal": (
+                "HINWEIS: Dieses Dokument wurde von Software erstellt. "
+                "Die Software liefert Vorschläge, keine Entscheidungen. "
+                "Konsultieren Sie einen Rechtsanwalt, bevor Sie Mahnstufe-3-Schreiben versenden. "
+                "Keine Daten an externe Server gesendet."
+            ),
+        },
+        "fr": {
+            "legal": (
+                "NOTE : Ce document est généré par logiciel. "
+                "Le logiciel fournit des suggestions, pas des décisions. "
+                "Consultez un professionnel juridique avant d'envoyer des avis de niveau 3. "
+                "Aucune donnée envoyée à des serveurs externes."
+            ),
+        },
+        "es": {
+            "legal": (
+                "NOTA: Este documento es generado por software. "
+                "El software proporciona sugerencias, no decisiones. "
+                "Consulte a un profesional legal antes de enviar avisos de nivel 3. "
+                "Ningún dato enviado a servidores externos."
+            ),
+        },
+        "pt": {
+            "legal": (
+                "NOTA: Este documento é gerado por software. "
+                "O software fornece sugestões, não decisões. "
+                "Consulte um profissional jurídico antes de enviar avisos de nível 3. "
+                "Nenhum dado enviado a servidores externos."
+            ),
+        },
+    },
+
+    # 6. ETICHETTE STATO PAGAMENTO
+    "status": {
+        "en": {
+            "SETTLED": "Settled",
+            "CREDIT_NOTE": "Credit Note",
+            "OVERDUE": "Overdue",
+            "PENDING": "Pending",
+            "PAID": "Paid",
+            "DISPUTED": "Disputed",
+            "UNKNOWN": "N/A",
+        },
+        "it": {
+            "SETTLED": "Saldata",
+            "CREDIT_NOTE": "Nota di Credito",
+            "OVERDUE": "Scaduta",
+            "PENDING": "In Attesa",
+            "PAID": "Pagata",
+            "DISPUTED": "Contestata",
+            "UNKNOWN": "N/D",
+        },
+        "de": {
+            "SETTLED": "Beglichen",
+            "CREDIT_NOTE": "Gutschrift",
+            "OVERDUE": "Überfällig",
+            "PENDING": "Ausstehend",
+            "PAID": "Bezahlt",
+            "DISPUTED": "Beanstandet",
+            "UNKNOWN": "N/B",
+        },
+        "fr": {
+            "SETTLED": "Réglée",
+            "CREDIT_NOTE": "Avoir / Note de Crédit",
+            "OVERDUE": "En Retard",
+            "PENDING": "En Attente",
+            "PAID": "Payée",
+            "DISPUTED": "Contestée",
+            "UNKNOWN": "N/D",
+        },
+        "es": {
+            "SETTLED": "Factura Pagada / Settled",
+            "CREDIT_NOTE": "Nota de Crédito / Credit Note",
+            "OVERDUE": "Vencida",
+            "PENDING": "Pendiente",
+            "PAID": "Pagada",
+            "DISPUTED": "En Disputa",
+            "UNKNOWN": "N/D",
+        },
+        "pt": {
+            "SETTLED": "Fatura Liquidada",
+            "CREDIT_NOTE": "Nota de Crédito",
+            "OVERDUE": "Vencida",
+            "PENDING": "Pendente",
+            "PAID": "Paga",
+            "DISPUTED": "Contestada",
+            "UNKNOWN": "N/D",
+        },
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -263,6 +385,43 @@ def get_flag_description(key: str, language: Optional[str] = None) -> str:
 def get_channel_label(key: str, language: Optional[str] = None) -> str:
     """Helper per la descrizione tradotta del canale di sollecito."""
     return get_text("channels", key, language)
+
+def get_legal_disclaimer(language: Optional[str] = None) -> str:
+    """Restituisce il disclaimer legale canonico per la lingua specificata (fallback EN)."""
+    return get_text("disclaimer", "legal", language)
+
+def get_status_label(status: str, language: Optional[str] = None) -> str:
+    """Helper per l'etichetta localizzata dello stato fattura (fallback EN)."""
+    st = str(status).strip().upper()
+    return get_text("status", st, language)
+
+def get_aging_bucket(days_overdue: Any) -> str:
+    """
+    Restituisce l'Aging Bucket ZUKWEND standard rigoroso:
+    - days <= 0: 'Current / Not Due'
+    - 1 <= days <= 30: '0-30 Days'
+    - 31 <= days <= 60: '31-60 Days'
+    - 61 <= days <= 90: '61-90 Days'
+    - days > 90: '90+ Days (Critical)'
+    """
+    try:
+        if days_overdue is None:
+            return "Current / Not Due"
+        days = int(days_overdue)
+    except (ValueError, TypeError):
+        return "Current / Not Due"
+
+    if days <= 0:
+        return "Current / Not Due"
+    elif 1 <= days <= 30:
+        return "0-30 Days"
+    elif 31 <= days <= 60:
+        return "31-60 Days"
+    elif 61 <= days <= 90:
+        return "61-90 Days"
+    else:
+        return "90+ Days (Critical)"
+
 
 # ---------------------------------------------------------------------------
 # POST-PROCESSOR GUARDRAIL & ANTI-LEAK LINTER
