@@ -262,6 +262,13 @@ def deduce(invoice: dict, classification: dict, language: str = "it") -> dict:
     else:
         next_esc_days = 0
 
+    if action == "NO_REMINDER_NEEDED" or payment_status in ("PAID", "DISPUTED", "SETTLED", "CREDIT_NOTE"):
+        reminder_level = 0
+        action = "NO_REMINDER_NEEDED"
+        channel = "none"
+        template_key = None
+        next_esc_days = 0
+
     return {
         "action": action,
         "recommended_channel": channel,

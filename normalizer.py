@@ -119,6 +119,29 @@ def normalize(raw_fields: dict, locale: str = "it") -> dict:
     if raw_fields.get("invoice_number"):
         result["invoice_number"] = normalize_invoice_number(raw_fields["invoice_number"])
 
+    # Rilevamento Credit Note e preservazione rigorosa importo negativo
+    text_corpus = (
+        (raw_text or "") + " " +
+        str(raw_fields.get("amount_raw") or "") + " " +
+        str(raw_fields.get("invoice_number") or "") + " " +
+        str(raw_fields.get("payment_status") or "")
+    ).lower()
+
+    is_credit_note = False
+    for pat in [r"\bcredit\s*note\b", r"\bnota\s*di\s*credito\b", r"\bnota\s*de\s*cr[eé]dito\b", r"\bavoir\b", r"\bgutschrift\b"]:
+        if re.search(pat, text_corpus, re.IGNORECASE):
+            is_credit_note = True
+            break
+
+    if is_credit_note:
+        result["payment_status"] = "CREDIT_NOTE"
+        if result.get("amount") is not None:
+            result["amount"] = -abs(float(result["amount"]))
+    elif result.get("amount") is not None and float(result["amount"]) < 0:
+        result["payment_status"] = "CREDIT_NOTE"
+    elif raw_fields.get("payment_status"):
+        result["payment_status"] = raw_fields.get("payment_status")
+
     result["normalization_locale"] = detected_lang
     result["normalized_at"] = datetime.now().isoformat()
     result["normalization_confidence"] = _compute_confidence(result)
@@ -189,8 +212,14 @@ def normalize_amount(raw: Optional[str], locale: str = "it") -> Optional[float]:
     if res.amount is not None:
         return res.amount
 
-    raw = str(raw).strip()
-    cleaned = re.sub(r"[€$£¥\sA-Za-z'’`]", "", raw)
+    raw_str = str(raw).strip()
+    is_neg = False
+    if re.search(r"\(\s*[-+]?[^)]*\d+[^)]*\)", raw_str):
+        is_neg = True
+    elif re.search(r"(?:^|[\s\$€£¥CHF\(\[])\s*[-−–]\s*[\d\$€£¥CHF\s]", raw_str) or re.search(r"[-−–]\s*[\d\$€£¥CHF]", raw_str) or raw_str.startswith("-") or raw_str.endswith("-"):
+        is_neg = True
+
+    cleaned = re.sub(r"[€$£¥\sA-Za-z'’`\(\)]", "", raw_str)
 
     if not cleaned:
         return None
@@ -224,7 +253,8 @@ def normalize_amount(raw: Optional[str], locale: str = "it") -> Optional[float]:
         cleaned = cleaned.replace(",", "").replace(".", "")
 
     try:
-        return round(float(cleaned), 2)
+        amt = round(float(cleaned), 2)
+        return -abs(amt) if is_neg else amt
     except:
         return None
 
@@ -287,6 +317,7 @@ def normalize_currency(raw: Optional[str]) -> CurrencyResult:
     """
     Normalizza valuta e importo:
     - Estrae simbolo valuta originale ($, €, £, CHF) o default EUR se assente.
+    - Preserva rigorosamente il segno negativo '-' sia anteposto al numero/valuta sia tra parentesi contabili.
     - Conserva il simbolo originale nell'output (.currency), tracciando anche l'ISO (.iso_code).
     - Pulisce e calcola l'importo numerico su formati Anglo-Sassone, Continentale e Svizzero.
     """
@@ -296,6 +327,13 @@ def normalize_currency(raw: Optional[str]) -> CurrencyResult:
     s = str(raw).strip()
     if not s:
         return CurrencyResult(None, "EUR", "EUR")
+
+    # 1. Rileva indicatore negativo esplicito (segno meno o parentesi contabili)
+    is_neg = False
+    if re.search(r"\(\s*[-+]?[^)]*\d+[^)]*\)", s):
+        is_neg = True
+    elif re.search(r"(?:^|[\s\$€£¥CHF\(\[])\s*[-−–]\s*[\d\$€£¥CHF\s]", s) or re.search(r"[-−–]\s*[\d\$€£¥CHF]", s) or s.startswith("-") or s.endswith("-"):
+        is_neg = True
 
     curr = "EUR"
     iso = "EUR"
@@ -372,10 +410,51 @@ def normalize_currency(raw: Optional[str]) -> CurrencyResult:
 
     try:
         amt = round(float(num_str), 2)
+        if is_neg and amt is not None:
+            amt = -abs(amt)
     except Exception:
         amt = None
 
     return CurrencyResult(amt, curr, iso)
+
+
+def _extract_amount_and_currency(text: str):
+    """Estrae importo e valuta preservando segno negativo e Credit Note."""
+    is_credit_note = False
+    for pat in [r"\bcredit\s*note\b", r"\bnota\s*di\s*credito\b", r"\bnota\s*de\s*cr[eé]dito\b", r"\bavoir\b", r"\bgutschrift\b"]:
+        if re.search(pat, text, re.IGNORECASE):
+            is_credit_note = True
+            break
+
+    amount_patterns = [
+        r"(?:[-−–]\s*)?(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)\s*\(?\s*[-−–]?\s*[\d\.,'’`\s]+\)?",
+        r"\(?\s*[-−–]?\s*[\d\.,'’`\s]+\)?\s*(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)",
+        r"(?:totale|total|amount|balance\s*due|montant|betrag|importe|valor)\s*[:\s|]\s*([^\n\r]+)",
+        r"\(?\s*[-−–]\s*[\d\.,'’`\s]+\)?",
+    ]
+
+    for line in text.split("\n"):
+        line_clean = line.strip()
+        if re.search(
+            r"(?:total\s*amount|totale\s*fattura|balance\s*due|amount\s*due|total|totale|montant|betrag|importe|valor)\b",
+            line_clean,
+            re.IGNORECASE,
+        ):
+            res = normalize_currency(line_clean)
+            if res.amount is not None:
+                amt = -abs(res.amount) if is_credit_note else res.amount
+                return amt, res.currency, line_clean
+
+    for pattern in amount_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        if matches:
+            for match in reversed(matches):
+                res = normalize_currency(match)
+                if res.amount is not None:
+                    amt = -abs(res.amount) if is_credit_note else res.amount
+                    return amt, res.currency, str(match).strip()
+
+    return None, "EUR", None
 
 # ------------------------------------------------------------
 # detect_language()

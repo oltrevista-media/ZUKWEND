@@ -621,6 +621,21 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
         for f in compliance.get("flags", [])
     ]
 
+    # Zero level sync rigoroso
+    rem_lvl_raw = classification.get("reminder_level")
+    if (
+        rem_lvl_raw is None
+        or classification.get("action") == "NO_REMINDER_NEEDED"
+        or billing.get("action") == "NO_REMINDER_NEEDED"
+        or status_raw in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED")
+    ):
+        final_rem_level = 0
+    else:
+        try:
+            final_rem_level = int(rem_lvl_raw)
+        except (ValueError, TypeError):
+            final_rem_level = 0
+
     report_dict = {
         "generated_at": clean_ts,
         "software": labels["software_name"],
@@ -645,7 +660,7 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "days_overdue":       int(classification.get("days_overdue") or 0),
             "risk_level_raw":     risk_raw,
             "risk_level_label":   risk_label,
-            "reminder_level":     int(classification.get("reminder_level") or 1),
+            "reminder_level":     final_rem_level,
             "compliance_flag":    bool(classification.get("compliance_flag") or False),
             "rationale":          rationale_val,
             "next_escalation":    str(classification.get("next_escalation_date") or "N/A"),

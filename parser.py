@@ -69,9 +69,10 @@ INVOICE_NUMBER_PATTERNS = [
 ]
 
 AMOUNT_PATTERNS = [
-    r"(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)\s*([\d\.,'’`\s]+)",
-    r"([\d\.,'’`\s]+)\s*(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)",
+    r"(?:[-−–]\s*)?(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)\s*\(?\s*[-−–]?\s*[\d\.,'’`\s]+\)?",
+    r"\(?\s*[-−–]?\s*[\d\.,'’`\s]+\)?\s*(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)",
     r"(?:totale|total|amount|balance\s*due|montant|betrag|importe|valor)\s*[:\s|]\s*([^\n\r]+)",
+    r"\(?\s*[-−–]\s*[\d\.,'’`\s]+\)?",
 ]
 
 DUE_DATE_KEYWORDS = {
@@ -205,7 +206,16 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
 def _fallback_regex_extraction(raw_text: str) -> dict:
     text_lower = raw_text.lower()
     amount, currency, amount_raw = _extract_amount_and_currency(raw_text)
-    
+
+    is_credit_note = False
+    for pat in [r"\bcredit\s*note\b", r"\bnota\s*di\s*credito\b", r"\bnota\s*de\s*cr[eé]dito\b", r"\bavoir\b", r"\bgutschrift\b"]:
+        if re.search(pat, raw_text, re.IGNORECASE):
+            is_credit_note = True
+            break
+
+    if is_credit_note and amount is not None and amount > 0:
+        amount = -abs(amount)
+
     fields = {
         "invoice_number": _extract_invoice_number(raw_text),
         "issue_date": _extract_issue_date(raw_text, text_lower),
@@ -213,10 +223,12 @@ def _fallback_regex_extraction(raw_text: str) -> dict:
         "amount": amount,
         "amount_raw": amount_raw,
         "currency": currency or "EUR",
+        "payment_status": "CREDIT_NOTE" if (is_credit_note or (amount is not None and amount < 0)) else None,
         "client_name": _extract_client_name(raw_text, text_lower),
         "client_address": _extract_client_address(raw_text, text_lower),
         "vendor_name": _extract_vendor_name(raw_text, text_lower),
         "payment_terms": _extract_payment_terms(text_lower),
+        "raw_text": raw_text,
         "extraction_timestamp": datetime.now().isoformat(),
         "extraction_method": "Regex_Fallback",
         "requires_manual_input": False,
@@ -314,6 +326,7 @@ def normalize_currency(raw_val) -> CurrencyResult:
     """
     Universal Currency Parser:
     - Estrae il simbolo valuta originale ($, €, £, CHF) o imposta EUR di default se assente.
+    - Preserva rigorosamente il segno negativo '-' sia anteposto al numero/valuta sia tra parentesi contabili '(500.00)'.
     - Pulisce la stringa numerica: gestisce formato Anglo-Sassone ("18,450.00" -> 18450.00),
       Continentale ("18.450,00" -> 18450.00) e Svizzero ("18'450.00" -> 18450.00).
     - Ritorna CurrencyResult(amount, currency) compatibile con tuple unpacking e accesso ad attributi.
@@ -325,7 +338,14 @@ def normalize_currency(raw_val) -> CurrencyResult:
     if not s:
         return CurrencyResult(None, "EUR", "EUR")
 
-    # 1. Estrazione valuta: conserva simbolo originale ($, €, £, CHF)
+    # 1. Rileva indicatore negativo esplicito (segno meno o parentesi contabili)
+    is_neg = False
+    if re.search(r"\(\s*[-+]?[^)]*\d+[^)]*\)", s):
+        is_neg = True
+    elif re.search(r"(?:^|[\s\$€£¥CHF\(\[])\s*[-−–]\s*[\d\$€£¥CHF\s]", s) or re.search(r"[-−–]\s*[\d\$€£¥CHF]", s) or s.startswith("-") or s.endswith("-"):
+        is_neg = True
+
+    # 2. Estrazione valuta: conserva simbolo originale ($, €, £, CHF)
     curr = "EUR"
     iso = "EUR"
     if "CHF" in s:
@@ -359,7 +379,7 @@ def normalize_currency(raw_val) -> CurrencyResult:
         curr = "BRL"
         iso = "BRL"
 
-    # 2. Pulizia stringa numerica
+    # 3. Pulizia stringa numerica
     num_str = re.sub(
         r"(?i)\b(?:EUR|USD|GBP|CHF|BRL|CAD|AUD|JPY|TOTAL|AMOUNT|SUBTOTAL|VALORE|IMPORTO|SOLDE|NETTO|LORDO|DUE|BALANCE)\b",
         "",
@@ -375,7 +395,7 @@ def normalize_currency(raw_val) -> CurrencyResult:
     if not num_str:
         return CurrencyResult(None, curr, iso)
 
-    # 3. Gestione separatori decimali e migliaia
+    # 4. Gestione separatori decimali e migliaia
     if "," in num_str and "." in num_str:
         if num_str.rfind(".") > num_str.rfind(","):
             # Anglo-Sassone: 18,450.00 -> 18450.00
@@ -398,6 +418,8 @@ def normalize_currency(raw_val) -> CurrencyResult:
 
     try:
         amt = round(float(num_str), 2)
+        if is_neg and amt is not None:
+            amt = -abs(amt)
     except Exception:
         amt = None
 
@@ -405,6 +427,13 @@ def normalize_currency(raw_val) -> CurrencyResult:
 
 
 def _extract_amount_and_currency(text: str):
+    # Rilevamento Credit Note nell'intero testo
+    is_credit_note = False
+    for pat in [r"\bcredit\s*note\b", r"\bnota\s*di\s*credito\b", r"\bnota\s*de\s*cr[eé]dito\b", r"\bavoir\b", r"\bgutschrift\b"]:
+        if re.search(pat, text, re.IGNORECASE):
+            is_credit_note = True
+            break
+
     # 1. Cerca prima su righe con indicazione esplicita di totale
     for line in text.split("\n"):
         line_clean = line.strip()
@@ -415,8 +444,9 @@ def _extract_amount_and_currency(text: str):
         ):
             res = normalize_currency(line_clean)
             if res.amount is not None:
+                amt = -abs(res.amount) if is_credit_note else res.amount
                 curr = res.currency if res.currency != "EUR" or "EUR" in line_clean else _extract_currency_symbol(text)
-                return res.amount, curr, line_clean
+                return amt, curr, line_clean
 
     # 2. Cerca tramite AMOUNT_PATTERNS
     for pattern in AMOUNT_PATTERNS:
@@ -425,8 +455,9 @@ def _extract_amount_and_currency(text: str):
             for match in reversed(matches):
                 res = normalize_currency(match)
                 if res.amount is not None:
+                    amt = -abs(res.amount) if is_credit_note else res.amount
                     curr = res.currency if res.currency != "EUR" or "EUR" in str(match) else _extract_currency_symbol(text)
-                    return res.amount, curr, str(match).strip()
+                    return amt, curr, str(match).strip()
 
     return None, "EUR", None
 

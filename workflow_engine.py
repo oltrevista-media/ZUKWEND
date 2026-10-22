@@ -9,6 +9,7 @@ REPTANA MODE | OLTREVISTA 2030 | Offline-First
 import json
 import logging
 import os
+import re
 import sys
 import time
 from datetime import datetime
@@ -326,6 +327,24 @@ def parse_invoice(pdf_path: str, use_ocr: bool = False, mode: str = "local", api
         logger.error(f"Parser error: {e}")
         return {"requires_manual_input": True, "error": str(e)}
 
+def normalize_currency(raw: Optional[str]):
+    norm_mod = _import_module("normalizer")
+    if norm_mod and hasattr(norm_mod, "normalize_currency"):
+        return norm_mod.normalize_currency(raw)
+    parser_mod = _import_module("parser")
+    if parser_mod and hasattr(parser_mod, "normalize_currency"):
+        return parser_mod.normalize_currency(raw)
+    return None
+
+def _extract_amount_and_currency(text: str):
+    norm_mod = _import_module("normalizer")
+    if norm_mod and hasattr(norm_mod, "_extract_amount_and_currency"):
+        return norm_mod._extract_amount_and_currency(text)
+    parser_mod = _import_module("parser")
+    if parser_mod and hasattr(parser_mod, "_extract_amount_and_currency"):
+        return parser_mod._extract_amount_and_currency(text)
+    return None, "EUR", None
+
 def normalize_invoice(raw_fields: dict, language: str = "it") -> dict:
     norm_mod = _import_module("normalizer")
     if norm_mod is None:
@@ -335,6 +354,25 @@ def normalize_invoice(raw_fields: dict, language: str = "it") -> dict:
     try:
         normalized = norm_mod.normalize(raw_fields, locale=language)
         normalized["is_normalized"] = True
+
+        # Rilevamento Credit Note sul workflow engine
+        text_corpus = (
+            str(raw_fields.get("raw_text") or "") + " " +
+            str(raw_fields.get("amount_raw") or "") + " " +
+            str(raw_fields.get("invoice_number") or "") + " " +
+            str(normalized.get("invoice_number") or "")
+        ).lower()
+
+        for pat in [r"\bcredit\s*note\b", r"\bnota\s*di\s*credito\b", r"\bnota\s*de\s*cr[eé]dito\b", r"\bavoir\b", r"\bgutschrift\b"]:
+            if re.search(pat, text_corpus, re.IGNORECASE):
+                normalized["payment_status"] = "CREDIT_NOTE"
+                if normalized.get("amount") is not None:
+                    normalized["amount"] = -abs(float(normalized["amount"]))
+                break
+
+        if normalized.get("amount") is not None and float(normalized["amount"]) < 0:
+            normalized["payment_status"] = "CREDIT_NOTE"
+
         logger.info(f"Normalizer: detected_language={normalized.get('detected_language', 'N/A')}")
         return normalized
     except Exception as e:
@@ -442,6 +480,21 @@ def check_compliance(normalized: dict, classification: dict, language: Optional[
         }
 
 def deduce_billing_action(normalized: dict, classification: dict, language: str) -> dict:
+    if (
+        classification.get("action") == "NO_REMINDER_NEEDED"
+        or classification.get("payment_status") in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED")
+        or (normalized.get("amount") is not None and float(normalized.get("amount")) <= 0)
+    ):
+        return {
+            "action": "NO_REMINDER_NEEDED",
+            "recommended_channel": "none",
+            "template_key": None,
+            "reminder_level": 0,
+            "grace_days": 0,
+            "next_escalation_days": 0,
+            "days_overdue": classification.get("days_overdue", 0),
+        }
+
     deducer_mod = _import_module("deducer")
     if deducer_mod is None:
         return {
@@ -456,6 +509,13 @@ def deduce_billing_action(normalized: dict, classification: dict, language: str)
         billing = deducer_mod.deduce(normalized, classification, language=language)
         if "days_overdue" not in billing:
             billing["days_overdue"] = classification.get("days_overdue", 0)
+        if (
+            billing.get("action") == "NO_REMINDER_NEEDED"
+            or classification.get("action") == "NO_REMINDER_NEEDED"
+            or classification.get("payment_status") in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED")
+        ):
+            billing["action"] = "NO_REMINDER_NEEDED"
+            billing["reminder_level"] = 0
         logger.info(f"Deducer: action={billing.get('action')} | template={billing.get('template_key')}")
         return billing
     except Exception as e:
@@ -751,6 +811,13 @@ def run_pipeline(
                 "critical_overdue_bad_debt_risk" if f == "critical_overdue_risk_inesigibilita" else f
                 for f in classification["flags"]
             ]
+        if (
+            classification.get("action") == "NO_REMINDER_NEEDED"
+            or classification.get("payment_status") in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED")
+            or (normalized.get("amount") is not None and float(normalized.get("amount")) <= 0)
+        ):
+            classification["reminder_level"] = 0
+            classification["action"] = "NO_REMINDER_NEEDED"
         _audit("CLASSIFY", "OK", f"status={classification.get('payment_status')} | level={classification.get('reminder_level')}")
 
     compliance, err = _safe_step("COMPLIANCE", lambda: check_compliance(normalized, classification, language=language))
@@ -775,15 +842,39 @@ def run_pipeline(
     if err:
         errors.append({"step": "BILLING", "code": ERR_BILLING, "error": str(err)})
         _audit("BILLING", "FALLBACK", str(err))
-        billing = {"action": "SEND_REMINDER_L1", "reminder_level": 1}
+        if (
+            classification.get("action") == "NO_REMINDER_NEEDED"
+            or classification.get("payment_status") in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED")
+            or (normalized.get("amount") is not None and float(normalized.get("amount")) <= 0)
+        ):
+            billing = {"action": "NO_REMINDER_NEEDED", "reminder_level": 0}
+        else:
+            billing = {"action": "SEND_REMINDER_L1", "reminder_level": 1}
     else:
+        if (
+            billing.get("action") == "NO_REMINDER_NEEDED"
+            or classification.get("action") == "NO_REMINDER_NEEDED"
+            or classification.get("payment_status") in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED")
+            or (normalized.get("amount") is not None and float(normalized.get("amount")) <= 0)
+        ):
+            billing["reminder_level"] = 0
+            billing["action"] = "NO_REMINDER_NEEDED"
+            classification["reminder_level"] = 0
+            classification["action"] = "NO_REMINDER_NEEDED"
         _audit("BILLING", "OK", f"action={billing.get('action')}")
 
     reminder_text, err = _safe_step(
         "REMINDER",
         lambda: generate_reminder_text(normalized, billing, language, mode, api_key, classification=classification)
     )
-    if err or not reminder_text:
+    if (
+        billing.get("action") == "NO_REMINDER_NEEDED"
+        or classification.get("payment_status") in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED")
+        or classification.get("action") == "NO_REMINDER_NEEDED"
+    ):
+        reminder_text = ""
+        _audit("REMINDER", "OK", "0 characters (no reminder needed)")
+    elif err or not reminder_text:
         try:
             reminder_text = _static_reminder(normalized, billing, language)
         except Exception as e_rem:

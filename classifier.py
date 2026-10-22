@@ -113,7 +113,7 @@ def classify(
     if currency not in SUPPORTED_CURRENCIES:
         errors.append("unsupported_currency")
 
-    # Gestione Importi <= 0 (SETTLED e CREDIT_NOTE)
+    # Gestione Importi <= 0 (SETTLED e CREDIT_NOTE) o payment_hint CREDIT_NOTE
     if amount == 0.0:
         rationale_key = "amount_settled"
         rationale_params = {}
@@ -137,8 +137,9 @@ def classify(
             status_label=status_lbl,
         )
 
-    if amount < 0.0:
-        errors.append("negative_amount")
+    if amount < 0.0 or payment_hint == STATUS_CREDIT_NOTE:
+        if amount < 0.0:
+            errors.append("negative_amount")
         rationale_key = "amount_credit_note"
         rationale_params = {}
         rationale = get_rationale(rationale_key, lang)
@@ -149,7 +150,7 @@ def classify(
             risk_level=RISK_NONE,
             reminder_level=LEVEL_0,
             compliance_flag=False,
-            flags=["negative_amount"],
+            flags=["negative_amount"] if amount < 0.0 else [],
             rationale_key=rationale_key,
             rationale_params=rationale_params,
             rationale=rationale,
@@ -300,6 +301,10 @@ def _build_result(
     action: Optional[str] = None,
     status_label: Optional[str] = None,
 ) -> dict:
+    if action == "NO_REMINDER_NEEDED" or payment_status in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED"):
+        reminder_level = 0
+        action = "NO_REMINDER_NEEDED"
+
     bucket = get_aging_bucket(days_overdue)
     res = {
         "payment_status": payment_status,

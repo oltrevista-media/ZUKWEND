@@ -241,8 +241,89 @@ def test_m1_parse_failure():
         if corrupt_file.exists():
             corrupt_file.unlink()
 
+def test_e2e_negative_credit_note():
+    print("\n---> Running E2E Negative Credit Note PDF Verification...")
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+
+    test_pdf_path = REPO_DIR / "test_credit_note_sample.pdf"
+    c = canvas.Canvas(str(test_pdf_path), pagesize=letter)
+    c.drawString(100, 750, "CREDIT NOTE")
+    c.drawString(100, 720, "Document Number: CN-2026-999")
+    c.drawString(100, 690, "Issue Date: 2026-05-10")
+    c.drawString(100, 660, "Due Date: 2026-06-10")
+    c.drawString(100, 630, "Client: Acme Corporation Ltd.")
+    c.drawString(100, 600, "Total Amount: EUR -500.00")
+    c.save()
+
+    try:
+        res = workflow_engine.run_pipeline(
+            pdf_path=str(test_pdf_path),
+            language="en",
+            mode="local",
+            is_demo=False
+        )
+        assert res.success, f"Pipeline execution failed for credit note: {res.errors}"
+
+        # a. amount estratto sia == -500.00
+        extracted_amount = float(res.invoice.get("amount", 0.0))
+        assert extracted_amount == -500.00, f"Expected amount -500.00, got {extracted_amount}"
+
+        # b. payment_status sia 'CREDIT_NOTE'
+        clf_status = res.classification.get("payment_status")
+        assert clf_status == "CREDIT_NOTE", f"Expected payment_status CREDIT_NOTE, got {clf_status}"
+
+        # c. action sia 'NO_REMINDER_NEEDED'
+        billing_action = res.billing.get("action")
+        assert billing_action == "NO_REMINDER_NEEDED", f"Expected action NO_REMINDER_NEEDED, got {billing_action}"
+
+        # d. reminder_level sia 0
+        rem_level = res.classification.get("reminder_level")
+        assert rem_level == 0, f"Expected classification reminder_level 0, got {rem_level}"
+        b_rem_level = res.billing.get("reminder_level")
+        assert b_rem_level == 0, f"Expected billing reminder_level 0, got {b_rem_level}"
+
+        # Check generated JSON export as well
+        json_path = None
+        for p in res.export_paths:
+            if p.endswith(".json"):
+                json_path = Path(p)
+                break
+        assert json_path and json_path.exists(), "Exported JSON report not found"
+        with open(json_path, "r", encoding="utf-8") as f:
+            jdata = json.load(f)
+        assert jdata["classification"]["reminder_level"] == 0, f"JSON reminder_level not 0: {jdata['classification']['reminder_level']}"
+        assert jdata["invoice"]["amount"] == -500.00
+        assert jdata["billing"]["action"] == "NO_REMINDER_NEEDED"
+
+        print("  [PASS] E2E Negative Credit Note PDF verified successfully:")
+        print(f"         - Amount: {extracted_amount}")
+        print(f"         - Payment Status: {clf_status}")
+        print(f"         - Action: {billing_action}")
+        print(f"         - Reminder Level: {rem_level}")
+    finally:
+        if test_pdf_path.exists():
+            test_pdf_path.unlink()
+
+def cleanup_output_folder():
+    import shutil
+    for d in [REPO_DIR / "output", Path("C:/OLTREVISTA_AI/output")]:
+        if d.exists():
+            for item in d.iterdir():
+                if item.name == ".gitkeep":
+                    continue
+                if item.is_dir():
+                    shutil.rmtree(item, ignore_errors=True)
+                else:
+                    try:
+                        item.unlink()
+                    except Exception:
+                        pass
+
 if __name__ == "__main__":
     test_b1_aging_buckets()
     test_b2_amounts()
     test_m1_parse_failure()
+    test_e2e_negative_credit_note()
     run_multilingual_test()
+    cleanup_output_folder()
