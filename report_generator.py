@@ -124,7 +124,7 @@ try:
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
-    logger.warning("reportlab non disponibile — PDF limitato a testo")
+    logger.warning("reportlab not available — PDF fallback to plain text")
 
 # ---------------------------------------------------------------------------
 # Font Unicode per PDF (accenti à è é ì ò ù ä ö ü ß ñ ç e valute € $ £)
@@ -163,11 +163,11 @@ def _register_pdf_fonts() -> None:
                 italic="ZukSans-Italic", boldItalic="ZukSans-BoldItalic",
             )
             PDF_FONT_REGULAR, PDF_FONT_BOLD, PDF_UNICODE_FONT = "ZukSans", "ZukSans-Bold", True
-            logger.info(f"Font PDF Unicode registrato: {os.path.basename(regular)}")
+            logger.info(f"Unicode PDF font registered: {os.path.basename(regular)}")
             return
         except Exception as e:
-            logger.warning(f"Registrazione font '{regular}' fallita: {e}")
-    logger.warning("Nessun font TrueType Unicode disponibile: uso Helvetica (WinAnsi, copre €, £, accenti latini)")
+            logger.warning(f"Font registration '{regular}' failed: {e}")
+    logger.warning("No TrueType Unicode font available: using Helvetica (WinAnsi Latin-1)")
 
 _register_pdf_fonts()
 
@@ -207,7 +207,7 @@ try:
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
-    logger.warning("python-docx non disponibile — DOCX disabilitato")
+    logger.warning("python-docx not available — DOCX disabled")
 
 # ---------------------------------------------------------------------------
 # Costanti e Dizionari Multilingua Completi (6 Lingue: IT, EN, DE, FR, ES, PT)
@@ -498,24 +498,24 @@ def generate(
                 p = _generate_html(report_data, out_dir / f"{base_name}.html", is_demo)
                 paths["html"] = clean_path(p)
             else:
-                logger.warning(f"Formato non supportato: {fmt}")
-                errors.append(f"formato_non_supportato:{fmt}")
+                logger.warning(f"Unsupported format: {fmt}")
+                errors.append(f"unsupported_format:{fmt}")
         except (PermissionError, OSError) as e:
             if _is_lock_error(e):
                 logger.error(
-                    f"[LOCK_ERROR] Errore di permesso o file bloccato (WinError 5 / PermissionError) "
-                    f"durante generazione {fmt}: {e}."
+                    f"[LOCK_ERROR] Permission error or file locked (WinError 5 / PermissionError) "
+                    f"during generation of {fmt}: {e}."
                 )
                 errors.append(f"file_locked:{fmt}:{e}")
             else:
-                logger.error(f"Errore generazione {fmt}: {e}")
+                logger.error(f"Error generating {fmt}: {e}")
                 errors.append(f"{fmt}:{e}")
         except Exception as e:
-            logger.error(f"Errore generazione {fmt}: {e}")
+            logger.error(f"Error generating {fmt}: {e}")
             errors.append(f"{fmt}:{e}")
 
     clean_out_dir = clean_path(out_dir)
-    logger.info(f"Report generati: {list(paths.keys())} in {clean_out_dir}")
+    logger.info(f"Reports generated: {list(paths.keys())} in {clean_out_dir}")
     return {
         "paths": paths,
         "base_name": base_name,
@@ -721,7 +721,7 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
     doc.build(story)
     pdf_bytes = buffer.getvalue()
     saved_path = _write_bytes_with_fallback(path, pdf_bytes)
-    logger.info(f"PDF generato: {clean_path(saved_path)}")
+    logger.info(f"PDF generated: {clean_path(saved_path)}")
     return Path(clean_path(saved_path))
 
 def _generate_pdf_text_fallback(data: dict, path: Path, is_demo: bool) -> Path:
@@ -735,13 +735,13 @@ def _generate_pdf_text_fallback(data: dict, path: Path, is_demo: bool) -> Path:
         if _is_lock_error(e):
             target_path = _get_unique_fallback_path(txt_path)
             logger.warning(
-                f"[LOCK_RECOVERY] Destinazione TXT '{txt_path.name}' bloccata ({e}). "
-                f"Salvataggio su '{target_path.name}'"
+                f"[LOCK_RECOVERY] TXT destination '{txt_path.name}' locked ({e}). "
+                f"Saving to '{target_path.name}'"
             )
             target_path.write_text(content, encoding="utf-8")
         else:
             raise e
-    logger.warning(f"PDF fallback (testo): {clean_path(target_path)}")
+    logger.warning(f"PDF fallback (text): {clean_path(target_path)}")
     return Path(clean_path(target_path))
 
 def _build_text_report(data: dict, is_demo: bool) -> str:
@@ -840,14 +840,14 @@ def _generate_docx(data: dict, path: Path, is_demo: bool = False) -> Path:
         if _is_lock_error(e):
             target_path = _get_unique_fallback_path(path)
             logger.warning(
-                f"[LOCK_RECOVERY] Destinazione DOCX '{path.name}' bloccata o aperta da altra applicazione ({e}). "
-                f"Salvataggio su '{target_path.name}'"
+                f"[LOCK_RECOVERY] DOCX destination '{path.name}' locked ({e}). "
+                f"Saving to '{target_path.name}'"
             )
             doc.save(str(target_path))
         else:
             raise e
     clean_docx = clean_path(target_path)
-    logger.info(f"DOCX generato: {clean_docx}")
+    logger.info(f"DOCX generated: {clean_docx}")
     return Path(clean_docx)
 
 # ---------------------------------------------------------------------------
@@ -875,14 +875,14 @@ def _generate_json(data: dict, path: Path) -> Path:
         if _is_lock_error(e):
             target_path = _get_unique_fallback_path(path)
             logger.warning(
-                f"[LOCK_RECOVERY] Destinazione JSON '{path.name}' bloccata ({e}). "
-                f"Salvataggio su '{target_path.name}'"
+                f"[LOCK_RECOVERY] JSON destination '{path.name}' locked ({e}). "
+                f"Saving to '{target_path.name}'"
             )
             target_path.write_text(content, encoding="utf-8")
         else:
             raise e
     clean_json = clean_path(target_path)
-    logger.info(f"JSON generato: {clean_json}")
+    logger.info(f"JSON generated: {clean_json}")
     return Path(clean_json)
 
 # ---------------------------------------------------------------------------
@@ -967,12 +967,12 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
         if _is_lock_error(e):
             target_path = _get_unique_fallback_path(path)
             logger.warning(
-                f"[LOCK_RECOVERY] Destinazione HTML '{path.name}' bloccata ({e}). "
-                f"Salvataggio su '{target_path.name}'"
+                f"[LOCK_RECOVERY] HTML destination '{path.name}' locked ({e}). "
+                f"Saving to '{target_path.name}'"
             )
             target_path.write_text(html, encoding="utf-8")
         else:
             raise e
     clean_html = clean_path(target_path)
-    logger.info(f"HTML generato: {clean_html}")
+    logger.info(f"HTML generated: {clean_html}")
     return Path(clean_html)

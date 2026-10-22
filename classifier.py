@@ -262,7 +262,7 @@ def classify_batch(
             result["invoice_number"] = invoice.get("invoice_number", f"IDX-{i}")
             results.append(result)
         except Exception as e:
-            logger.error(f"Errore classificazione fattura {i}: {e}")
+            logger.error(f"Error classifying invoice {i}: {e}")
             results.append({
                 "batch_index": i,
                 "invoice_number": invoice.get("invoice_number", f"IDX-{i}"),

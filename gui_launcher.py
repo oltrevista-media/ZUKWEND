@@ -55,7 +55,7 @@ def load_user_config():
                 if isinstance(loaded, dict):
                     cfg.update(loaded)
         except Exception as e:
-            logger.warning(f"Config '{candidate}' non leggibile: {e}")
+            logger.warning(f"Config '{candidate}' not readable: {e}")
     return cfg
 
 def save_user_config(cfg):
@@ -63,26 +63,25 @@ def save_user_config(cfg):
         with open(_user_config_file(), "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        logger.warning(f"Config non salvabile: {e}")
+        logger.warning(f"Config could not be saved: {e}")
 
 def safe_check_license() -> dict:
-    """check_license() protetto: un errore di I/O sulla licenza non deve mai bloccare l'avvio della GUI."""
+    """safe check_license(): an I/O error on license must never crash GUI startup."""
     try:
         return check_license()
     except Exception as e:
-        logger.error(f"Controllo licenza fallito: {e}")
+        logger.error(f"License check failed: {e}")
         return {
             "license_type": "INVALID",
             "is_valid": False,
             "invoice_count": 0,
             "max_invoices": 10,
             "days_remaining": 0,
-            "message": f"Controllo licenza non disponibile: {e}",
+            "message": f"License check unavailable: {e}",
         }
 
 def ensure_output_folder() -> str:
-    """Crea (se manca) e restituisce os.path.abspath('output') — cartella di scrittura dei report."""
-    path = get_output_dir()  # == os.makedirs(os.path.abspath("output"), exist_ok=True) + fallback sicuri
+    path = get_output_dir()
     os.makedirs(path, exist_ok=True)
     return path
 
@@ -97,14 +96,12 @@ def launch_gui_launcher():
     root.geometry("640x760")
     root.resizable(False, False)
 
-    # INIZIALIZZAZIONE CARTELLA: 'output/' creata automaticamente all'avvio
-    # (equivale a os.makedirs(os.path.abspath("output"), exist_ok=True))
     try:
         ensure_output_folder()
     except Exception as e:
-        logger.error(f"Impossibile creare la cartella output: {e}")
+        logger.error(f"Unable to create output folder: {e}")
 
-    # Coda thread-safe worker -> GUI (i widget Tk si toccano SOLO dal main thread)
+    # Thread-safe UI queue
     ui_queue = queue.Queue()
 
     def post_ui(fn, *args):
@@ -117,7 +114,7 @@ def launch_gui_launcher():
                 try:
                     fn(*args)
                 except Exception:
-                    logger.exception("Errore in callback UI")
+                    logger.exception("Error in UI callback")
         except queue.Empty:
             pass
         try:
@@ -162,7 +159,7 @@ def launch_gui_launcher():
 
     btn_activate_license = ctk.CTkButton(
         frame_license_header,
-        text="🔑 Attiva Licenza",
+        text="🔑 Activate License",
         width=120,
         height=28,
         font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
@@ -172,7 +169,7 @@ def launch_gui_launcher():
 
     btn_buy_full = ctk.CTkButton(
         frame_license_header,
-        text="🚀 Acquista FULL",
+        text="🚀 Buy FULL",
         width=120,
         height=28,
         command=lambda: webbrowser.open(LEMON_CHECKOUT_URL),
@@ -198,7 +195,7 @@ def launch_gui_launcher():
 
         if lic_type == "FULL":
             badge_license.configure(
-                text="🟢 ZUKWEND FULL — Licenza Attiva",
+                text="🟢 ZUKWEND FULL — License Active",
                 text_color="#10B981",
                 fg_color="#064E3B"
             )
@@ -206,7 +203,7 @@ def launch_gui_launcher():
                 btn_run.configure(state="normal")
         elif lic_type == "EXPIRED":
             badge_license.configure(
-                text=f"🔴 LICENZA SCADUTA ({inv_count}/{max_inv} fatture o 7 gg)",
+                text=f"🔴 LICENSE EXPIRED ({inv_count}/{max_inv} invoices or 7 days)",
                 text_color="#EF4444",
                 fg_color="#450A0A"
             )
@@ -216,7 +213,7 @@ def launch_gui_launcher():
                 btn_run.configure(state="disabled")
         else:  # DEMO
             badge_license.configure(
-                text=f"🟡 EVALUATION ({inv_count}/{max_inv} fatture | {days_rem} gg rimasti)",
+                text=f"🟡 EVALUATION ({inv_count}/{max_inv} invoices | {days_rem} days remaining)",
                 text_color="#F59E0B",
                 fg_color="#451A03"
             )
@@ -227,7 +224,7 @@ def launch_gui_launcher():
 
     def open_activation_dialog():
         dialog = ctk.CTkToplevel(root)
-        dialog.title("Attivazione Licenza ZUKWEND FULL")
+        dialog.title("Activate ZUKWEND FULL License")
         dialog.geometry("520x330")
         dialog.resizable(False, False)
         dialog.transient(root)
@@ -235,14 +232,14 @@ def launch_gui_launcher():
 
         lbl_modal_title = ctk.CTkLabel(
             dialog,
-            text="Attiva la tua Licenza ZUKWEND FULL",
+            text="Activate your ZUKWEND FULL License",
             font=ctk.CTkFont(family="Segoe UI", size=16, weight="bold")
         )
         lbl_modal_title.pack(pady=(20, 4))
 
         lbl_modal_sub = ctk.CTkLabel(
             dialog,
-            text=f"Inserisci la License Key ricevuta dopo l'acquisto su Lemon Squeezy.\nMachine ID associato: {get_machine_id_short()}",
+            text=f"Enter the License Key received after purchasing on Lemon Squeezy.\nAssociated Machine ID: {get_machine_id_short()}",
             font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color="#9CA3AF",
             justify="center"
@@ -251,7 +248,7 @@ def launch_gui_launcher():
 
         entry_license_key = ctk.CTkEntry(
             dialog,
-            placeholder_text="Incolla la tua License Key qui...",
+            placeholder_text="Paste your License Key here...",
             width=440,
             height=38,
             font=ctk.CTkFont(family="Consolas", size=12)
@@ -269,38 +266,38 @@ def launch_gui_launcher():
         def execute_activation():
             key = entry_license_key.get().strip()
             if not key:
-                lbl_act_msg.configure(text="Inserisci un codice licenza valido.", text_color="#EF4444")
+                lbl_act_msg.configure(text="Please enter a valid license key.", text_color="#EF4444")
                 return
 
-            btn_verify.configure(state="disabled", text="Verifica in corso...")
-            lbl_act_msg.configure(text="Convalida licenza (online Lemon Squeezy / offline HWID)...", text_color="#F59E0B")
+            btn_verify.configure(state="disabled", text="Verifying...")
+            lbl_act_msg.configure(text="Validating license (online Lemon Squeezy / offline HWID)...", text_color="#F59E0B")
 
             def finish_activation(res: dict):
                 try:
                     if res.get("success", False):
-                        lbl_act_msg.configure(text="Licenza attivata con successo! Riavvio interfaccia...", text_color="#10B981")
+                        lbl_act_msg.configure(text="License activated successfully! Restarting interface...", text_color="#10B981")
                         refresh_license_ui()
-                        messagebox.showinfo("Licenza Attivata", res.get("message", "ZUKWEND FULL attivato con successo!"))
+                        messagebox.showinfo("License Activated", res.get("message", "ZUKWEND FULL successfully activated!"))
                         dialog.destroy()
                     else:
-                        btn_verify.configure(state="normal", text="Verifica e Attiva")
-                        lbl_act_msg.configure(text=res.get("message", "Codice non valido."), text_color="#EF4444")
+                        btn_verify.configure(state="normal", text="Verify & Activate")
+                        lbl_act_msg.configure(text=res.get("message", "Invalid license key."), text_color="#EF4444")
                 except Exception:
-                    logger.exception("Errore nel completamento attivazione licenza")
+                    logger.exception("Error completing license activation")
 
             def activation_worker():
                 try:
                     res = activate_license(key)
                 except Exception as e:
-                    logger.exception("Errore attivazione licenza")
-                    res = {"success": False, "message": f"Errore attivazione: {e}"}
+                    logger.exception("License activation error")
+                    res = {"success": False, "message": f"Activation error: {e}"}
                 post_ui(finish_activation, res)
 
             threading.Thread(target=activation_worker, daemon=True).start()
 
         btn_verify = ctk.CTkButton(
             dialog,
-            text="Verifica e Attiva",
+            text="Verify & Activate",
             command=execute_activation,
             width=200,
             height=36,
@@ -312,7 +309,7 @@ def launch_gui_launcher():
 
         btn_checkout = ctk.CTkButton(
             dialog,
-            text="Non hai ancora una licenza? Acquista FULL — 249 €",
+            text="Don't have a license yet? Buy FULL — 249 €",
             command=lambda: webbrowser.open(LEMON_CHECKOUT_URL),
             font=ctk.CTkFont(family="Segoe UI", size=11, underline=True),
             fg_color="transparent",
@@ -329,17 +326,15 @@ def launch_gui_launcher():
         lic_type = lic.get("license_type", "DEMO")
         if lic_type == "EXPIRED":
             messagebox.showwarning(
-                "Licenza ZUKWEND Scaduta",
-                f"Il periodo di valutazione è terminato ({lic.get('invoice_count', 10)}/{lic.get('max_invoices', 10)} fatture o periodo di 7 giorni terminato).\n\n"
-                f"Per continuare ad analizzare documenti senza limiti, acquista la licenza FULL o inserisci una chiave attiva."
+                "ZUKWEND License Expired",
+                f"The evaluation period has ended ({lic.get('invoice_count', 10)}/{lic.get('max_invoices', 10)} invoices or 7-day period completed).\n\n"
+                f"To continue analyzing documents without limits, purchase a FULL license or enter an active key."
             )
         elif lic_type == "DEMO":
             inv_rem = lic.get("invoices_remaining", 10)
             days_rem = lic.get("days_remaining", 7)
             inv_cnt = lic.get("invoice_count", 0)
-            # Mostra avviso amichevole informativo all'avvio
-            # Non bloccante: solo informazione trasparente
-            print(f"[ZUKWEND] Avvio in modalità di valutazione ({inv_cnt}/10 fatture elaborate, {days_rem} giorni rimasti)")
+            print(f"[ZUKWEND] Starting in evaluation mode ({inv_cnt}/10 invoices processed, {days_rem} days remaining)")
 
     frame_main = ctk.CTkFrame(root, corner_radius=12)
     frame_main.pack(fill="both", expand=True, padx=20, pady=(0, 16))
@@ -571,13 +566,13 @@ def launch_gui_launcher():
             target = ensure_output_folder()
             os.startfile(target)
         except Exception as e:
-            logger.error(f"Apertura cartella output fallita ({target}): {e}")
-            append_log(f"[WARN] Impossibile aprire la cartella output: {e}")
+            logger.error(f"Output folder open failed ({target}): {e}")
+            append_log(f"[WARN] Unable to open output folder: {e}")
             try:
                 subprocess.Popen(["explorer", target])
             except Exception as e2:
-                logger.error(f"Fallback explorer fallito: {e2}")
-                messagebox.showwarning("Cartella output", f"Impossibile aprire la cartella:\n{target}\n\n{e2}")
+                logger.error(f"Fallback explorer failed: {e2}")
+                messagebox.showwarning("Output Folder", f"Unable to open folder:\n{target}\n\n{e2}")
 
     btn_open_folder = ctk.CTkButton(
         frame_actions,
@@ -660,7 +655,7 @@ def launch_gui_launcher():
             post_ui(on_complete)
 
         except Exception as e:
-            logger.exception("Errore fatale nel worker thread")
+            logger.exception("Fatal error in worker thread")
 
             def on_error(err=e):
                 restore_run_button()
@@ -674,9 +669,9 @@ def launch_gui_launcher():
         if not lic.get("is_valid", False):
             refresh_license_ui()
             messagebox.showwarning(
-                "Licenza Scaduta o Non Valida",
-                f"Il periodo di valutazione è terminato ({lic.get('invoice_count', 10)}/{lic.get('max_invoices', 10)} fatture elaborate).\n"
-                f"Per continuare, attiva una licenza FULL o acquistala su ZUKWEND.com."
+                "License Expired or Invalid",
+                f"The evaluation period has ended ({lic.get('invoice_count', 10)}/{lic.get('max_invoices', 10)} invoices processed).\n"
+                f"To continue, activate a FULL license or purchase it on ZUKWEND.com."
             )
             return
 

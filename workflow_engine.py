@@ -46,6 +46,102 @@ except ImportError:
         norm = os.path.normpath(raw) if raw else ""
         return os.path.basename(norm) if basename_only else norm
 
+# ---------------------------------------------------------------------------
+# Console & Audit i18n Localization Dictionary (6 Languages: EN, IT, DE, FR, ES, PT)
+# ---------------------------------------------------------------------------
+I18N_CONSOLE = {
+    "en": {
+        "fields_extracted": "fields extracted",
+        "characters": "characters",
+        "path_prefix": "path=",
+        "language_prefix": "language=",
+        "formats_prefix": "formats=",
+        "static_template_used": "static template used",
+        "manual_input_required": "manual input required",
+        "invalid_license": "Invalid license",
+        "pipeline_completed": "Pipeline completed in",
+        "success_label": "success",
+        "yes_label": "YES",
+        "partial_label": "PARTIAL",
+        "report_empty": "empty report",
+    },
+    "it": {
+        "fields_extracted": "campi estratti",
+        "characters": "caratteri",
+        "path_prefix": "percorso=",
+        "language_prefix": "lingua=",
+        "formats_prefix": "formati=",
+        "static_template_used": "template statico usato",
+        "manual_input_required": "input manuale richiesto",
+        "invalid_license": "Licenza non valida",
+        "pipeline_completed": "Pipeline completata in",
+        "success_label": "successo",
+        "yes_label": "SI",
+        "partial_label": "PARZIALE",
+        "report_empty": "report vuoto",
+    },
+    "de": {
+        "fields_extracted": "Felder extrahiert",
+        "characters": "Zeichen",
+        "path_prefix": "pfad=",
+        "language_prefix": "sprache=",
+        "formats_prefix": "formate=",
+        "static_template_used": "statisches Template verwendet",
+        "manual_input_required": "manuelle Eingabe erforderlich",
+        "invalid_license": "Ungültige Lizenz",
+        "pipeline_completed": "Pipeline abgeschlossen in",
+        "success_label": "Erfolg",
+        "yes_label": "JA",
+        "partial_label": "TEILWEISE",
+        "report_empty": "leerer Bericht",
+    },
+    "fr": {
+        "fields_extracted": "champs extraits",
+        "characters": "caractères",
+        "path_prefix": "chemin=",
+        "language_prefix": "langue=",
+        "formats_prefix": "formats=",
+        "static_template_used": "modèle statique utilisé",
+        "manual_input_required": "saisie manuelle requise",
+        "invalid_license": "Licence non valide",
+        "pipeline_completed": "Pipeline terminée en",
+        "success_label": "succès",
+        "yes_label": "OUI",
+        "partial_label": "PARTIEL",
+        "report_empty": "rapport vide",
+    },
+    "es": {
+        "fields_extracted": "campos extraídos",
+        "characters": "caracteres",
+        "path_prefix": "ruta=",
+        "language_prefix": "idioma=",
+        "formats_prefix": "formatos=",
+        "static_template_used": "plantilla estática utilizada",
+        "manual_input_required": "entrada manual requerida",
+        "invalid_license": "Licencia no válida",
+        "pipeline_completed": "Pipeline completada en",
+        "success_label": "éxito",
+        "yes_label": "SÍ",
+        "partial_label": "PARCIAL",
+        "report_empty": "informe vacío",
+    },
+    "pt": {
+        "fields_extracted": "campos extraídos",
+        "characters": "caracteres",
+        "path_prefix": "caminho=",
+        "language_prefix": "idioma=",
+        "formats_prefix": "formatos=",
+        "static_template_used": "modelo estático utilizado",
+        "manual_input_required": "entrada manual necessária",
+        "invalid_license": "Licença inválida",
+        "pipeline_completed": "Pipeline concluída em",
+        "success_label": "sucesso",
+        "yes_label": "SIM",
+        "partial_label": "PARCIAL",
+        "report_empty": "relatório vazio",
+    },
+}
+
 if getattr(sys, "frozen", False):
     ROOT_DIR = Path(sys.executable).parent
 else:
@@ -172,24 +268,24 @@ def _safe_step(step_name: str, fn, max_retries: int = 3, backoff_s: float = 2.0)
     for attempt in range(1, max_retries + 1):
         try:
             result = fn()
-            logger.info(f"[STEP {step_name}] OK (tentativo {attempt})")
+            logger.info(f"[STEP {step_name}] OK (attempt {attempt})")
             return result, None
         except Exception as e:
             last_err = e
-            logger.warning(f"[STEP {step_name}] Tentativo {attempt}/{max_retries} fallito: {e}")
+            logger.warning(f"[STEP {step_name}] Attempt {attempt}/{max_retries} failed: {e}")
             if attempt < max_retries:
                 time.sleep(backoff_s)
-    logger.error(f"[STEP {step_name}] FALLITO dopo {max_retries} tentativi: {last_err}")
+    logger.error(f"[STEP {step_name}] FAILED after {max_retries} attempts: {last_err}")
     return None, last_err
 
 def _check_license_gate() -> dict:
     lic_mod = _import_module("license_manager")
     if lic_mod is None:
-        logger.warning("license_manager.py non disponibile — fallback DEMO")
+        logger.warning("license_manager.py not available — DEMO fallback")
         return {
             "license_type": "DEMO",
             "is_valid": True,
-            "message": "License manager non trovato — modalita DEMO.",
+            "message": "License manager not found — DEMO mode.",
             "machine_id_short": "N/A",
         }
     status = lic_mod.check_license()
@@ -202,11 +298,11 @@ def _check_license_gate() -> dict:
 def load_invoice(pdf_path: str) -> dict:
     p = Path(pdf_path)
     if not p.exists():
-        raise FileNotFoundError(f"File non trovato: {pdf_path}")
+        raise FileNotFoundError(f"File not found: {pdf_path}")
     if p.suffix.lower() != ".pdf":
-        raise ValueError(f"Formato non supportato: {p.suffix} (atteso .pdf)")
+        raise ValueError(f"Unsupported format: {p.suffix} (expected .pdf)")
     stat = p.stat()
-    logger.info(f"Fattura caricata: {p.name} ({stat.st_size} bytes)")
+    logger.info(f"Invoice loaded: {p.name} ({stat.st_size} bytes)")
     return {
         "path": str(p.resolve()),
         "filename": p.name,
@@ -217,7 +313,7 @@ def load_invoice(pdf_path: str) -> dict:
 def parse_invoice(pdf_path: str, use_ocr: bool = False) -> dict:
     parser_mod = _import_module("parser")
     if parser_mod is None:
-        logger.warning("parser.py non disponibile — restituisco struttura vuota")
+        logger.warning("parser.py not available — returning empty structure")
         return {"requires_manual_input": True, "error": "parser module not found"}
 
     try:
@@ -226,7 +322,7 @@ def parse_invoice(pdf_path: str, use_ocr: bool = False) -> dict:
         else:
             raw = parser_mod.extract_text(pdf_path, use_ocr=use_ocr)
             fields = parser_mod.extract_fields(raw, use_ocr=use_ocr)
-        logger.info(f"Parser: {len(fields)} campi estratti")
+        logger.info(f"Parser: {len(fields)} fields extracted")
         return fields
     except Exception as e:
         logger.error(f"Parser error: {e}")
@@ -235,13 +331,13 @@ def parse_invoice(pdf_path: str, use_ocr: bool = False) -> dict:
 def normalize_invoice(raw_fields: dict, language: str = "it") -> dict:
     norm_mod = _import_module("normalizer")
     if norm_mod is None:
-        logger.warning("normalizer.py non disponibile — campi grezzi")
+        logger.warning("normalizer.py not available — raw fields")
         raw_fields["is_normalized"] = False
         return raw_fields
     try:
         normalized = norm_mod.normalize(raw_fields, locale=language)
         normalized["is_normalized"] = True
-        logger.info(f"Normalizer: lingua rilevata={normalized.get('detected_language', 'N/A')}")
+        logger.info(f"Normalizer: detected_language={normalized.get('detected_language', 'N/A')}")
         return normalized
     except Exception as e:
         logger.error(f"Normalizer error: {e}")
@@ -396,11 +492,11 @@ def generate_reminder_text(
                 normalized, billing, language=language, mode=mode, api_key=api_key
             )
         if not text or len(text.strip()) < 20:
-            raise ValueError("Testo generato troppo corto o vuoto")
-        logger.info(f"Reminder generato: {len(text)} caratteri | lingua={language} | mode={mode}")
+            raise ValueError("Generated text too short or empty")
+        logger.info(f"Reminder generated: {len(text)} characters | language={language} | mode={mode}")
         return text
     except Exception as e:
-        logger.warning(f"LLM fallback attivato: {e}")
+        logger.warning(f"LLM fallback triggered: {e}")
         return _static_reminder(normalized, billing, language)
 
 def _static_reminder(normalized: dict, billing: dict, language: str) -> str:
@@ -520,7 +616,7 @@ def generate_report(
             formats=formats or ["pdf"],
             is_demo=is_demo,
         )
-        logger.info(f"Report generato: {report.get('paths', {})}")
+        logger.info(f"Report generated: {report.get('paths', {})}")
         return report
     except Exception as e:
         logger.error(f"Report generator error: {e}")
@@ -535,7 +631,7 @@ def export_result(report: dict, output_dir: Optional[str] = None) -> list:
         exp_mod.ensure_output_structure(output_dir)
     try:
         paths = exp_mod.export(report, output_dir=output_dir)
-        logger.info(f"Export completato: {paths}")
+        logger.info(f"Export completed: {paths}")
         return paths
     except Exception as e:
         logger.error(f"Export error: {e}")
@@ -556,6 +652,9 @@ def run_pipeline(
     audit_log = []
     errors = []
 
+    lang_key = (language or "en").strip().lower()[:2]
+    i18n = I18N_CONSOLE.get(lang_key, I18N_CONSOLE["en"])
+
     def _audit(step: str, status: str, detail: str = ""):
         entry = {
             "step": step,
@@ -575,7 +674,7 @@ def run_pipeline(
 
     lic_status = _check_license_gate()
     if not lic_status.get("is_valid", False):
-        msg = lic_status.get("message", "Licenza non valida")
+        msg = lic_status.get("message") or i18n["invalid_license"]
         _audit("LICENSE", "FAILED", msg)
         errors.append({"step": "LICENSE", "code": ERR_LICENSE, "error": msg})
         return WorkflowResult({}, {}, {}, {}, "", None, [], audit_log, False, errors)
@@ -595,10 +694,10 @@ def run_pipeline(
 
     raw_fields, err = _safe_step("PARSE", lambda: parse_invoice(pdf_path))
     if err or raw_fields.get("requires_manual_input"):
-        errors.append({"step": "PARSE", "code": ERR_PARSE, "error": str(err or "manual input required")})
-        _audit("PARSE", "FALLBACK", str(err or "requires_manual_input"))
+        errors.append({"step": "PARSE", "code": ERR_PARSE, "error": str(err or i18n["manual_input_required"])})
+        _audit("PARSE", "FALLBACK", str(err or i18n["manual_input_required"]))
     else:
-        _audit("PARSE", "OK", f"{len(raw_fields)} campi estratti")
+        _audit("PARSE", "OK", f"{len(raw_fields)} {i18n['fields_extracted']}")
 
     normalized, err = _safe_step("NORMALIZE", lambda: normalize_invoice(raw_fields, language))
     if err:
@@ -606,7 +705,7 @@ def run_pipeline(
         _audit("NORMALIZE", "FALLBACK", str(err))
         normalized = raw_fields
     else:
-        _audit("NORMALIZE", "OK", f"lingua={normalized.get('detected_language', language)}")
+        _audit("NORMALIZE", "OK", f"{i18n['language_prefix']}{normalized.get('detected_language', language)}")
 
     classification, err = _safe_step(
         "CLASSIFY",
@@ -625,7 +724,9 @@ def run_pipeline(
         _audit("COMPLIANCE", "FALLBACK", str(err))
         compliance = {"compliance_flag": False, "flags": [], "recommendations": []}
     else:
-        _audit("COMPLIANCE", "OK", f"flags={compliance.get('flags', [])}")
+        flags_list = compliance.get("flags", [])
+        flags_str = ", ".join(flags_list) if flags_list else "none"
+        _audit("COMPLIANCE", "OK", f"flags={flags_str}")
 
     billing, err = _safe_step(
         "BILLING",
@@ -646,12 +747,12 @@ def run_pipeline(
         try:
             reminder_text = _static_reminder(normalized, billing, language)
         except Exception as e_rem:
-            logger.error(f"Errore generazione reminder statico: {e_rem}")
+            logger.error(f"Static reminder generation error: {e_rem}")
             reminder_text = f"Notice: Invoice {normalized.get('invoice_number', 'N/A')} payment is required."
         errors.append({"step": "REMINDER", "code": ERR_LLM, "error": str(err) if err else "fallback template"})
-        _audit("REMINDER", "FALLBACK", "template statico usato")
+        _audit("REMINDER", "FALLBACK", i18n["static_template_used"])
     else:
-        _audit("REMINDER", "OK", f"{len(reminder_text)} caratteri")
+        _audit("REMINDER", "OK", f"{len(reminder_text)} {i18n['characters']}")
 
     report, err = _safe_step(
         "REPORT",
@@ -661,11 +762,13 @@ def run_pipeline(
         )
     )
     if err or not report:
-        errors.append({"step": "REPORT", "code": ERR_REPORT, "error": str(err or "report vuoto")})
+        errors.append({"step": "REPORT", "code": ERR_REPORT, "error": str(err or i18n["report_empty"])})
         _audit("REPORT", "FAILED", str(err))
         report = {"paths": {}, "error": str(err)}
     else:
-        _audit("REPORT", "OK", f"formati={list(report.get('paths', {}).keys())}")
+        fmts_list = list(report.get("paths", {}).keys())
+        fmts_str = ", ".join(fmts_list) if fmts_list else "none"
+        _audit("REPORT", "OK", f"{i18n['formats_prefix']}{fmts_str}")
 
     export_paths, err = _safe_step("EXPORT", lambda: export_result(report, output_dir))
     if err:
@@ -673,11 +776,11 @@ def run_pipeline(
         _audit("EXPORT", "FAILED", str(err))
         export_paths = []
     else:
-        _audit("EXPORT", "OK", f"percorso={clean_path(export_paths)}")
+        _audit("EXPORT", "OK", f"{i18n['path_prefix']}{clean_path(export_paths)}")
 
     elapsed = round(time.time() - start_time, 2)
     _audit("PIPELINE_END", "OK" if not errors else "PARTIAL", f"elapsed={elapsed}s | errors={len(errors)}")
-    logger.info(f"Pipeline completata in {elapsed}s | successo={'SI' if not errors else 'PARZIALE'}")
+    logger.info(f"{i18n['pipeline_completed']} {elapsed}s | {i18n['success_label']}={i18n['yes_label'] if not errors else i18n['partial_label']}")
 
     return WorkflowResult(
         invoice=normalized,

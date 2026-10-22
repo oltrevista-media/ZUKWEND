@@ -99,7 +99,7 @@ def export(
     base_name    = report.get("base_name", "report_unknown")
 
     if not source_paths:
-        logger.warning("export(): nessun file da esportare (report.paths vuoto)")
+        logger.warning("export(): no files to export (report.paths empty)")
         return []
 
     # Copia / sposta file nella destinazione finale
@@ -108,7 +108,7 @@ def export(
             continue
         src = Path(src_path)
         if not src.exists():
-            logger.warning(f"File sorgente non trovato: {src}")
+            logger.warning(f"Source file not found: {src}")
             errors.append(f"not_found:{src}")
             continue
         # Se e gia nella cartella dest, non spostare
@@ -121,26 +121,26 @@ def export(
                 if _is_lock_error(e):
                     alt_dest = _get_unique_fallback_path(dest)
                     logger.warning(
-                        f"[LOCK_RECOVERY] Destinazione export '{dest.name}' aperta o bloccata da altra applicazione ({e}). "
-                        f"Salvataggio automatico con timestamp univoco su '{alt_dest.name}'..."
+                        f"[LOCK_RECOVERY] Export destination '{dest.name}' locked ({e}). "
+                        f"Saving with unique timestamp to '{alt_dest.name}'..."
                     )
                     try:
                         shutil.copy2(str(src), str(alt_dest))
                         dest = alt_dest
-                        logger.info(f"Export {fmt.upper()} (recupero): {src.name} -> {dest}")
+                        logger.info(f"Export {fmt.upper()} (recovery): {src.name} -> {dest}")
                     except Exception as e2:
                         logger.error(
-                            f"[LOCK_ERROR] Errore informativo: impossibile scrivere file bloccato né copia alternativa ({e2}). "
-                            f"La pipeline continua senza interruzioni."
+                            f"[LOCK_ERROR] Locked file recovery failed ({e2}). "
+                            f"Pipeline continues."
                         )
                         errors.append(f"copy_error_locked:{fmt}:{e2}")
                         dest = src  # usa percorso originale
                 else:
-                    logger.error(f"Errore copia {fmt}: {e}")
+                    logger.error(f"Copy error {fmt}: {e}")
                     errors.append(f"copy_error:{fmt}:{e}")
                     dest = src
             except Exception as e:
-                logger.error(f"Errore copia {fmt}: {e}")
+                logger.error(f"Copy error {fmt}: {e}")
                 errors.append(f"copy_error:{fmt}:{e}")
                 dest = src  # usa percorso originale
         exported_paths.append(str(dest))
@@ -148,7 +148,7 @@ def export(
     # Scrivi audit log export
     _write_export_audit_log(dest_dir, base_name, exported_paths, errors, report)
 
-    logger.info(f"Export completato: {len(exported_paths)} file | {len(errors)} errori")
+    logger.info(f"Export completed: {len(exported_paths)} files | {len(errors)} errors")
     return exported_paths
 
 

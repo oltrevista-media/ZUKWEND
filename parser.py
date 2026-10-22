@@ -98,7 +98,7 @@ def extract_text(pdf_path: str, use_ocr: bool = False) -> str:
             with pdfplumber.open(str(path)) as pdf:
                 text = "\n".join([page.extract_text() or "" for page in pdf.pages]).strip()
             if text: return text
-        except Exception as e: logger.warning(f"pdfplumber fallito: {e}")
+        except Exception as e: logger.warning(f"pdfplumber failed: {e}")
 
     if PYPDF2_AVAILABLE and not text:
         try:
@@ -106,7 +106,7 @@ def extract_text(pdf_path: str, use_ocr: bool = False) -> str:
                 reader = PyPDF2.PdfReader(f)
                 text = "\n".join([page.extract_text() or "" for page in reader.pages]).strip()
             if text: return text
-        except Exception as e: logger.warning(f"PyPDF2 fallito: {e}")
+        except Exception as e: logger.warning(f"PyPDF2 failed: {e}")
 
     if use_ocr and OCR_AVAILABLE and not text:
         try:
@@ -120,10 +120,10 @@ def extract_text(pdf_path: str, use_ocr: bool = False) -> str:
             doc.close()
             text = "\n".join(all_text)
             if text: return text
-        except Exception as e: logger.warning(f"OCR fallito: {e}")
+        except Exception as e: logger.warning(f"OCR failed: {e}")
 
     if not text:
-        raise ValueError(f"Impossibile estrarre testo da {path.name}.")
+        raise ValueError(f"Unable to extract text from {path.name}.")
     return text
 
 # ---------------------------------------------------------------------------
@@ -170,14 +170,14 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
                     data["requires_manual_input"] = False
                     data["extraction_timestamp"] = datetime.now().isoformat()
                     data["extraction_method"] = f"LLM ({mode})"
-                    logger.info("Estrazione completata via LLM.")
+                    logger.info("Extraction completed via LLM.")
                     return data
                 
         except Exception as e:
-            logger.warning(f"LLM fallito ({e}), attivazione Fallback Regex.")
+            logger.warning(f"LLM extraction failed ({e}), activating regex fallback.")
 
-    # TENTATIVO 2: Fallback Deterministico (Regex Originali)
-    logger.info("Esecuzione estrazione Regex di emergenza.")
+    # Fallback Deterministico
+    logger.info("Executing regex extraction fallback.")
     return _fallback_regex_extraction(raw_text)
 
 # ---------------------------------------------------------------------------
