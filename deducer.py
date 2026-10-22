@@ -13,6 +13,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
+from i18n_catalog import normalize_lang, get_text, get_channel_label
+
 try:
     from resource_utils import get_resource_path, is_local_llm_available
 except ImportError:  # pragma: no cover - esecuzione isolata del modulo
@@ -28,8 +30,8 @@ TEMPLATE_DIR = Path(__file__).parent.parent / "billing" / "templates"
 
 LEVEL_CHANNELS = {
     1: "email",
-    2: "email_raccomandata",
-    3: "raccomandata_ar_pec",
+    2: "certified_email",
+    3: "registered_mail",
 }
 
 LEVEL_GRACE_DAYS = {
@@ -311,23 +313,19 @@ def check_compliance(invoice: dict, classification: dict, language: Optional[str
     reminder_level = classification.get("reminder_level", 0)
     compliance_flag = classification.get("compliance_flag", False)
 
-    # Verifica della lingua: priorità al parametro language, poi campi fattura, fallback 'en'
-    lang = (language or invoice.get("detected_language") or invoice.get("language") or "en").lower()
-    if lang not in RECOMMENDATIONS_BY_LANG:
-        lang = "en"
-
-    active_recs = RECOMMENDATIONS_BY_LANG.get(lang, RECOMMENDATIONS_BY_LANG["en"])
+    # Verifica della lingua: priorità al parametro language, poi campi fattura, fallback tassativo 'en'
+    lang = normalize_lang(language or invoice.get("detected_language") or invoice.get("language") or "en")
 
     if compliance_flag:
-        recommendations.append(active_recs["threshold"])
+        recommendations.append(get_text("recommendations", "threshold", lang))
     if "high_value_kyc_aml" in flags:
-        recommendations.append(active_recs["high_value"])
+        recommendations.append(get_text("recommendations", "kyc", lang))
     if reminder_level >= 3:
-        recommendations.append(active_recs["level_3"])
-    if "critical_overdue_risk_inesigibilita" in flags or "critical_overdue_bad_debt_risk" in flags:
-        recommendations.append(active_recs["overdue_90"])
+        recommendations.append(get_text("recommendations", "legal", lang))
+    if "critical_overdue_bad_debt_risk" in flags or "critical_overdue_risk_inesigibilita" in flags:
+        recommendations.append(get_text("recommendations", "overdue_90", lang))
     if not recommendations:
-        recommendations.append(active_recs["clean"])
+        recommendations.append(get_text("recommendations", "none", lang))
 
     return {
         "compliance_flag": compliance_flag,

@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union, List
 from xml.sax.saxutils import escape as _xml_escape
+from i18n_catalog import get_rationale, scan_and_sanitize_text, sanitize_data_recursively
 
 try:
     from resource_utils import APP_VERSION, get_output_dir, _is_inside_meipass
@@ -605,7 +606,22 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
     clean_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
     clean_reminder = sanitize_reminder_text(str(reminder_text or ""))
 
-    return {
+    rationale_val = str(classification.get("classification_rationale") or "")
+    if classification.get("rationale_key"):
+        rationale_val = get_rationale(
+            classification.get("rationale_key"),
+            lang_code,
+            **(classification.get("rationale_params") or {})
+        )
+    elif lang_code != "it":
+        rationale_val, _ = scan_and_sanitize_text(rationale_val, lang_code)
+
+    canonical_flags = [
+        "critical_overdue_bad_debt_risk" if f == "critical_overdue_risk_inesigibilita" else f
+        for f in compliance.get("flags", [])
+    ]
+
+    report_dict = {
         "generated_at": clean_ts,
         "software": labels["software_name"],
         "version": APP_VERSION,
@@ -631,11 +647,11 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "risk_level_label":   risk_label,
             "reminder_level":     int(classification.get("reminder_level") or 1),
             "compliance_flag":    bool(classification.get("compliance_flag") or False),
-            "rationale":          str(classification.get("classification_rationale") or ""),
+            "rationale":          rationale_val,
             "next_escalation":    str(classification.get("next_escalation_date") or "N/A"),
         },
         "compliance": {
-            "flags":           compliance.get("flags", []),
+            "flags":           canonical_flags,
             "recommendations": translated_recs,
             "disclaimer":       str(compliance.get("disclaimer") or DISCLAIMER_TEXT.get(lang_code, DISCLAIMER_TEXT["en"])),
         },
@@ -653,6 +669,11 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "disclaimer": DISCLAIMER_TEXT.get(lang_code, DISCLAIMER_TEXT["en"]),
         },
     }
+
+    if lang_code != "it":
+        report_dict = sanitize_data_recursively(report_dict, lang_code)
+
+    return report_dict
 
 # ---------------------------------------------------------------------------
 # Generatore PDF (ReportLab con fallback testuale UTF-8)
@@ -943,6 +964,11 @@ def _generate_json(data: dict, path: Path) -> Path:
         json_out["branding"] = data["branding"]
 
     content = json.dumps(json_out, indent=2, ensure_ascii=False)
+    if data.get("language") and data["language"] != "it":
+        sanitized_content, leaks = scan_and_sanitize_text(content, data["language"])
+        if leaks:
+            logger.warning(f"[ANTI-LEAK] Sanitized Italian leaks in JSON: {leaks}")
+        content = sanitized_content
     target_path = path
     try:
         target_path.write_text(content, encoding="utf-8")
@@ -1010,7 +1036,8 @@ def _generate_xlsx(data: dict, path: Path) -> Path:
     # 2. Informazioni Mittente (Custom Branding)
     row = 3
     if branding.get("company_name"):
-        ws.cell(row=row, column=1, value="CREDITOR / MITTENTE:").font = font_bold
+        cred_lbl = "CREDITORE:" if data.get("language") == "it" else "CREDITOR:"
+        ws.cell(row=row, column=1, value=cred_lbl).font = font_bold
         ws.cell(row=row, column=2, value=branding.get("company_name", "")).font = font_bold
         if branding.get("address"):
             row += 1

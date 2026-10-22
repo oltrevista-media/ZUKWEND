@@ -9,6 +9,8 @@ import logging
 from datetime import date, datetime, timedelta
 from typing import Optional
 
+from i18n_catalog import get_rationale, normalize_lang
+
 logger = logging.getLogger("zukwend.classifier")
 
 # ------------------------------------------------------------
@@ -94,7 +96,7 @@ def classify(
     currency      = invoice.get("currency", "EUR")
     payment_hint  = (invoice.get("payment_status") or "").upper()
     invoice_number = invoice.get("invoice_number", "N/A")
-    lang = (language or invoice.get("detected_language") or invoice.get("normalization_locale") or "it").lower()
+    lang = normalize_lang(language or invoice.get("detected_language") or invoice.get("normalization_locale") or "en")
 
     # Validazioni base
     if amount is not None and amount < 0:
@@ -105,6 +107,9 @@ def classify(
 
     # Stato dichiarato
     if payment_hint in (STATUS_PAID, STATUS_DISPUTED):
+        rationale_key = "status_declared"
+        rationale_params = {"status": payment_hint}
+        rationale = get_rationale(rationale_key, lang, **rationale_params)
         return _build_result(
             payment_status=payment_hint,
             days_overdue=0,
@@ -112,7 +117,9 @@ def classify(
             reminder_level=LEVEL_0,
             compliance_flag=False,
             flags=[],
-            rationale=f"Stato dichiarato: {payment_hint}",
+            rationale_key=rationale_key,
+            rationale_params=rationale_params,
+            rationale=rationale,
             next_escalation=None,
             amount=amount,
             currency=currency,
@@ -123,6 +130,9 @@ def classify(
     due_date = _parse_date(due_date_raw)
     if due_date is None:
         errors.append("due_date_not_parsable")
+        rationale_key = "due_date_missing"
+        rationale_params = {}
+        rationale = get_rationale(rationale_key, lang)
         return _build_result(
             payment_status=STATUS_UNKNOWN,
             days_overdue=0,
@@ -130,7 +140,9 @@ def classify(
             reminder_level=LEVEL_0,
             compliance_flag=_check_compliance_threshold(amount, compliance_threshold),
             flags=["due_date_missing"] + _check_extra_flags(amount, 0, language=lang),
-            rationale="Data scadenza non disponibile",
+            rationale_key=rationale_key,
+            rationale_params=rationale_params,
+            rationale=rationale,
             next_escalation=None,
             amount=amount,
             currency=currency,
@@ -145,41 +157,51 @@ def classify(
         payment_status = STATUS_PENDING
         risk_level     = RISK_NONE
         reminder_level = LEVEL_0
-        rationale      = f"Scade tra {abs(days_overdue)} giorni"
+        rationale_key  = "due_in_days"
+        rationale_params = {"days": abs(days_overdue)}
+        rationale      = get_rationale(rationale_key, lang, **rationale_params)
         next_escalation = due_date.isoformat()
 
     elif days_overdue == 0:
         payment_status = STATUS_OVERDUE
         risk_level     = RISK_LOW
         reminder_level = LEVEL_1
-        rationale      = "Scade oggi — sollecito L1"
+        rationale_key  = "due_today_l1"
+        rationale_params = {}
+        rationale      = get_rationale(rationale_key, lang)
         next_escalation = (today + timedelta(days=15)).isoformat()
 
     elif 1 <= days_overdue <= 15:
         payment_status = STATUS_OVERDUE
         risk_level     = RISK_LOW
         reminder_level = LEVEL_1
-        rationale      = f"Scaduta da {days_overdue} giorni — L1"
+        rationale_key  = "overdue_days_l1"
+        rationale_params = {"days": days_overdue}
+        rationale      = get_rationale(rationale_key, lang, **rationale_params)
         next_escalation = (today + timedelta(days=15 - days_overdue)).isoformat()
 
     elif 16 <= days_overdue <= 30:
         payment_status = STATUS_OVERDUE
         risk_level     = RISK_MEDIUM
         reminder_level = LEVEL_2
-        rationale      = f"Scaduta da {days_overdue} giorni — L2"
+        rationale_key  = "overdue_days_l2"
+        rationale_params = {"days": days_overdue}
+        rationale      = get_rationale(rationale_key, lang, **rationale_params)
         next_escalation = (today + timedelta(days=30 - days_overdue)).isoformat()
 
     else:
         payment_status = STATUS_OVERDUE
         risk_level     = RISK_HIGH
         reminder_level = LEVEL_3
-        rationale      = f"Scaduta da {days_overdue} giorni — L3"
+        rationale_key  = "overdue_days_l3"
+        rationale_params = {"days": days_overdue}
+        rationale      = get_rationale(rationale_key, lang, **rationale_params)
         next_escalation = None
 
     # Compliance
     compliance_flag = _check_compliance_threshold(amount, compliance_threshold)
 
-    # Extra flags
+    # Extra flags (Canonical English neutral keys)
     flags = _check_extra_flags(amount, days_overdue, language=lang)
     if compliance_flag:
         flags.append("compliance_threshold_exceeded")
@@ -191,6 +213,8 @@ def classify(
         reminder_level=reminder_level,
         compliance_flag=compliance_flag,
         flags=flags,
+        rationale_key=rationale_key,
+        rationale_params=rationale_params,
         rationale=rationale,
         next_escalation=next_escalation,
         amount=amount,
@@ -208,6 +232,8 @@ def _build_result(
     reminder_level: int,
     compliance_flag: bool,
     flags: list,
+    rationale_key: str,
+    rationale_params: dict,
     rationale: str,
     next_escalation: Optional[str],
     amount: Optional[float],
@@ -221,6 +247,8 @@ def _build_result(
         "reminder_level": reminder_level,
         "compliance_flag": compliance_flag,
         "flags": flags,
+        "rationale_key": rationale_key,
+        "rationale_params": rationale_params,
         "classification_rationale": rationale,
         "next_escalation_date": next_escalation,
         "amount": amount,
@@ -238,17 +266,14 @@ def _check_compliance_threshold(amount: Optional[float], threshold: float) -> bo
     return float(amount) > threshold
 
 # ------------------------------------------------------------
-# extra flags
+# extra flags (Canonical Neutral Keys)
 # ------------------------------------------------------------
-def _check_extra_flags(amount: Optional[float], days_overdue: int, language: str = "it") -> list:
+def _check_extra_flags(amount: Optional[float], days_overdue: int, language: str = "en") -> list:
     flags = []
     if amount and float(amount) > HIGH_VALUE_THRESHOLD:
         flags.append("high_value_kyc_aml")
     if days_overdue > CRITICAL_OVERDUE_DAYS:
-        if (language or "it").lower().startswith("en"):
-            flags.append("critical_overdue_bad_debt_risk")
-        else:
-            flags.append("critical_overdue_risk_inesigibilita")
+        flags.append("critical_overdue_bad_debt_risk")
     return flags
 
 # ------------------------------------------------------------

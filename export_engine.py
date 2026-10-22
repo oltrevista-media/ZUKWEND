@@ -117,6 +117,10 @@ def export(
             try:
                 shutil.copy2(str(src), str(dest))
                 logger.info(f"Export {fmt.upper()}: {src.name} -> {dest}")
+                try:
+                    src.unlink()
+                except Exception:
+                    pass
             except (PermissionError, OSError) as e:
                 if _is_lock_error(e):
                     alt_dest = _get_unique_fallback_path(dest)
@@ -128,6 +132,10 @@ def export(
                         shutil.copy2(str(src), str(alt_dest))
                         dest = alt_dest
                         logger.info(f"Export {fmt.upper()} (recovery): {src.name} -> {dest}")
+                        try:
+                            src.unlink()
+                        except Exception:
+                            pass
                     except Exception as e2:
                         logger.error(
                             f"[LOCK_ERROR] Locked file recovery failed ({e2}). "
@@ -143,7 +151,27 @@ def export(
                 logger.error(f"Copy error {fmt}: {e}")
                 errors.append(f"copy_error:{fmt}:{e}")
                 dest = src  # usa percorso originale
+
+        report.setdefault("paths", {})[fmt] = str(dest)
         exported_paths.append(str(dest))
+
+    report["output_dir"] = str(dest_dir)
+
+    # Post-Processor Anti-Leak Guardrail su tutti i file esportati
+    lang = (report.get("language") or report.get("report_data", {}).get("language") or "").lower()
+    if lang and lang != "it":
+        from i18n_catalog import scan_and_sanitize_text
+        for p_str in list(exported_paths):
+            p_file = Path(p_str)
+            if p_file.suffix.lower() == ".json":
+                try:
+                    raw_j = p_file.read_text(encoding="utf-8")
+                    clean_j, leaks = scan_and_sanitize_text(raw_j, lang)
+                    if leaks:
+                        logger.warning(f"[ANTI-LEAK GUARDRAIL] Leak intercettato in {p_file.name}: {leaks}. Sanificato.")
+                        p_file.write_text(clean_j, encoding="utf-8")
+                except Exception as ex_leak:
+                    logger.warning(f"Errore linter anti-leak su {p_file.name}: {ex_leak}")
 
     # Scrivi audit log export
     _write_export_audit_log(dest_dir, base_name, exported_paths, errors, report)
