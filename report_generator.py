@@ -457,7 +457,7 @@ def generate(
     is_demo: bool = False,
 ) -> dict:
     if formats is None:
-        formats = ["pdf"]
+        formats = ["pdf", "xlsx", "json"]
 
     lang_code = language.lower() if language else "en"
     if lang_code not in REPORT_LABELS:
@@ -488,6 +488,9 @@ def generate(
             if fmt == "pdf":
                 p = _generate_pdf(report_data, out_dir / f"{base_name}.pdf", is_demo)
                 paths["pdf"] = clean_path(p)
+            elif fmt == "xlsx":
+                p = _generate_xlsx(report_data, out_dir / f"{base_name}.xlsx")
+                paths["xlsx"] = clean_path(p)
             elif fmt == "docx":
                 p = _generate_docx(report_data, out_dir / f"{base_name}.docx", is_demo)
                 paths["docx"] = clean_path(p)
@@ -527,10 +530,26 @@ def _clean_layout_tokens(raw: Optional[str]) -> str:
     if not raw:
         return ""
     s = str(raw).strip()
-    pattern = r"(?i)\s*[\-_|/:]*\s*\b(?:invoice|facture|rechnung|page|fattura|fatura)\b.*$"
+    pattern = r"(?i)\s*[\-_|/:]*\s*\b(?:invoice|facture|rechnung|page|fattura|fatura|description)\b.*$"
     s = re.sub(pattern, "", s)
+    s = re.sub(r"(?i)^\s*description[\s:]*", "", s)
     s = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", s)
     return re.sub(r"\s+", " ", s).strip()
+
+def sanitize_reminder_text(text: str, deadline_days: int = 7) -> str:
+    if not text:
+        return ""
+    clean = text.replace("**", "")
+    from datetime import timedelta
+    deadline_date = (datetime.now() + timedelta(days=deadline_days)).strftime("%Y-%m-%d")
+    clean = re.sub(r"\[insert\s+deadline[^\]]*\]", deadline_date, clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\[insert\s+due\s+date[^\]]*\]", deadline_date, clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\[insert\s+date[^\]]*\]", deadline_date, clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\[insert\s+[^\]]+\]", "", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\[inserisci\s+[^\]]+\]", "", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"[ \t]+", " ", clean)
+    clean = re.sub(r"\n\s*\n\s*\n", "\n\n", clean)
+    return clean.strip()
 
 # ---------------------------------------------------------------------------
 # Builder dati report
@@ -573,17 +592,27 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
     if not translated_recs:
         translated_recs = [rec_dict["none"]]
 
+    try:
+        from custom_branding import get_branding
+        branding = get_branding()
+    except Exception:
+        branding = {}
+
     client_name = _clean_layout_tokens(invoice.get("client_name") or "N/A")
     client_address = _clean_layout_tokens(invoice.get("client_address") or invoice.get("address") or "")
-    vendor_name = _clean_layout_tokens(invoice.get("vendor_name") or "N/A")
+    vendor_name = branding.get("company_name") or _clean_layout_tokens(invoice.get("vendor_name") or "N/A")
+
+    clean_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+    clean_reminder = sanitize_reminder_text(str(reminder_text or ""))
 
     return {
-        "generated_at": datetime.now().isoformat(),
+        "generated_at": clean_ts,
         "software": labels["software_name"],
         "version": APP_VERSION,
         "language": lang_code,
         "labels": labels,
         "is_demo": is_demo,
+        "branding": branding,
         "invoice": {
             "number":         str(invoice.get("invoice_number") or "N/A"),
             "issue_date":     str(invoice.get("issue_date") or "N/A"),
@@ -615,9 +644,9 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "channel":    str(billing.get("recommended_channel") or "N/A"),
             "grace_days": int(billing.get("grace_days") or 5),
         },
-        "reminder_text": str(reminder_text or ""),
+        "reminder_text": clean_reminder,
         "audit": {
-            "processed_at": datetime.now().isoformat(),
+            "processed_at": clean_ts,
             "software_version": APP_VERSION,
             "is_demo": is_demo,
             "data_sent_externally": False,
@@ -651,13 +680,34 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
         textColor=brand_color, fontSize=16, spaceAfter=4,
         fontName=PDF_FONT_BOLD
     )
+
+    branding = data.get("branding", {})
+    # Logo aziendale se presente
+    if branding.get("logo_path") and os.path.exists(branding["logo_path"]):
+        try:
+            from reportlab.platypus import Image as RLImage
+            story.append(RLImage(branding["logo_path"], width=4.5*cm, height=1.8*cm, kind="proportional"))
+            story.append(Spacer(1, 0.2*cm))
+        except Exception as e_img:
+            logger.warning(f"Impossibile caricare logo aziendale: {e_img}")
+
     story.append(Paragraph(_pdf_text(labels["software_name"]), title_style))
     story.append(Paragraph(_pdf_text(f"{labels['report_title']} | {data['generated_at'][:10]}"), styles["Normal"]))
+    
+    # Intestazione mittente personalizzata (Custom Branding)
+    if branding.get("company_name"):
+        comp_info = [branding.get("company_name", "")]
+        if branding.get("address"): comp_info.append(branding["address"])
+        if branding.get("iban"): comp_info.append(f"IBAN: {branding['iban']}")
+        if branding.get("email"): comp_info.append(branding["email"])
+        story.append(Paragraph(_pdf_text(" | ".join(comp_info)), styles["Normal"]))
+
     story.append(HRFlowable(width="100%", thickness=1, color=brand_color, spaceAfter=8))
 
     inv = data["invoice"]
     clf = data["classification"]
-    story.append(Paragraph(_pdf_text(labels["title"]), styles["Heading2"]))
+    if labels["title"].strip().upper() != "DESCRIPTION":
+        story.append(Paragraph(_pdf_text(labels["title"]), styles["Heading2"]))
     table_data = [
         [labels["inv_num"],      inv["number"]],
         [labels["issue_date"],   inv["issue_date"]],
@@ -690,21 +740,24 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
 
     story.append(Paragraph(_pdf_text(labels["rem_title"]), styles["Heading2"]))
     for line in data["reminder_text"].split("\n"):
-        if line.strip():
-            story.append(Paragraph(_pdf_text(line), styles["Normal"]))
-        else:
+        line_clean = line.replace("**", "").strip()
+        if line_clean and line_clean.upper() != "DESCRIPTION":
+            story.append(Paragraph(_pdf_text(line_clean), styles["Normal"]))
+        elif not line_clean:
             story.append(Spacer(1, 0.2*cm))
     story.append(Spacer(1, 0.5*cm))
 
     if data["compliance"]["recommendations"]:
         story.append(Paragraph(_pdf_text(labels["recs_title"]), styles["Heading2"]))
         for rec in data["compliance"]["recommendations"]:
-            story.append(Paragraph(_pdf_text(f"• {rec}"), styles["Normal"]))
+            rec_clean = str(rec).replace("**", "").strip()
+            story.append(Paragraph(_pdf_text(f"• {rec_clean}"), styles["Normal"]))
         story.append(Spacer(1, 0.3*cm))
 
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor(MEDIUM_GRAY), spaceAfter=4))
     audit_style = ParagraphStyle("Audit", parent=styles["Normal"], fontSize=8, textColor=colors.gray)
-    story.append(Paragraph(_pdf_text(f"{labels['processed']}: {data['audit']['processed_at']} | {data['software']} {data['version']}"), audit_style))
+    clean_proc_at = data["audit"]["processed_at"][:16].replace("T", " ")
+    story.append(Paragraph(_pdf_text(f"{labels['processed']}: {clean_proc_at} | ZUKWEND — Multilingual Billing Agent 2.1.5"), audit_style))
     story.append(Paragraph(_pdf_text(labels["offline_tag"]), audit_style))
     story.append(Spacer(1, 0.2*cm))
 
@@ -855,6 +908,10 @@ def _generate_docx(data: dict, path: Path, is_demo: bool = False) -> Path:
 # ---------------------------------------------------------------------------
 def _generate_json(data: dict, path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
+    days_od = data["classification"]["days_overdue"]
+    bucket_label = "0-30" if 0 <= days_od <= 30 else ("31-60" if 31 <= days_od <= 60 else ("61-90" if 61 <= days_od <= 90 else "90+"))
+    if days_od < 0: bucket_label = "NOT_DUE"
+
     json_out = {
         "zukwend_version": data["version"],
         "generated_at": data["generated_at"],
@@ -866,7 +923,25 @@ def _generate_json(data: dict, path: Path) -> Path:
         "billing": data["billing"],
         "reminder_text": data["reminder_text"],
         "audit": data["audit"],
+        "erp_ingestion": {
+            "erp_compatible_systems": ["SAP", "Zucchetti", "TeamSystem"],
+            "invoice_number": data["invoice"]["number"],
+            "client": data["invoice"]["client"],
+            "client_address": data["invoice"].get("client_address", ""),
+            "currency": data["invoice"]["currency"],
+            "amount": data["invoice"]["amount"],
+            "payment_status": data["classification"]["payment_status"],
+            "days_overdue": days_od,
+            "aging_bucket": bucket_label,
+            "risk_level": data["classification"]["risk_level_label"],
+            "reminder_level": data["classification"]["reminder_level"],
+            "recommended_action": data["billing"]["action"],
+            "export_timestamp": data["audit"]["processed_at"]
+        }
     }
+    if data.get("branding"):
+        json_out["branding"] = data["branding"]
+
     content = json.dumps(json_out, indent=2, ensure_ascii=False)
     target_path = path
     try:
@@ -884,6 +959,202 @@ def _generate_json(data: dict, path: Path) -> Path:
     clean_json = clean_path(target_path)
     logger.info(f"JSON generated: {clean_json}")
     return Path(clean_json)
+
+# ---------------------------------------------------------------------------
+# Generatore Excel (.xlsx) Formattato con Aging Buckets (0-30/31-60/61-90/90+)
+# ---------------------------------------------------------------------------
+def _generate_xlsx(data: dict, path: Path) -> Path:
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "AR Aging Analysis"
+    ws.views.sheetView[0].showGridLines = True
+
+    # Palette colori professionali
+    brand_fill = PatternFill(start_color="FF6B00", end_color="FF6B00", fill_type="solid")
+    dark_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+    gray_fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+    highlight_fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
+
+    font_title = Font(name="Calibri", size=15, bold=True, color="FFFFFF")
+    font_section = Font(name="Calibri", size=12, bold=True, color="FFFFFF")
+    font_header = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    font_bold = Font(name="Calibri", size=11, bold=True)
+    font_normal = Font(name="Calibri", size=11)
+    font_muted = Font(name="Calibri", size=9, italic=True, color="64748B")
+
+    thin_border = Border(
+        left=Side(style="thin", color="CBD5E1"),
+        right=Side(style="thin", color="CBD5E1"),
+        top=Side(style="thin", color="CBD5E1"),
+        bottom=Side(style="thin", color="CBD5E1")
+    )
+
+    inv = data["invoice"]
+    clf = data["classification"]
+    labels = data["labels"]
+    branding = data.get("branding", {})
+
+    # 1. Header Banner
+    ws.merge_cells("A1:G1")
+    title_cell = ws["A1"]
+    title_cell.value = f"ZUKWEND — {labels.get('report_title', 'Accounts Receivable Aging Report')}"
+    title_cell.font = font_title
+    title_cell.fill = brand_fill
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 36
+
+    # 2. Informazioni Mittente (Custom Branding)
+    row = 3
+    if branding.get("company_name"):
+        ws.cell(row=row, column=1, value="CREDITOR / MITTENTE:").font = font_bold
+        ws.cell(row=row, column=2, value=branding.get("company_name", "")).font = font_bold
+        if branding.get("address"):
+            row += 1
+            ws.cell(row=row, column=1, value="ADDRESS:").font = font_muted
+            ws.cell(row=row, column=2, value=branding.get("address", "")).font = font_normal
+        if branding.get("iban"):
+            row += 1
+            ws.cell(row=row, column=1, value="IBAN:").font = font_muted
+            ws.cell(row=row, column=2, value=branding.get("iban", "")).font = font_normal
+        if branding.get("email"):
+            row += 1
+            ws.cell(row=row, column=1, value="EMAIL:").font = font_muted
+            ws.cell(row=row, column=2, value=branding.get("email", "")).font = font_normal
+        row += 1
+
+    # 3. Sezione Dettagli Fattura
+    ws.cell(row=row, column=1, value="INVOICE & DEBTOR DETAILS").font = font_section
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
+    for c in range(1, 8):
+        ws.cell(row=row, column=c).fill = dark_fill
+    ws.row_dimensions[row].height = 24
+    row += 1
+
+    invoice_fields = [
+        (labels.get("inv_num", "Invoice Number"), inv["number"]),
+        (labels.get("issue_date", "Issue Date"), inv["issue_date"]),
+        (labels.get("due_date", "Due Date"), inv["due_date"]),
+        (labels.get("amount", "Amount"), f"{inv['currency']} {inv['amount']:,.2f}"),
+        (labels.get("client", "Client"), inv["client"]),
+        (labels.get("client_address", "Client Address"), inv.get("client_address", "")),
+        (labels.get("status", "Status"), clf["payment_status"]),
+        (labels.get("overdue", "Days Overdue"), clf["days_overdue"]),
+        (labels.get("risk", "Risk Level"), clf["risk_level_label"]),
+        (labels.get("reminder_lvl", "Reminder Level"), f"{labels.get('notice_prefix', 'Level')} {clf['reminder_level']}"),
+    ]
+
+    for label, val in invoice_fields:
+        c1 = ws.cell(row=row, column=1, value=label)
+        c2 = ws.cell(row=row, column=2, value=str(val))
+        c1.font = font_bold
+        c1.fill = gray_fill
+        c2.font = font_normal
+        c1.border = thin_border
+        c2.border = thin_border
+        ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=4)
+        for cc in range(2, 5):
+            ws.cell(row=row, column=cc).border = thin_border
+        row += 1
+
+    row += 1
+
+    # 4. Aging Buckets Section (0-30, 31-60, 61-90, 90+)
+    ws.cell(row=row, column=1, value="AR AGING BUCKETS BREAKDOWN").font = font_section
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
+    for c in range(1, 8):
+        ws.cell(row=row, column=c).fill = dark_fill
+    ws.row_dimensions[row].height = 24
+    row += 1
+
+    bucket_headers = ["Current / Not Due", "0 - 30 Days", "31 - 60 Days", "61 - 90 Days", "90+ Days (Critical)", "Total Overdue"]
+    for col_idx, b_title in enumerate(bucket_headers, start=1):
+        cell = ws.cell(row=row, column=col_idx, value=b_title)
+        cell.font = font_header
+        cell.fill = brand_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = thin_border
+    ws.row_dimensions[row].height = 22
+    row += 1
+
+    days_od = clf["days_overdue"]
+    amt = inv["amount"]
+
+    b_not_due = amt if days_od <= 0 else 0.0
+    b_0_30    = amt if 1 <= days_od <= 30 else 0.0
+    b_31_60   = amt if 31 <= days_od <= 60 else 0.0
+    b_61_90   = amt if 61 <= days_od <= 90 else 0.0
+    b_90_plus = amt if days_od > 90 else 0.0
+    total_od  = amt if days_od > 0 else 0.0
+
+    bucket_values = [b_not_due, b_0_30, b_31_60, b_61_90, b_90_plus, total_od]
+    for col_idx, b_val in enumerate(bucket_values, start=1):
+        cell = ws.cell(row=row, column=col_idx, value=b_val)
+        cell.font = font_bold if col_idx in (5, 6) else font_normal
+        cell.number_format = f'"{inv["currency"]} " #,##0.00'
+        cell.alignment = Alignment(horizontal="right", vertical="center")
+        cell.border = thin_border
+        if b_val > 0 and col_idx in (5, 6):
+            cell.fill = highlight_fill
+    row += 2
+
+    # 5. Scheda 2: Ingestione ERP (SAP, Zucchetti, TeamSystem)
+    ws_erp = wb.create_sheet(title="ERP_Ingestion")
+    ws_erp.views.sheetView[0].showGridLines = True
+    erp_cols = [
+        "INVOICE_ID", "CLIENT_NAME", "CLIENT_ADDRESS", "ISSUE_DATE", "DUE_DATE",
+        "CURRENCY", "AMOUNT", "PAYMENT_STATUS", "DAYS_OVERDUE", "AGING_BUCKET",
+        "RISK_LEVEL", "REMINDER_LEVEL", "RECOMMENDED_ACTION", "EXPORT_TIMESTAMP"
+    ]
+    for c_idx, h_text in enumerate(erp_cols, start=1):
+        c = ws_erp.cell(row=1, column=c_idx, value=h_text)
+        c.font = font_header
+        c.fill = dark_fill
+        c.alignment = Alignment(horizontal="center", vertical="center")
+        c.border = thin_border
+
+    bucket_str = "0-30" if 0 <= days_od <= 30 else ("31-60" if 31 <= days_od <= 60 else ("61-90" if 61 <= days_od <= 90 else "90+"))
+    if days_od < 0: bucket_str = "NOT_DUE"
+
+    erp_row_data = [
+        inv["number"], inv["client"], inv.get("client_address", ""), inv["issue_date"], inv["due_date"],
+        inv["currency"], inv["amount"], clf["payment_status"], clf["days_overdue"], bucket_str,
+        clf["risk_level_label"], clf["reminder_level"], data["billing"]["action"], data["audit"]["processed_at"]
+    ]
+    for c_idx, val in enumerate(erp_row_data, start=1):
+        c = ws_erp.cell(row=2, column=c_idx, value=val)
+        c.font = font_normal
+        c.border = thin_border
+        if c_idx == 7:  # Amount
+            c.number_format = "#,##0.00"
+            c.alignment = Alignment(horizontal="right")
+
+    for col in ws.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        col_letter = get_column_letter(col[0].column)
+        ws.column_dimensions[col_letter].width = max(max_len + 3, 15)
+
+    for col in ws_erp.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        col_letter = get_column_letter(col[0].column)
+        ws_erp.column_dimensions[col_letter].width = max(max_len + 4, 15)
+
+    target_path = path
+    try:
+        wb.save(str(target_path))
+    except (PermissionError, OSError) as e:
+        if _is_lock_error(e):
+            target_path = _get_unique_fallback_path(path)
+            logger.warning(f"[LOCK_RECOVERY] XLSX destination '{path.name}' locked ({e}). Saving to '{target_path.name}'")
+            wb.save(str(target_path))
+        else:
+            raise e
+    clean_xlsx = clean_path(target_path)
+    logger.info(f"XLSX generated: {clean_xlsx}")
+    return Path(clean_xlsx)
 
 # ---------------------------------------------------------------------------
 # Generatore HTML

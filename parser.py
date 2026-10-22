@@ -131,18 +131,22 @@ def extract_text(pdf_path: str, use_ocr: bool = False) -> str:
 # ---------------------------------------------------------------------------
 def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", api_key: str = None) -> dict:
     if not raw_text or len(raw_text.strip()) < 10:
-        return {"requires_manual_input": True, "error": "testo insufficiente"}
+        return {"requires_manual_input": True, "error": "insufficient text"}
 
-    # TENTATIVO 1: Estrazione Cognitiva (LLM)
-    prompt_path = Path(get_resource_path("prompts/prompt_parser_ar.md"))
-    if prompt_path.exists():
-        try:
-            system_prompt = prompt_path.read_text(encoding="utf-8")
-            full_prompt = f"{system_prompt}\n\nTESTO DELLA FATTURA:\n{raw_text}"
+    # MODALITÀ 1: ZUKWEND CORE AI (mode == "local" o "core") — 100% Deterministico e Locale (~1s)
+    if mode in ("local", "core"):
+        logger.info("Executing ZUKWEND CORE AI proprietary deterministic extraction.")
+        return _fallback_regex_extraction(raw_text)
 
-            if mode == "local":
-                if not is_local_llm_available():
-                    raise ConnectionError("Motore LLM locale (Ollama) non attivo")
+    # MODALITÀ 2: OLLAMA AI POWER-UP (mode == "ollama")
+    if mode == "ollama":
+        if not is_local_llm_available():
+            raise ConnectionError("Ollama non rilevato su localhost:11434. Avvia il server Ollama oppure seleziona ⚡ ZUKWEND CORE AI.")
+        prompt_path = Path(get_resource_path("prompts/prompt_parser_ar.md"))
+        if prompt_path.exists():
+            try:
+                system_prompt = prompt_path.read_text(encoding="utf-8")
+                full_prompt = f"{system_prompt}\n\nTESTO DELLA FATTURA:\n{raw_text}"
                 resp = requests.post(
                     "http://localhost:11434/api/generate",
                     json={"model": "qwen3:8b", "prompt": full_prompt, "stream": False, "format": "json"},
@@ -150,7 +154,26 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
                 )
                 resp.raise_for_status()
                 response_text = resp.json().get("response", "")
-            else:
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    data = json.loads(json_match.group(0))
+                    if data.get("invoice_number") and data.get("amount") is not None:
+                        data["requires_manual_input"] = False
+                        data["extraction_timestamp"] = datetime.now().isoformat()
+                        data["extraction_method"] = "Ollama Local LLM"
+                        logger.info("Extraction completed via Ollama Local LLM.")
+                        return data
+            except Exception as e:
+                logger.warning(f"Ollama extraction error ({e}), using fallback.")
+        return _fallback_regex_extraction(raw_text)
+
+    # MODALITÀ 3: CLOUD BYOC (mode == "cloud")
+    if mode == "cloud":
+        prompt_path = Path(get_resource_path("prompts/prompt_parser_ar.md"))
+        if prompt_path.exists() and api_key:
+            try:
+                system_prompt = prompt_path.read_text(encoding="utf-8")
+                full_prompt = f"{system_prompt}\n\nTESTO DELLA FATTURA:\n{raw_text}"
                 headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
                 resp = requests.post(
                     "https://api.anthropic.com/v1/messages",
@@ -160,24 +183,20 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
                 )
                 resp.raise_for_status()
                 response_text = resp.json()["content"][0]["text"]
-
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if json_match:
-                data = json.loads(json_match.group(0))
-                
-                # Validazione minima di sicurezza
-                if data.get("invoice_number") and data.get("amount") is not None:
-                    data["requires_manual_input"] = False
-                    data["extraction_timestamp"] = datetime.now().isoformat()
-                    data["extraction_method"] = f"LLM ({mode})"
-                    logger.info("Extraction completed via LLM.")
-                    return data
-                
-        except Exception as e:
-            logger.warning(f"LLM extraction failed ({e}), activating regex fallback.")
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    data = json.loads(json_match.group(0))
+                    if data.get("invoice_number") and data.get("amount") is not None:
+                        data["requires_manual_input"] = False
+                        data["extraction_timestamp"] = datetime.now().isoformat()
+                        data["extraction_method"] = "Cloud BYOC LLM"
+                        logger.info("Extraction completed via Cloud LLM.")
+                        return data
+            except Exception as e:
+                logger.warning(f"Cloud LLM extraction error ({e}), using fallback.")
+        return _fallback_regex_extraction(raw_text)
 
     # Fallback Deterministico
-    logger.info("Executing regex extraction fallback.")
     return _fallback_regex_extraction(raw_text)
 
 # ---------------------------------------------------------------------------

@@ -310,18 +310,15 @@ def load_invoice(pdf_path: str) -> dict:
         "loaded_at": datetime.now().isoformat(),
     }
 
-def parse_invoice(pdf_path: str, use_ocr: bool = False) -> dict:
+def parse_invoice(pdf_path: str, use_ocr: bool = False, mode: str = "local", api_key: Optional[str] = None) -> dict:
     parser_mod = _import_module("parser")
     if parser_mod is None:
         logger.warning("parser.py not available — returning empty structure")
         return {"requires_manual_input": True, "error": "parser module not found"}
 
     try:
-        if hasattr(parser_mod, "parse_invoice_from_path"):
-            fields = parser_mod.parse_invoice_from_path(pdf_path, use_ocr=use_ocr)
-        else:
-            raw = parser_mod.extract_text(pdf_path, use_ocr=use_ocr)
-            fields = parser_mod.extract_fields(raw, use_ocr=use_ocr)
+        raw = parser_mod.extract_text(pdf_path, use_ocr=use_ocr)
+        fields = parser_mod.extract_fields(raw, use_ocr=use_ocr, mode=mode, api_key=api_key)
         logger.info(f"Parser: {len(fields)} fields extracted")
         return fields
     except Exception as e:
@@ -345,7 +342,7 @@ def normalize_invoice(raw_fields: dict, language: str = "it") -> dict:
         raw_fields["normalize_error"] = str(e)
         return raw_fields
 
-def classify_invoice(normalized: dict, compliance_threshold: float = 10000.0) -> dict:
+def classify_invoice(normalized: dict, compliance_threshold: float = 10000.0, language: str = "it") -> dict:
     clf_mod = _import_module("classifier")
     if clf_mod is None:
         return {
@@ -357,7 +354,12 @@ def classify_invoice(normalized: dict, compliance_threshold: float = 10000.0) ->
             "classification_rationale": "Classificatore non disponibile",
         }
     try:
-        classification = clf_mod.classify(normalized, compliance_threshold=compliance_threshold)
+        import inspect
+        sig = inspect.signature(clf_mod.classify)
+        if "language" in sig.parameters:
+            classification = clf_mod.classify(normalized, compliance_threshold=compliance_threshold, language=language)
+        else:
+            classification = clf_mod.classify(normalized, compliance_threshold=compliance_threshold)
         logger.info(
             f"Classifier: status={classification.get('payment_status')} "
             f"| risk={classification.get('risk_level')} "
@@ -613,7 +615,7 @@ def generate_report(
             reminder_text=reminder_text,
             language=language,
             output_dir=output_dir,
-            formats=formats or ["pdf"],
+            formats=formats or ["pdf", "xlsx", "json"],
             is_demo=is_demo,
         )
         logger.info(f"Report generated: {report.get('paths', {})}")
@@ -652,6 +654,9 @@ def run_pipeline(
     audit_log = []
     errors = []
 
+    if formats is None:
+        formats = ["pdf", "xlsx", "json"]
+
     lang_key = (language or "en").strip().lower()[:2]
     i18n = I18N_CONSOLE.get(lang_key, I18N_CONSOLE["en"])
 
@@ -671,6 +676,25 @@ def run_pipeline(
                 pass
 
     _audit("PIPELINE_START", "OK", f"pdf={pdf_path} | lang={language} | mode={mode}")
+
+    # Controllo esplicito Ollama: zero fallback silenzioso se Ollama non è attivo
+    if mode == "ollama":
+        import urllib.request
+        ollama_alive = False
+        try:
+            req = urllib.request.Request("http://localhost:11434/api/tags", headers={"User-Agent": "ZUKWEND"})
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
+                ollama_alive = (resp.status == 200)
+        except Exception:
+            ollama_alive = False
+
+        if not ollama_alive:
+            msg = "Ollama non rilevato su localhost:11434. Avvia il server Ollama oppure seleziona ⚡ ZUKWEND CORE AI."
+            _audit("OLLAMA", "FAILED", msg)
+            errors.append({"step": "OLLAMA", "code": "ERR_OLLAMA", "error": msg})
+            return WorkflowResult({}, {}, {}, {}, "", None, [], audit_log, False, errors)
+        else:
+            _audit("OLLAMA", "OK", "Server Ollama connesso su localhost:11434")
 
     lic_status = _check_license_gate()
     if not lic_status.get("is_valid", False):
@@ -692,7 +716,7 @@ def run_pipeline(
         return WorkflowResult({}, {}, {}, {}, "", None, [], audit_log, False, errors)
     _audit("LOAD", "OK", file_meta.get("filename", ""))
 
-    raw_fields, err = _safe_step("PARSE", lambda: parse_invoice(pdf_path))
+    raw_fields, err = _safe_step("PARSE", lambda: parse_invoice(pdf_path, mode=mode, api_key=api_key))
     if err or raw_fields.get("requires_manual_input"):
         errors.append({"step": "PARSE", "code": ERR_PARSE, "error": str(err or i18n["manual_input_required"])})
         _audit("PARSE", "FALLBACK", str(err or i18n["manual_input_required"]))
@@ -709,13 +733,18 @@ def run_pipeline(
 
     classification, err = _safe_step(
         "CLASSIFY",
-        lambda: classify_invoice(normalized, compliance_threshold=compliance_threshold)
+        lambda: classify_invoice(normalized, compliance_threshold=compliance_threshold, language=language)
     )
     if err:
         errors.append({"step": "CLASSIFY", "code": ERR_CLASSIFY, "error": str(err)})
         _audit("CLASSIFY", "FALLBACK", str(err))
         classification = {"payment_status": "UNKNOWN", "days_overdue": 0, "risk_level": "UNKNOWN", "reminder_level": 0}
     else:
+        if lang_key == "en" and "flags" in classification:
+            classification["flags"] = [
+                "critical_overdue_bad_debt_risk" if f == "critical_overdue_risk_inesigibilita" else f
+                for f in classification["flags"]
+            ]
         _audit("CLASSIFY", "OK", f"status={classification.get('payment_status')} | level={classification.get('reminder_level')}")
 
     compliance, err = _safe_step("COMPLIANCE", lambda: check_compliance(normalized, classification, language=language))
@@ -724,6 +753,11 @@ def run_pipeline(
         _audit("COMPLIANCE", "FALLBACK", str(err))
         compliance = {"compliance_flag": False, "flags": [], "recommendations": []}
     else:
+        if lang_key == "en" and "flags" in compliance:
+            compliance["flags"] = [
+                "critical_overdue_bad_debt_risk" if f == "critical_overdue_risk_inesigibilita" else f
+                for f in compliance["flags"]
+            ]
         flags_list = compliance.get("flags", [])
         flags_str = ", ".join(flags_list) if flags_list else "none"
         _audit("COMPLIANCE", "OK", f"flags={flags_str}")

@@ -13,6 +13,8 @@ import queue
 import logging
 import subprocess
 import threading
+import urllib.request
+import re
 import webbrowser
 from pathlib import Path
 import customtkinter as ctk
@@ -20,6 +22,9 @@ from tkinter import filedialog, messagebox
 
 from license_manager import check_license, activate_license, increment_invoice_count, get_machine_id_short
 from resource_utils import get_resource_path, get_user_data_dir, get_output_dir
+import custom_branding
+import watch_directory
+from watch_directory import DirectoryWatcher
 
 # Explicit internal & PDF library imports for PyInstaller bundling
 import workflow_engine
@@ -93,13 +98,31 @@ def launch_gui_launcher():
 
     root = ctk.CTk()
     root.title("ZUKWEND Billing Agent")
-    root.geometry("640x760")
+    root.geometry("640x800")
     root.resizable(False, False)
 
     try:
         ensure_output_folder()
     except Exception as e:
         logger.error(f"Unable to create output folder: {e}")
+
+    # Watch daemon tracking
+    global_watcher = {"daemon": None}
+    branding_init = custom_branding.get_branding()
+    if branding_init.get("watch_enabled") and branding_init.get("watch_folder"):
+        w_folder = branding_init.get("watch_folder")
+        if os.path.exists(w_folder):
+            try:
+                watcher = DirectoryWatcher(
+                    watch_folder=w_folder,
+                    language=cfg.get("lang", "en"),
+                    mode=cfg.get("mode", "local"),
+                    callback=lambda fpath, ok, msg: post_ui(append_log, f"[WATCH] {os.path.basename(fpath)}: {msg}")
+                )
+                if watcher.start():
+                    global_watcher["daemon"] = watcher
+            except Exception as e:
+                logger.error(f"Error starting initial watch daemon: {e}")
 
     # Thread-safe UI queue
     ui_queue = queue.Queue()
@@ -178,6 +201,16 @@ def launch_gui_launcher():
         hover_color="#1D4ED8"
     )
 
+    btn_settings = ctk.CTkButton(
+        frame_license_header,
+        text="⚙️ Settings & Branding",
+        width=140,
+        height=28,
+        font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+        fg_color="#374151",
+        hover_color="#4B5563"
+    )
+
     # State tracking
     current_lic_status = {"data": safe_check_license()}
 
@@ -192,6 +225,10 @@ def launch_gui_launcher():
         # Unpack elements
         btn_activate_license.pack_forget()
         btn_buy_full.pack_forget()
+        btn_settings.pack_forget()
+
+        # Always show Settings & Branding on right
+        btn_settings.pack(side="right")
 
         if lic_type == "FULL":
             badge_license.configure(
@@ -207,7 +244,7 @@ def launch_gui_launcher():
                 text_color="#EF4444",
                 fg_color="#450A0A"
             )
-            btn_buy_full.pack(side="right", padx=(6, 0))
+            btn_buy_full.pack(side="right", padx=(6, 6))
             btn_activate_license.pack(side="right")
             if "btn_run" in locals() or "btn_run" in globals():
                 btn_run.configure(state="disabled")
@@ -217,7 +254,7 @@ def launch_gui_launcher():
                 text_color="#F59E0B",
                 fg_color="#451A03"
             )
-            btn_buy_full.pack(side="right", padx=(6, 0))
+            btn_buy_full.pack(side="right", padx=(6, 6))
             btn_activate_license.pack(side="right")
             if "btn_run" in locals() or "btn_run" in globals():
                 btn_run.configure(state="normal")
@@ -320,6 +357,145 @@ def launch_gui_launcher():
 
     btn_activate_license.configure(command=open_activation_dialog)
 
+    def open_settings_dialog():
+        dialog = ctk.CTkToplevel(root)
+        dialog.title("Impostazioni Aziendali & Watch Directory — ZUKWEND")
+        dialog.geometry("560x530")
+        dialog.resizable(False, False)
+        dialog.transient(root)
+        dialog.grab_set()
+
+        current_b = custom_branding.get_branding()
+
+        lbl_dlg_title = ctk.CTkLabel(
+            dialog,
+            text="Personalizzazione Mittente & Automazione",
+            font=ctk.CTkFont(family="Segoe UI", size=15, weight="bold")
+        )
+        lbl_dlg_title.pack(pady=(14, 2))
+
+        lbl_dlg_sub = ctk.CTkLabel(
+            dialog,
+            text="Dati mittente stampati sui report PDF/Excel e monitoraggio cartella.",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            text_color="#9CA3AF"
+        )
+        lbl_dlg_sub.pack(pady=(0, 10))
+
+        frm_fields = ctk.CTkFrame(dialog, fg_color="transparent")
+        frm_fields.pack(fill="x", padx=20)
+
+        # 1. Ragione Sociale
+        ctk.CTkLabel(frm_fields, text="Ragione Sociale / Intestazione Mittente:", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
+        ent_comp = ctk.CTkEntry(frm_fields, placeholder_text="Es. Acme Corp S.r.l.", height=28)
+        ent_comp.pack(fill="x", pady=(0, 5))
+        if current_b.get("company_name"):
+            ent_comp.insert(0, current_b["company_name"])
+
+        # 2. Indirizzo
+        ctk.CTkLabel(frm_fields, text="Indirizzo Completo:", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
+        ent_addr = ctk.CTkEntry(frm_fields, placeholder_text="Es. Via Roma 123, 20121 Milano (MI)", height=28)
+        ent_addr.pack(fill="x", pady=(0, 5))
+        if current_b.get("address"):
+            ent_addr.insert(0, current_b["address"])
+
+        # 3. IBAN & Email
+        frm_row3 = ctk.CTkFrame(frm_fields, fg_color="transparent")
+        frm_row3.pack(fill="x", pady=(2, 5))
+        
+        frm_iban = ctk.CTkFrame(frm_row3, fg_color="transparent")
+        frm_iban.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        ctk.CTkLabel(frm_iban, text="IBAN Bancario:", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(0, 1))
+        ent_iban = ctk.CTkEntry(frm_iban, placeholder_text="IT00X0000000000000000000000", height=28)
+        ent_iban.pack(fill="x")
+        if current_b.get("iban"):
+            ent_iban.insert(0, current_b["iban"])
+
+        frm_email = ctk.CTkFrame(frm_row3, fg_color="transparent")
+        frm_email.pack(side="right", fill="x", expand=True, padx=(5, 0))
+        ctk.CTkLabel(frm_email, text="Email Amministrazione:", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(0, 1))
+        ent_email = ctk.CTkEntry(frm_email, placeholder_text="amministrazione@azienda.com", height=28)
+        ent_email.pack(fill="x")
+        if current_b.get("email"):
+            ent_email.insert(0, current_b["email"])
+
+        # 4. Logo PNG/JPG
+        ctk.CTkLabel(frm_fields, text="Logo Aziendale (PNG/JPG):", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
+        frm_logo = ctk.CTkFrame(frm_fields, fg_color="transparent")
+        frm_logo.pack(fill="x", pady=(0, 5))
+        ent_logo = ctk.CTkEntry(frm_logo, placeholder_text="Percorso logo per carta intestata...", height=28)
+        ent_logo.pack(side="left", fill="x", expand=True, padx=(0, 6))
+        if current_b.get("logo_path"):
+            ent_logo.insert(0, current_b["logo_path"])
+        
+        def sfoglia_logo():
+            f = filedialog.askopenfilename(title="Seleziona Logo Aziendale", filetypes=[("Immagini", "*.png;*.jpg;*.jpeg"), ("Tutti i file", "*.*")])
+            if f:
+                ent_logo.delete(0, "end")
+                ent_logo.insert(0, f)
+
+        ctk.CTkButton(frm_logo, text="Sfoglia...", width=75, height=28, command=sfoglia_logo).pack(side="right")
+
+        # 5. Watch Directory & Switch
+        ctk.CTkLabel(frm_fields, text="Cartella di Monitoraggio Automatico (Watch Directory):", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
+        frm_watch = ctk.CTkFrame(frm_fields, fg_color="transparent")
+        frm_watch.pack(fill="x", pady=(0, 5))
+        ent_watch = ctk.CTkEntry(frm_watch, placeholder_text="Es. C:/Fatture_In_Arrivo", height=28)
+        ent_watch.pack(side="left", fill="x", expand=True, padx=(0, 6))
+        if current_b.get("watch_folder"):
+            ent_watch.insert(0, current_b["watch_folder"])
+
+        def sfoglia_watch():
+            d = filedialog.askdirectory(title="Seleziona Cartella da Monitorare")
+            if d:
+                ent_watch.delete(0, "end")
+                ent_watch.insert(0, d)
+
+        ctk.CTkButton(frm_watch, text="Sfoglia...", width=75, height=28, command=sfoglia_watch).pack(side="right")
+
+        sw_var = ctk.BooleanVar(value=bool(current_b.get("watch_enabled", False)))
+        sw_watch = ctk.CTkSwitch(frm_fields, text="Attiva Monitoraggio Automatico Background (Watch Daemon)", variable=sw_var, font=ctk.CTkFont(family="Segoe UI", size=11))
+        sw_watch.pack(anchor="w", pady=(4, 10))
+
+        def salva_e_chiudi():
+            new_b = {
+                "company_name": ent_comp.get().strip(),
+                "address": ent_addr.get().strip(),
+                "iban": ent_iban.get().strip(),
+                "email": ent_email.get().strip(),
+                "logo_path": ent_logo.get().strip(),
+                "watch_folder": ent_watch.get().strip(),
+                "watch_enabled": sw_var.get(),
+            }
+            custom_branding.save_branding(new_b)
+            
+            # Gestione daemon
+            if new_b["watch_enabled"] and new_b["watch_folder"] and os.path.exists(new_b["watch_folder"]):
+                if global_watcher["daemon"]:
+                    global_watcher["daemon"].stop()
+                w = DirectoryWatcher(
+                    watch_folder=new_b["watch_folder"],
+                    language=lang_map.get(combo_lang.get(), "en"),
+                    mode=mode_var.get(),
+                    api_key=api_key_var.get().strip() if mode_var.get() == "cloud" else None,
+                    callback=lambda fpath, ok, msg: post_ui(append_log, f"[WATCH] {os.path.basename(fpath)}: {msg}")
+                )
+                if w.start():
+                    global_watcher["daemon"] = w
+                    post_ui(append_log, f"[WATCH] Daemon attivo sulla cartella: {new_b['watch_folder']}")
+            else:
+                if global_watcher["daemon"]:
+                    global_watcher["daemon"].stop()
+                    global_watcher["daemon"] = None
+                    post_ui(append_log, "[WATCH] Daemon disattivato.")
+
+            messagebox.showinfo("Configurazione Salvata", "Impostazioni di branding e cartella salvate con successo!")
+            dialog.destroy()
+
+        ctk.CTkButton(dialog, text="💾 Salva Configurazione", font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"), width=200, height=34, fg_color="#059669", hover_color="#047857", command=salva_e_chiudi).pack(pady=(4, 8))
+
+    btn_settings.configure(command=open_settings_dialog)
+
     # Startup DEMO/EXPIRED Modal
     def check_startup_license_modal():
         lic = current_lic_status["data"]
@@ -388,41 +564,59 @@ def launch_gui_launcher():
 
     mode_var = ctk.StringVar(value=cfg.get("mode", "local"))
 
-    rb_local = ctk.CTkRadioButton(
+    rb_core = ctk.CTkRadioButton(
         frame_main, 
-        text="On-Premise Local AI (High Privacy & Zero-Config)", 
+        text="⚡ ZUKWEND CORE AI (Engine Proprietario Local-First)", 
         variable=mode_var, 
         value="local", 
         font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold")
     )
-    rb_local.pack(anchor="w", padx=20, pady=(2, 2))
+    rb_core.pack(anchor="w", padx=20, pady=(2, 1))
 
-    lbl_local_desc = ctk.CTkLabel(
+    lbl_core_desc = ctk.CTkLabel(
         frame_main, 
-        text="Self-contained execution on local hardware. Zero external data transmission.\nIncludes resilient fallback engine for instant, uninterrupted operations.", 
+        text="Massima velocità (1s), 100% deterministico e riservato. Zero dati inviati al cloud | Privacy & GDPR-Native by Design.", 
         font=ctk.CTkFont(family="Segoe UI", size=10), 
         text_color="#9CA3AF", 
         justify="left"
     )
-    lbl_local_desc.pack(anchor="w", padx=45, pady=(0, 8))
+    lbl_core_desc.pack(anchor="w", padx=45, pady=(0, 6))
+
+    rb_ollama = ctk.CTkRadioButton(
+        frame_main, 
+        text="🦙 OLLAMA AI POWER-UP (Local LLM Offline)", 
+        variable=mode_var, 
+        value="ollama", 
+        font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold")
+    )
+    rb_ollama.pack(anchor="w", padx=20, pady=(2, 1))
+
+    lbl_ollama_desc = ctk.CTkLabel(
+        frame_main, 
+        text="Usa il tuo modello Ollama locale su localhost:11434.", 
+        font=ctk.CTkFont(family="Segoe UI", size=10), 
+        text_color="#9CA3AF", 
+        justify="left"
+    )
+    lbl_ollama_desc.pack(anchor="w", padx=45, pady=(0, 6))
 
     rb_cloud = ctk.CTkRadioButton(
         frame_main, 
-        text="High-Precision Cloud AI (BYOC)", 
+        text="☁️ CLOUD BYOC (Bring Your Own Key — Global Enterprise)", 
         variable=mode_var, 
         value="cloud", 
         font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold")
     )
-    rb_cloud.pack(anchor="w", padx=20, pady=(2, 2))
+    rb_cloud.pack(anchor="w", padx=20, pady=(2, 1))
 
     lbl_cloud_desc = ctk.CTkLabel(
         frame_main, 
-        text="Frontier reasoning for complex document layouts with your API provider.\nSupports OpenAI, Google Gemini, Groq, Anthropic, Mistral AI (EU/GDPR compliant).", 
+        text="Collega la tua API Key aziendale (OpenAI / Claude / Gemini).", 
         font=ctk.CTkFont(family="Segoe UI", size=10), 
         text_color="#9CA3AF", 
         justify="left"
     )
-    lbl_cloud_desc.pack(anchor="w", padx=45, pady=(0, 6))
+    lbl_cloud_desc.pack(anchor="w", padx=45, pady=(0, 4))
 
     api_key_var = ctk.StringVar(value=cfg.get("api_key", ""))
     entry_key = ctk.CTkEntry(
@@ -432,7 +626,7 @@ def launch_gui_launcher():
         font=ctk.CTkFont(family="Segoe UI", size=12), 
         show="*"
     )
-    entry_key.pack(fill="x", padx=45, pady=(0, 10))
+    entry_key.pack(fill="x", padx=45, pady=(0, 8))
 
     def on_mode_change(*args):
         if mode_var.get() == "cloud":
@@ -683,6 +877,23 @@ def launch_gui_launcher():
         selected_mode = mode_var.get()
         selected_key = api_key_var.get().strip()
         selected_lang = lang_map.get(combo_lang.get(), "en")
+
+        if selected_mode == "ollama":
+            ollama_alive = False
+            try:
+                req = urllib.request.Request("http://localhost:11434/api/tags", headers={"User-Agent": "ZUKWEND-Agent"})
+                with urllib.request.urlopen(req, timeout=1.5) as resp:
+                    if resp.status == 200:
+                        ollama_alive = True
+            except Exception:
+                ollama_alive = False
+
+            if not ollama_alive:
+                messagebox.showwarning(
+                    "Ollama Non Rilevato",
+                    "Ollama non rilevato su localhost:11434. Avvia il server Ollama oppure seleziona ⚡ ZUKWEND CORE AI."
+                )
+                return
 
         if selected_mode == "cloud" and not selected_key:
             messagebox.showwarning("Missing API Key", "Cloud AI mode selected: please provide your API Key.")

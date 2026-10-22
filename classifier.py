@@ -82,6 +82,7 @@ def classify(
     invoice: dict,
     compliance_threshold: float = DEFAULT_COMPLIANCE_THRESHOLD,
     reference_date: Optional[date] = None,
+    language: Optional[str] = None,
 ) -> dict:
 
     today = reference_date or date.today()
@@ -93,6 +94,7 @@ def classify(
     currency      = invoice.get("currency", "EUR")
     payment_hint  = (invoice.get("payment_status") or "").upper()
     invoice_number = invoice.get("invoice_number", "N/A")
+    lang = (language or invoice.get("detected_language") or invoice.get("normalization_locale") or "it").lower()
 
     # Validazioni base
     if amount is not None and amount < 0:
@@ -127,7 +129,7 @@ def classify(
             risk_level=RISK_NONE,
             reminder_level=LEVEL_0,
             compliance_flag=_check_compliance_threshold(amount, compliance_threshold),
-            flags=["due_date_missing"] + _check_extra_flags(amount, 0),
+            flags=["due_date_missing"] + _check_extra_flags(amount, 0, language=lang),
             rationale="Data scadenza non disponibile",
             next_escalation=None,
             amount=amount,
@@ -178,7 +180,7 @@ def classify(
     compliance_flag = _check_compliance_threshold(amount, compliance_threshold)
 
     # Extra flags
-    flags = _check_extra_flags(amount, days_overdue)
+    flags = _check_extra_flags(amount, days_overdue, language=lang)
     if compliance_flag:
         flags.append("compliance_threshold_exceeded")
 
@@ -238,12 +240,15 @@ def _check_compliance_threshold(amount: Optional[float], threshold: float) -> bo
 # ------------------------------------------------------------
 # extra flags
 # ------------------------------------------------------------
-def _check_extra_flags(amount: Optional[float], days_overdue: int) -> list:
+def _check_extra_flags(amount: Optional[float], days_overdue: int, language: str = "it") -> list:
     flags = []
     if amount and float(amount) > HIGH_VALUE_THRESHOLD:
         flags.append("high_value_kyc_aml")
     if days_overdue > CRITICAL_OVERDUE_DAYS:
-        flags.append("critical_overdue_risk_inesigibilita")
+        if (language or "it").lower().startswith("en"):
+            flags.append("critical_overdue_bad_debt_risk")
+        else:
+            flags.append("critical_overdue_risk_inesigibilita")
     return flags
 
 # ------------------------------------------------------------

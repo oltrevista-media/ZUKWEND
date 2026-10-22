@@ -19,8 +19,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-APP_VERSION = "2.1.4"
-APP_VERSION_FULL = "2.1.4.0"
+APP_VERSION = "2.1.5"
+APP_VERSION_FULL = "2.1.5.0"
 
 logger = logging.getLogger("zukwend.resource_utils")
 

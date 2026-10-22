@@ -56,7 +56,7 @@ def _get_unique_fallback_path(target_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Costanti
 # ---------------------------------------------------------------------------
-SUPPORTED_FORMATS = {"pdf", "docx", "json", "html"}
+SUPPORTED_FORMATS = {"pdf", "docx", "json", "html", "xlsx"}
 
 # ---------------------------------------------------------------------------
 # Funzione principale: export()
