@@ -1,91 +1,101 @@
-================================================================================
-  ZUKWEND — Multilingual Billing Agent (v2.1.5 Enterprise)
-  Offline-First B2B Accounts Receivable & Automated Payment Recovery
-  (c) OLTREVISTA AI — All rights reserved.
-================================================================================
+===============================================================================
+ZUKWEND v2.1.5 ENTERPRISE — USER MANUAL & OPERATIONAL GUIDE
+Local-First Accounts Receivable & Credit Management AI Agent
+===============================================================================
 
-1. OVERVIEW & ARCHITECTURE
---------------------------------------------------------------------------------
-ZUKWEND is part of the OLTREVISTA AI automation platform: an autonomous
-multilingual desktop agent engineered for B2B accounts receivable (AR)
-management, invoice aging analysis, and automated payment recovery workflows
-across 6 languages (EN, IT, DE, FR, ES, PT).
+1. QUICK START (TIER 1 NATIVE ENGINE)
+-------------------------------------------------------------------------------
+ZUKWEND is designed to work immediately out-of-the-box with zero setup:
 
-OPERATIONAL PHILOSOPHY:
-- 100% Offline-First: Corporate data privacy is paramount. Invoices and data
-  remain strictly on your local machine. No background telemetry is sent.
-- Zero External Dependencies: Ready out-of-the-box via the Level 1 Built-in
-  Native AI Engine. No Python, no mandatory Ollama, and no cloud API keys
-  required to start working.
-
-AI EXECUTION TIERS:
-- Tier 1 — Built-in Native AI Engine (Default): 100% offline, deterministic
-  rule-based & local classification without external setup.
-- Tier 2 — Local Ollama Power-Up (Optional): 1-click integration for private,
-  locally hosted open-weights LLMs (Gemma, Mistral, Qwen, DeepSeek).
-- Tier 3 — Cloud BYOC Power-Up (Optional): Bring-Your-Own-Key connection to
-  enterprise frontier models (Claude by Anthropic, GPT-4o by OpenAI, Gemini,
-  Mistral AI EU GDPR, Groq).
-
-
-2. QUICK START GUIDE
---------------------------------------------------------------------------------
-1. Extract all contents of this ZIP archive into a dedicated local directory
-   (e.g., C:\ZUKWEND\ or Desktop\ZUKWEND).
+1. Extract the "Zukwend_Full" ZIP archive to any local directory (e.g., C:\Zukwend\).
 2. Double-click "ZUKWEND.exe" to launch the application.
-3. Select the target document language (EN, IT, DE, FR, ES, PT) in the interface.
-4. Select your target invoice PDF (Import invoice PDFs & aging calculation) (a sample invoice is
-   provided in the "demo/" folder: demo/b2b_invoice_sample_en.pdf).
-5. Click "RUN DOCUMENT ANALYSIS".
-6. The generated analysis reports, debt classification, and reminder drafts
-   are automatically saved inside the "output/" directory.
+3. Click "Select Invoice File / Folder" in the main interface to choose your target PDF invoices (ready-to-test sample invoices are provided in the "demo\" folder).
+4. Click "Run Analysis". In ~1 second, ZUKWEND extracts invoice data, calculates aging risk, generates branded PDF reports, and prepares 1-click email reminders.
 
+No internet connection, external servers, or API keys are required for Tier 1 operation.
 
-3. MICROSOFT DEFENDER SMARTSCREEN & SECURITY NOTICE
---------------------------------------------------------------------------------
-As a standalone native Windows desktop application with zero external cloud
-telemetry, on the first launch Microsoft Defender SmartScreen may display a
-notification: "Windows protected your PC / Unrecognized app".
+-------------------------------------------------------------------------------
+2. FIRST-TIME LAUNCH NOTICE (WINDOWS SMARTSCREEN)
+-------------------------------------------------------------------------------
+Because ZUKWEND runs as an autonomous, local-first executable without requiring administrative installation rights, Windows Defender SmartScreen may display a standard protection message on first launch.
 
-HOW TO PROCEED:
-1. Click on "More info" (or "Ulteriori informazioni").
-2. Click on the "Run anyway" (or "Esegui comunque") button.
+To proceed:
+1. Click on "More info".
+2. Click on the "Run anyway" button.
 
-ZUKWEND is digitally signed and operates strictly on your local files. It never
-transmits customer invoice data to external networks.
+Note: ZUKWEND.exe is digitally signed with an Authenticode EV Code Signing Certificate (Certum EV CA) verifying software integrity and publisher identity.
 
+-------------------------------------------------------------------------------
+3. AI EXECUTION ENGINES: THE 3-TIER ARCHITECTURE
+-------------------------------------------------------------------------------
+ZUKWEND provides three flexible execution tiers to match your corporate privacy and performance requirements:
 
-4. DIRECTORY & FILE STRUCTURE
---------------------------------------------------------------------------------
-The distribution is organized as follows:
+[TIER 1] ZUKWEND CORE AI (Default — 100% Offline & Instant)
+- How it works: Built-in deterministic rules and local AI parser.
+- Setup required: NONE.
+- Privacy: 100% Air-Gapped and Local. Zero data transmitted anywhere.
+- Speed: ~1 second per invoice.
 
-  ZUKWEND.exe            - Main executable application (digitally signed).
-  INSTALLATION_GUIDE.txt - International user setup and architecture guide.
-  LICENSE_EULA.txt       - End User License Agreement and terms of use.
-  zukwend_config.json    - Runtime configuration (language, paths, execution mode).
-  demo/                  - Contains ready-to-test sample B2B invoices.
-                           File: demo/b2b_invoice_sample_en.pdf
-  output/                - Target destination directory for all generated PDF
-                           audit reports, aging sheets, and reminder drafts.
-  prompts/               - System prompt templates and multilingual deduction rules.
-  _internal/             - Native execution binaries, dependencies, and libraries.
+[TIER 2] LOCAL OLLAMA POWER-UP (Optional — Local Open-Weights LLMs)
+- How it works: Connects to your local Ollama server for advanced open-weights reasoning (e.g., Qwen2.5, Gemma3, DeepSeek-R1).
+- Setup steps:
+  1. Download and install Ollama from https://ollama.com
+  2. Open your Command Prompt / Terminal and pull your preferred model:
+     Example: "ollama pull qwen2.5:7b-instruct" or "ollama pull gemma3"
+  3. Launch ZUKWEND, open "Settings" in the top bar, enable "Local Ollama Engine", select your model from localhost:11434, and click "Save".
+- Privacy: 100% Local. Processing stays entirely on your hardware.
 
+[TIER 3] CLOUD BYOC (Optional — Bring Your Own API Key)
+- How it works: Allows enterprise teams to utilize top-tier cloud LLMs (OpenAI GPT-4o, Anthropic Claude 3.5, Google Gemini 1.5/2.0, Mistral).
+- Setup steps:
+  1. Open "Settings" in the ZUKWEND top menu bar.
+  2. Select "Cloud BYOC Provider" and choose your provider.
+  3. Paste your personal API Key into the designated field and click "Save".
+- Privacy: API calls are sent securely directly from your machine to your chosen provider via encrypted TLS. No middleman servers used.
 
-5. SYSTEM REQUIREMENTS
---------------------------------------------------------------------------------
-- Operating System: Microsoft Windows 10 / Windows 11 (64-bit).
-- Hardware: Minimum 4 GB RAM, 500 MB free disk space.
-- Dependencies: None (fully self-contained, no Python installation required).
+-------------------------------------------------------------------------------
+4. COMPANY BRANDING & SETTINGS CONFIGURATION
+-------------------------------------------------------------------------------
+Customize ZUKWEND to match your corporate identity for generated reports and collection notices:
+1. Click the "Settings" icon in the top navigation bar.
+2. Enter your company details: Legal Business Name, Address, VAT ID, IBAN, BIC/SWIFT, and Admin Email.
+3. Upload your corporate logo (PNG or JPG format) to automatically brand generated PDF reports.
+4. Settings are stored securely in your local configuration file (.zukwend/config.json).
 
+-------------------------------------------------------------------------------
+5. AUTOMATED WATCH DIRECTORY DAEMON
+-------------------------------------------------------------------------------
+For automated background processing:
+1. Open the "Watch Directory" tab in ZUKWEND.
+2. Select an inbound folder (e.g., C:\Invoices_Inbound\).
+3. Activate the daemon. ZUKWEND will continuously monitor the folder, automatically processing new PDFs in real time as they arrive and exporting reports directly to the "output\" directory.
 
-6. LEGAL & TRANSPARENCY NOTICE
---------------------------------------------------------------------------------
-ZUKWEND is an administrative desktop agent designed for Accounts Receivable (AR)
-automation, overdue invoice tracking, and reminder draft generation. It is NOT
-an active billing tool (it does not generate XML/SDI electronic invoices or file
-taxes) nor a debt collection agency or legal counsel. All outputs must be
-reviewed and validated by qualified human personnel prior to business dispatch.
+-------------------------------------------------------------------------------
+6. TRIPLE-EXPORT DELIVERABLES & ERP INTEGRATION (output/ DIRECTORY)
+-------------------------------------------------------------------------------
+ZUKWEND exports three standardized formats into the "output\" folder for every processed batch:
+1. Branded PDF Audit Report: Fully formatted report with company header, risk breakdown, aging analysis, and legal footer.
+2. Excel Workbook (.xlsx):
+   - Sheet 1 ("AR Aging Analysis"): Human-readable summary with local dates and aging buckets (0-30, 31-60, 61-90, 90+ days).
+   - Sheet 2 ("ERP_Ingestion"): Strict ISO YYYY-MM-DD formatted data for seamless import into SAP, Zucchetti, and TeamSystem.
+3. JSON Audit File (.json): Structured metadata containing full compliance and ERP ingestion payloads.
 
-For license activations, support, or documentation, visit:
-https://oltrevista.com
-================================================================================
+-------------------------------------------------------------------------------
+7. 1-CLICK REMINDER WORKFLOW & EMAIL COPY-PASTE
+-------------------------------------------------------------------------------
+ZUKWEND generates clean, pre-formatted collection e-mails ready for immediate sending:
+- Structure: Each reminder is strictly separated into two distinct blocks:
+  SUBJECT: [Localized Email Subject Line]
+  BODY: [Clean Message Body]
+- How to use: Copy the SUBJECT line into your email client (Outlook/Gmail), then copy the BODY text and paste it into your message.
+- Clean Text Guarantee: Reminders contain zero hardcoded fake signatures and zero internal legal disclaimers, ensuring your default corporate email signature remains clean and untouched.
+
+-------------------------------------------------------------------------------
+8. PRIVACY, AIR-GAP SECURITY & LEGAL DISCLAIMER
+-------------------------------------------------------------------------------
+- Privacy Guarantee: ZUKWEND operates under a strict Local-First & Air-Gapped architecture. Your financial data, client names, and invoice details never leave your computer unless you explicitly configure a Tier 3 Cloud provider.
+- Legal Disclaimer: ZUKWEND provides automated operational risk analysis and recommended collection notices. It does not constitute formal legal counsel. Always review Level 3 formal notices with your legal department before business dispatch.
+
+===============================================================================
+(C) 2026 OLTREVISTA / ZUKWEND. All Rights Reserved.
+===============================================================================
