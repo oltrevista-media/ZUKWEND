@@ -565,49 +565,36 @@ def _extract_vendor_name(text: str, text_lower: str) -> Optional[str]:
 
 def _extract_vat_number(text: str) -> Optional[str]:
     """
-    Estrae il numero di Partita IVA / VAT Registration Number / Tax ID.
-    Cerca prioritariamente nei blocchi cliente (Bill to, Spett.le, Customer, ecc.)
-    oppure mediante etichette esplicite (P.IVA, VAT ID, Tax ID, CIF, TVA, USt-IdNr).
+    Estrae il numero di Partita IVA / VAT Registration Number / Tax ID del CLIENTE.
+    Restringe la ricerca esclusivamente alla finestra successiva ai marker del destinatario.
+    NON esegue scansioni globali sul testo dell'intera fattura per evitare di catturare il Tax ID del fornitore nell'header.
+    Richiede pattern con [ \t] (nessun newline crossing) e almeno 5 cifre numeriche.
     """
     if not text:
         return None
     text_lower = text.lower()
 
-    # 1. Cerca prima in prossimità del blocco cliente
     client_keywords = [
-        "spett.le", "spettabile", "bill to", "billed to", "client", "customer",
-        "sold to", "fatturato a", "destinatario"
+        "bill to", "billed to", "cliente", "client", "spett.le", "spettabile",
+        "destinatario", "rechnungsempfänger", "rechnungsempfaenger", "facturer à", "facturer a",
+        "customer", "sold to", "fatturato a"
     ]
     for kw in client_keywords:
         idx = text_lower.find(kw)
         if idx != -1:
-            segment = text[idx: idx + 400]
+            segment = text[idx + len(kw): idx + len(kw) + 350]
             m_cl = re.search(
-                r"(?:p\.?\s*iva|partita\s*iva|c\.?\s*f\.?|codice\s*fiscale|vat\s*(?:reg\.?|id|no\.?|number)?|tax\s*id|tva|uid|ust[\s\-_]?idnr|cif|nif)[\s:#]+([A-Z0-9\-\s]{5,22})",
+                r"(?:p\.?[ \t]*iva|partita[ \t]+iva|c\.?[ \t]*f\.?|codice[ \t]+fiscale|vat[ \t]*(?:reg\.?|id|no\.?|number)?|tax[ \t]*id|tva|uid|ust[ \t\-_]?idnr|cif|nif)[ \t:#]+([A-Z0-9\-\.]{5,20})",
                 segment,
                 re.IGNORECASE
             )
             if m_cl:
-                candidate = re.sub(r"[\s\-_.]+", "", m_cl.group(1)).upper()
-                if len(candidate) >= 5 and candidate not in ("00000000000", "UNKNOWN", "NOTAVAILABLE"):
-                    return candidate
-
-    # 2. Cerca etichette esplicite ovunque nel documento
-    explicit_patterns = [
-        r"(?:client|customer|buyer|destinatario)?[\s\-_]*(?:p\.?\s*iva|partita\s*iva|c\.?\s*f\.?|codice\s*fiscale|vat\s*(?:reg\.?|id|no\.?|number)?|tax\s*id|tva|uid|ust[\s\-_]?idnr|cif|nif)[\s:#]+([A-Z0-9\-\s]{5,22})",
-        r"\b(IT[0-9]{11})\b",
-        r"\b(DE[0-9]{9})\b",
-        r"\b(FR[0-9A-Z]{2}[0-9]{9})\b",
-        r"\b(GB[0-9]{9})\b",
-        r"\b(ES[0-9A-Z]{9})\b",
-        r"\b(CHE[\s\-]?[0-9]{3}[\s\-]?[0-9]{3}[\s\-]?[0-9]{3})\b",
-    ]
-    for pat in explicit_patterns:
-        matches = list(re.finditer(pat, text, re.IGNORECASE))
-        if matches:
-            for match in reversed(matches):
-                candidate = re.sub(r"[\s\-_.]+", "", match.group(1)).upper()
-                if len(candidate) >= 5 and candidate not in ("00000000000", "UNKNOWN", "NOTAVAILABLE"):
+                candidate = re.sub(r"[ \t\-_.]+", "", m_cl.group(1)).upper()
+                if (
+                    len(candidate) >= 5
+                    and sum(c.isdigit() for c in candidate) >= 5
+                    and candidate not in ("00000000000", "UNKNOWN", "NOTAVAILABLE")
+                ):
                     return candidate
 
     return None

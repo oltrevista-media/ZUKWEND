@@ -232,8 +232,8 @@ def test_m1_parse_failure():
         assert res.report_path is None, "No report should be generated"
         assert len(res.export_paths) == 0, "No files should be exported"
 
-        # Check output directory has not received any report_AR_UNKNOWN files
-        unknown_reports = list(out_dir.glob("**/report_AR_UNKNOWN*"))
+        # Check output directory has not received any new report_AR_UNKNOWN files
+        unknown_reports = [f for f in out_dir.glob("**/report_AR_UNKNOWN*") if f not in files_before]
         assert len(unknown_reports) == 0, f"Output directory polluted with unknown reports: {unknown_reports}"
 
         print("  [PASS] Parse error handled without polluting output directory.")

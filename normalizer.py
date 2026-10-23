@@ -58,6 +58,43 @@ CURRENCY_ALIASES = {
     "cad":"CAD","aud":"AUD","jpy":"JPY","¥":"JPY","yen":"JPY",
 }
 
+CURRENCY_MAP_ISO = {
+    "€": "EUR",
+    "$": "USD",
+    "£": "GBP",
+    "¥": "JPY",
+    "R$": "BRL",
+    "EUR": "EUR",
+    "USD": "USD",
+    "GBP": "GBP",
+    "CHF": "CHF",
+    "JPY": "JPY",
+    "BRL": "BRL",
+    "CAD": "CAD",
+    "AUD": "AUD",
+}
+
+def normalize_currency_iso(curr: Optional[str]) -> str:
+    """Mappa e normalizza sempre tutti i simboli valuta ai rispettivi codici ISO 4217 standard."""
+    if not curr:
+        return "EUR"
+    c_str = str(curr).strip()
+    if c_str in CURRENCY_MAP_ISO:
+        return CURRENCY_MAP_ISO[c_str]
+    c_lower = c_str.lower()
+    if c_lower in CURRENCY_ALIASES:
+        return CURRENCY_ALIASES[c_lower]
+    c_upper = c_str.upper()
+    if c_upper in CURRENCY_MAP_ISO:
+        return CURRENCY_MAP_ISO[c_upper]
+    for sym, iso in [("€", "EUR"), ("$", "USD"), ("£", "GBP"), ("¥", "JPY"), ("R$", "BRL")]:
+        if sym in c_str:
+            return iso
+    for code in ["EUR", "USD", "GBP", "CHF", "JPY", "BRL", "CAD", "AUD"]:
+        if code in c_upper:
+            return code
+    return c_upper or "EUR"
+
 # ------------------------------------------------------------
 # Indicatori lingua
 # ------------------------------------------------------------
@@ -95,11 +132,12 @@ def normalize(raw_fields: dict, locale: str = "it") -> dict:
     if result["amount"] is not None:
         result["amount"] = round(float(result["amount"]), 2)
 
-    # Valuta
+    # Valuta (Normalizzazione rigorosa ISO 4217)
     curr_res = normalize_currency(
         raw_fields.get("currency") or raw_fields.get("amount_raw", "")
     )
-    result["currency"] = curr_res.currency if hasattr(curr_res, "currency") else str(curr_res)
+    raw_curr = getattr(curr_res, "iso_code", None) or getattr(curr_res, "currency", None) or raw_fields.get("currency") or "EUR"
+    result["currency"] = normalize_currency_iso(raw_curr)
     if result.get("amount") is None and getattr(curr_res, "amount", None) is not None:
         result["amount"] = curr_res.amount
 

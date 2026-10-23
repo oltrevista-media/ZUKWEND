@@ -14,7 +14,15 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union, List
-from i18n_catalog import get_aging_bucket
+from i18n_catalog import get_aging_bucket, format_human_date
+
+try:
+    from normalizer import normalize_currency_iso
+except ImportError:
+    def normalize_currency_iso(c: str) -> str:
+        s = str(c or "").strip()
+        m = {"€": "EUR", "$": "USD", "£": "GBP", "¥": "JPY", "R$": "BRL"}
+        return m.get(s, s.upper() or "EUR")
 
 try:
     from classifier import slugify_folder_name, group_invoices_by_client
@@ -24,7 +32,39 @@ except ImportError:
         return re.sub(r'[\s_]+', '_', clean).strip('._ ')[:max_length]
 
     def group_invoices_by_client(invoices: list) -> dict:
-        return {"DEFAULT": {"client_name": "Client", "vat": None, "folder_slug": "CLIENT", "invoices": invoices}}
+        groups = {}
+        for inv_item in invoices:
+            if isinstance(inv_item, dict) and "invoice" in inv_item:
+                inv = inv_item["invoice"]
+            elif isinstance(inv_item, dict) and "data" in inv_item and isinstance(inv_item["data"], dict):
+                inv = inv_item["data"].get("invoice", {})
+            elif isinstance(inv_item, dict):
+                inv = inv_item
+            else:
+                inv = {}
+
+            c_vat = (inv.get("client_vat") or inv.get("vat_number") or "").strip()
+            c_name = (inv.get("client") or inv.get("client_name") or "CLIENT").strip()
+            inv_num = (inv.get("number") or inv.get("invoice_number") or "INV").strip()
+
+            has_valid_vat = bool(c_vat and c_vat.upper() not in ("N/A", "NONE", "") and sum(c.isdigit() for c in c_vat) >= 5)
+
+            if has_valid_vat:
+                key = f"VAT_{c_vat.upper()}"
+                folder_slug = slugify_folder_name(f"{c_name}_{c_vat}", 40)
+            else:
+                key = f"ISOLATED_{slugify_folder_name(c_name, 22)}_{slugify_folder_name(inv_num, 17)}"
+                folder_slug = f"{slugify_folder_name(c_name, 22)}_{slugify_folder_name(inv_num, 17)}"
+
+            if key not in groups:
+                groups[key] = {
+                    "client_name": c_name,
+                    "vat": c_vat if has_valid_vat else None,
+                    "folder_slug": folder_slug,
+                    "invoices": []
+                }
+            groups[key]["invoices"].append(inv_item)
+        return groups
 
 try:
     from report_generator import generate_consolidated_statement_pdf, generate_consolidated_reminder_email
@@ -171,17 +211,25 @@ def _generate_master_excel(reports_or_invoices: list, dest_path: Path) -> Path:
         audit = rdata.get("audit", {})
 
         amt = float(inv.get("amount") or 0.0)
-        curr = str(inv.get("currency") or "EUR").upper()
+        curr = normalize_currency_iso(inv.get("currency") or "EUR")
         days_od = int(clf.get("days_overdue") or 0)
         bucket = clf.get("aging_bucket") or get_aging_bucket(days_od)
+        lang = str(rdata.get("language") or "en").lower()[:2]
+
+        iss_raw = str(inv.get("issue_date_iso") or inv.get("issue_date") or "N/A")
+        due_raw = str(inv.get("due_date_iso") or inv.get("due_date") or "N/A")
+        iss_human = format_human_date(inv.get("issue_date") or iss_raw, lang) if iss_raw != "N/A" else "N/A"
+        due_human = format_human_date(inv.get("due_date") or due_raw, lang) if due_raw != "N/A" else "N/A"
 
         records.append({
             "number": str(inv.get("number") or inv.get("invoice_number") or "N/A"),
             "client": str(inv.get("client") or inv.get("client_name") or "Client"),
             "client_address": str(inv.get("client_address") or inv.get("address") or ""),
             "client_vat": str(inv.get("client_vat") or inv.get("vat_number") or "N/A"),
-            "issue_date_iso": str(inv.get("issue_date_iso") or inv.get("issue_date") or "N/A"),
-            "due_date_iso": str(inv.get("due_date_iso") or inv.get("due_date") or "N/A"),
+            "issue_date_human": iss_human,
+            "due_date_human": due_human,
+            "issue_date_iso": iss_raw,
+            "due_date_iso": due_raw,
             "days_overdue": days_od,
             "aging_bucket": bucket,
             "status": str(clf.get("payment_status") or clf.get("payment_status_raw") or "OVERDUE"),
@@ -200,7 +248,7 @@ def _generate_master_excel(reports_or_invoices: list, dest_path: Path) -> Path:
         subtotals_by_curr[c] = round(subtotals_by_curr.get(c, 0.0) + rec["amount"], 2)
 
         row_vals = [
-            rec["number"], rec["client"], rec["client_vat"], rec["issue_date_iso"], rec["due_date_iso"],
+            rec["number"], rec["client"], rec["client_vat"], rec["issue_date_human"], rec["due_date_human"],
             rec["days_overdue"], rec["aging_bucket"], rec["status"], rec["risk"], rec["rem_level"],
             rec["amount"], rec["currency"]
         ]
@@ -321,7 +369,7 @@ def _generate_master_json(reports_or_invoices: list, dest_path: Path) -> Path:
         audit = rdata.get("audit", {})
 
         amt = float(inv.get("amount") or 0.0)
-        curr = str(inv.get("currency") or "EUR").upper()
+        curr = normalize_currency_iso(inv.get("currency") or "EUR")
         subtotals[curr] = round(subtotals.get(curr, 0.0) + amt, 2)
 
         records.append({

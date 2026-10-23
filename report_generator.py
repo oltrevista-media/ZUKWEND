@@ -19,6 +19,14 @@ from xml.sax.saxutils import escape as _xml_escape
 from i18n_catalog import get_rationale, scan_and_sanitize_text, sanitize_data_recursively, get_legal_disclaimer, get_aging_bucket, format_human_date
 
 try:
+    from normalizer import normalize_currency_iso
+except ImportError:
+    def normalize_currency_iso(c: str) -> str:
+        s = str(c or "").strip()
+        m = {"€": "EUR", "$": "USD", "£": "GBP", "¥": "JPY", "R$": "BRL"}
+        return m.get(s, s.upper() or "EUR")
+
+try:
     from resource_utils import APP_VERSION, get_output_dir, _is_inside_meipass
 except ImportError:  # pragma: no cover - esecuzione isolata del modulo
     APP_VERSION = "2.1.5"
@@ -658,7 +666,7 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "issue_date_iso": str(invoice.get("issue_date") or "N/A"),
             "due_date_iso":   str(invoice.get("due_date") or "N/A"),
             "amount":         safe_amount,
-            "currency":       str(invoice.get("currency") or "EUR"),
+            "currency":       normalize_currency_iso(invoice.get("currency") or "EUR"),
             "client":         client_name or "N/A",
             "client_address": client_address,
             "client_vat":     str(invoice.get("client_vat") or invoice.get("vat_number") or ""),
@@ -1311,61 +1319,103 @@ CONSOLIDATED_EMAIL_I18N = {
         "greeting": "Gentile {client_name},",
         "intro": "Dai nostri controlli contabili aggiornati, risultano ad oggi le seguenti posizioni aperte in sospeso:",
         "totals_header": "Riepilogo Saldi Scaduti per Valuta:",
+        "inv_line": "  • Fattura n. {number} | Data: {issue_date} | Scadenza: {due_date} | Scaduta da: {days_overdue} gg | Importo: {amount} {currency}",
+        "total_line": "  • Totale {currency}: {total} {currency}",
         "action_prompt": "Vi invitiamo a verificare la corrispondenza con i Vostri archivi e a procedere con il saldo del dovuto. Qualora il pagamento fosse già stato effettuato, Vi preghiamo di trasmetterci la relativa contabile bancaria.",
         "bank_header": "Coordinate bancarie per il bonifico:",
         "iban_label": "IBAN:",
-        "regards": "Distinti saluti,",
     },
     "en": {
         "subject": "Statement of Account & Outstanding Invoices Summary - {client_name}",
         "greeting": "Dear {client_name},",
         "intro": "According to our accounting records, the following invoice(s) are currently outstanding:",
         "totals_header": "Outstanding Balances by Currency:",
+        "inv_line": "  • Invoice #{number} | Date: {issue_date} | Due: {due_date} | Overdue: {days_overdue} days | Amount: {amount} {currency}",
+        "total_line": "  • Total {currency}: {total} {currency}",
         "action_prompt": "Please review your records and confirm settlement of the open balance. If payment has already been remitted, please provide the remittance confirmation so we may update our records.",
         "bank_header": "Bank Details for Remittance:",
         "iban_label": "IBAN:",
-        "regards": "Kind regards,",
     },
     "de": {
         "subject": "Kontoauszug und Übersicht offener Rechnungen - {client_name}",
         "greeting": "Sehr geehrte Damen und Herren ({client_name}),",
         "intro": "Gemäß unserer Buchhaltung sind aktuell folgende Rechnungen noch zur Zahlung offen:",
         "totals_header": "Offene Beträge nach Währung:",
+        "inv_line": "  • Rechnung Nr. {number} | Datum: {issue_date} | Fällig am: {due_date} | Überfällig: {days_overdue} Tage | Betrag: {amount} {currency}",
+        "total_line": "  • Gesamt {currency}: {total} {currency}",
         "action_prompt": "Wir bitten Sie, Ihren Kontenstand zu prüfen und den fälligen Ausgleich zu veranlassen. Sollte die Zahlung bereits erfolgt sein, betrachten Sie dieses Schreiben bitte als gegenstandslos.",
         "bank_header": "Bankverbindung:",
         "iban_label": "IBAN:",
-        "regards": "Mit freundlichen Grüßen,",
     },
     "fr": {
         "subject": "Relevé de compte et récapitulatif des factures en attente - {client_name}",
         "greeting": "Madame, Monsieur ({client_name}),",
         "intro": "D'après nos écritures comptables, les factures suivantes restent à ce jour en attente de règlement :",
         "totals_header": "Récapitulatif des soldes par devise :",
+        "inv_line": "  • Facture n° {number} | Date : {issue_date} | Échéance : {due_date} | Retard : {days_overdue} jours | Montant : {amount} {currency}",
+        "total_line": "  • Total {currency} : {total} {currency}",
         "action_prompt": "Nous vous remercions de bien vouloir vérifier vos écritures et procéder au règlement du solde ouvert. Si le paiement a déjà été effectué, merci d'ignorer ce rappel.",
         "bank_header": "Coordonnées bancaires pour le virement :",
         "iban_label": "IBAN :",
-        "regards": "Cordialement,",
     },
     "es": {
         "subject": "Estado de Cuenta y Resumen de Facturas Pendientes - {client_name}",
         "greeting": "Estimado/a {client_name},",
         "intro": "Según nuestros registros contables, a la fecha figuran las siguientes facturas pendientes de pago:",
         "totals_header": "Resumen de saldos pendientes por moneda:",
+        "inv_line": "  • Factura n.° {number} | Fecha: {issue_date} | Vencimiento: {due_date} | Vencida: {days_overdue} días | Importe: {amount} {currency}",
+        "total_line": "  • Total {currency}: {total} {currency}",
         "action_prompt": "Le solicitamos tenga a bien revisar sus registros y gestionar el saldo pendiente a la brevedad. Si ya ha efectuado el pago, le rogamos desestime este mensaje.",
         "bank_header": "Datos bancarios para transferencia:",
         "iban_label": "IBAN:",
-        "regards": "Atentamente,",
     },
     "pt": {
         "subject": "Extrato de Conta e Resumo de Faturas em Aberto - {client_name}",
         "greeting": "Prezado(a) {client_name},",
         "intro": "De acordo com os nossos registos contabilísticos, encontram-se atualmente em aberto as seguintes faturas:",
         "totals_header": "Resumo dos saldos em aberto por moeda:",
+        "inv_line": "  • Fatura n.º {number} | Data: {issue_date} | Vencimento: {due_date} | Em atraso: {days_overdue} dias | Valor: {amount} {currency}",
+        "total_line": "  • Total {currency}: {total} {currency}",
         "action_prompt": "Agradecemos que verifique os seus registos e proceda à regularização do valor em dívida. Caso o pagamento já tenha sido emitido, queira desconsiderar este aviso.",
         "bank_header": "Dados bancários para transferência:",
         "iban_label": "IBAN:",
-        "regards": "Com os melhores cumprimentos,",
     }
+}
+
+STATEMENT_TITLES = {
+    "it": "ESTRATTO CONTO CLIENTI CONSOLIDATO",
+    "en": "CONSOLIDATED STATEMENT OF ACCOUNT",
+    "de": "KONSOLIDIERTER KONTOAUSZUG",
+    "fr": "RELEVÉ DE COMPTE CONSOLIDÉ",
+    "es": "ESTADO DE CUENTA CONSOLIDADO",
+    "pt": "EXTRATO DE CONTA CONSOLIDADO",
+}
+
+STATEMENT_SUBTITLES = {
+    "it": "Dossier Consolidato: {client_name} | Data: {today_str}",
+    "en": "Consolidated Dossier: {client_name} | Date: {today_str}",
+    "de": "Konsolidierte Kundenakte: {client_name} | Datum: {today_str}",
+    "fr": "Dossier consolidé : {client_name} | Date : {today_str}",
+    "es": "Expediente consolidado: {client_name} | Fecha: {today_str}",
+    "pt": "Dossier consolidado: {client_name} | Data: {today_str}",
+}
+
+DAYS_OVERDUE_SUFFIX = {
+    "it": "gg",
+    "en": "d",
+    "de": "T.",
+    "fr": "j",
+    "es": "días",
+    "pt": "dias",
+}
+
+TOTAL_LABEL_I18N = {
+    "it": "Totale {curr}:",
+    "en": "Total {curr}:",
+    "de": "Gesamt {curr}:",
+    "fr": "Total {curr} :",
+    "es": "Total {curr}:",
+    "pt": "Total {curr}:",
 }
 
 
@@ -1396,7 +1446,7 @@ def _extract_invoice_record(item: dict) -> dict:
     days_od = int(clf.get("days_overdue") or inv.get("days_overdue") or 0)
     st = str(clf.get("payment_status") or clf.get("payment_status_raw") or "OVERDUE")
     amt = float(inv.get("amount") or 0.0)
-    curr = str(inv.get("currency") or "EUR").upper()
+    curr = normalize_currency_iso(inv.get("currency") or "EUR")
     client = str(inv.get("client") or inv.get("client_name") or "Client")
     client_addr = str(inv.get("client_address") or inv.get("address") or "")
     client_vat = str(inv.get("client_vat") or inv.get("vat_number") or "")
@@ -1525,9 +1575,11 @@ def generate_consolidated_statement_pdf(
             leading=12,
         )
 
-        title_text = "STATEMENT OF ACCOUNT" if lang_code != "it" else "ESTRATTO CONTO CLIENTI CONSOLIDATO"
+        title_text = STATEMENT_TITLES.get(lang_code, STATEMENT_TITLES["en"])
+        subtitle_tmpl = STATEMENT_SUBTITLES.get(lang_code, STATEMENT_SUBTITLES["en"])
+        subtitle_text = subtitle_tmpl.format(client_name=client_name, today_str=today_str)
         story.append(Paragraph(_pdf_text(f"ZUKWEND — {title_text}"), title_style))
-        story.append(Paragraph(_pdf_text(f"Consolidated Dossier: {client_name} | Date: {today_str}"), subtitle_style))
+        story.append(Paragraph(_pdf_text(subtitle_text), subtitle_style))
 
         # Blocco Intestazione: Mittente vs Destinatario
         sender_lines = [
@@ -1587,6 +1639,7 @@ def generate_consolidated_statement_pdf(
             ]
         ]
 
+        od_suffix = DAYS_OVERDUE_SUFFIX.get(lang_code, "d")
         for r in records:
             amt_str = f"{r['amount']:,.2f} {r['currency']}"
             table_data.append(
@@ -1594,13 +1647,14 @@ def generate_consolidated_statement_pdf(
                     Paragraph(_pdf_text(r["number"]), body_style),
                     Paragraph(_pdf_text(r["issue_date"]), body_style),
                     Paragraph(_pdf_text(r["due_date"]), body_style),
-                    Paragraph(_pdf_text(f"{r['days_overdue']} d"), body_style),
+                    Paragraph(_pdf_text(f"{r['days_overdue']} {od_suffix}"), body_style),
                     Paragraph(_pdf_text(r["status"]), body_style),
                     Paragraph(_pdf_text(amt_str), bold_style),
                 ]
             )
 
         # Righe subtotali separati per valuta (MAI sommare valute diverse)
+        tot_lbl_tmpl = TOTAL_LABEL_I18N.get(lang_code, TOTAL_LABEL_I18N["en"])
         subtotal_row_start = len(table_data)
         for curr, tot in subtotals_by_curr.items():
             tot_str = f"{tot:,.2f} {curr}"
@@ -1610,7 +1664,7 @@ def generate_consolidated_statement_pdf(
                     Paragraph("", body_style),
                     Paragraph("", body_style),
                     Paragraph("", body_style),
-                    Paragraph(_pdf_text(f"Total {curr}:"), bold_style),
+                    Paragraph(_pdf_text(tot_lbl_tmpl.format(curr=curr)), bold_style),
                     Paragraph(_pdf_text(tot_str), bold_style),
                 ]
             )
@@ -1651,19 +1705,21 @@ def generate_consolidated_statement_pdf(
     except Exception as e:
         logger.warning(f"ReportLab consolidated PDF generation failed ({e}), writing text fallback.")
         lines = [
-            f"=== ZUKWEND CONSOLIDATED STATEMENT OF ACCOUNT ===",
+            f"=== ZUKWEND {title_text} ===",
             f"Client: {client_name}",
             f"VAT / Tax ID: {client_vat}",
             f"Generated: {today_str}",
             "",
             "INVOICE BREAKDOWN:",
         ]
+        od_suffix = DAYS_OVERDUE_SUFFIX.get(lang_code, "d")
         for r in records:
-            lines.append(f"- #{r['number']} | Issue: {r['issue_date']} | Due: {r['due_date']} | Overdue: {r['days_overdue']} d | Status: {r['status']} | Amount: {r['amount']:,.2f} {r['currency']}")
+            lines.append(f"- #{r['number']} | Issue: {r['issue_date']} | Due: {r['due_date']} | Overdue: {r['days_overdue']} {od_suffix} | Status: {r['status']} | Amount: {r['amount']:,.2f} {r['currency']}")
         lines.append("")
         lines.append("SUBTOTALS BY CURRENCY:")
+        tot_lbl_tmpl = TOTAL_LABEL_I18N.get(lang_code, TOTAL_LABEL_I18N["en"])
         for curr, tot in subtotals_by_curr.items():
-            lines.append(f"  * Total {curr}: {tot:,.2f} {curr}")
+            lines.append(f"  * {tot_lbl_tmpl.format(curr=curr)} {tot:,.2f} {curr}")
         out_file.write_text("\n".join(lines), encoding="utf-8")
         return out_file
 
@@ -1715,14 +1771,23 @@ def generate_consolidated_reminder_email(
         "",
     ]
 
+    inv_tmpl = i18n.get("inv_line", "  • Invoice #{number} | Date: {issue_date} | Due: {due_date} | Overdue: {days_overdue} days | Amount: {amount} {currency}")
     for r in records:
-        line = f"  • Invoice #{r['number']} | Date: {r['issue_date']} | Due: {r['due_date']} | Overdue: {r['days_overdue']} days | Amount: {r['amount']:,.2f} {r['currency']}"
+        line = inv_tmpl.format(
+            number=r["number"],
+            issue_date=r["issue_date"],
+            due_date=r["due_date"],
+            days_overdue=r["days_overdue"],
+            amount=f"{r['amount']:,.2f}",
+            currency=r["currency"],
+        )
         body_lines.append(line)
 
     body_lines.append("")
     body_lines.append(i18n["totals_header"])
+    tot_tmpl = i18n.get("total_line", "  • Total {currency}: {total} {currency}")
     for curr, tot in subtotals_by_curr.items():
-        body_lines.append(f"  • Total {curr}: {tot:,.2f} {curr}")
+        body_lines.append(tot_tmpl.format(currency=curr, total=f"{tot:,.2f}"))
 
     body_lines.append("")
     body_lines.append(i18n["action_prompt"])
@@ -1732,13 +1797,7 @@ def generate_consolidated_reminder_email(
         body_lines.append(i18n["bank_header"])
         body_lines.append(f"  {i18n['iban_label']} {branding['iban']}")
 
-    body_lines.append("")
-    body_lines.append(i18n["regards"])
-    vendor_name = branding.get("company_name", "Accounts Receivable Department")
-    body_lines.append(vendor_name)
-    if branding.get("email"):
-        body_lines.append(branding["email"])
-
+    # Clean text: nessun saluto generico ('Kind regards') o firma fittizia ('Accounts Receivable Department')
     content = "\n".join(body_lines)
     out_file.write_text(content, encoding="utf-8")
     logger.info(f"Consolidated Reminder Email generated: {out_file}")

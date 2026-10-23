@@ -464,10 +464,11 @@ def group_invoices_by_client(invoices: list) -> dict:
         vat = str(raw_vat).strip().upper() if raw_vat else ""
         vat = re.sub(r"[\s\-_.]+", "", vat)
 
-        # Validazione P.IVA / VAT ID al 100%: min 5 caratteri alfanumerici e non generico
+        # Validazione P.IVA / VAT ID al 100%: min 5 caratteri, almeno 5 cifre numeriche e non generico
         is_valid_vat = bool(
             vat
             and len(vat) >= 5
+            and sum(c.isdigit() for c in vat) >= 5
             and vat not in ("NONE", "NULL", "UNKNOWN", "NOTAVAILABLE", "00000000000", "N/A")
         )
 
@@ -483,9 +484,10 @@ def group_invoices_by_client(invoices: list) -> dict:
             inv_num = inv.get("invoice_number") or inv.get("number")
             if not inv_num and isinstance(inv.get("invoice"), dict):
                 inv_num = inv["invoice"].get("number") or inv["invoice"].get("invoice_number")
-            inv_num_clean = slugify_folder_name(str(inv_num or f"NOID_{isolated_counter}"), max_length=15)
-            group_key = f"ISOLATED_{client_name}_{inv_num_clean}_{isolated_counter}"
-            folder_slug = slugify_folder_name(f"{client_name}_{inv_num_clean}", max_length=40)
+            c_slug = slugify_folder_name(client_name, 22)
+            i_slug = slugify_folder_name(str(inv_num or f"NOID_{isolated_counter}"), 17)
+            group_key = f"ISOLATED_{c_slug}_{i_slug}_{isolated_counter}"
+            folder_slug = f"{c_slug}_{i_slug}"
             isolated_counter += 1
 
         if group_key not in groups:
