@@ -2,6 +2,8 @@
   "mode": "local",
   "api_key": "",
   "lang": "en",
+  "dossier_mode": true,
+  "generate_individual_archive": true,
   "output_dir": "./output",
   "prompts_dir": "./prompts"
 }

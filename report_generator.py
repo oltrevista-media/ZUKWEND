@@ -661,6 +661,7 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "currency":       str(invoice.get("currency") or "EUR"),
             "client":         client_name or "N/A",
             "client_address": client_address,
+            "client_vat":     str(invoice.get("client_vat") or invoice.get("vat_number") or ""),
             "vendor":         vendor_name or "N/A",
         },
         "classification": {
@@ -1298,3 +1299,448 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
     clean_html = clean_path(target_path)
     logger.info(f"HTML generated: {clean_html}")
     return Path(clean_html)
+
+
+# ---------------------------------------------------------------------------
+# Consolidated Dossier Exports (v2.1.6 Multi-Currency & Strict P.IVA)
+# ---------------------------------------------------------------------------
+
+CONSOLIDATED_EMAIL_I18N = {
+    "it": {
+        "subject": "Estratto Conto e Riepilogo Fatture Scadute - {client_name}",
+        "greeting": "Gentile {client_name},",
+        "intro": "Dai nostri controlli contabili aggiornati, risultano ad oggi le seguenti posizioni aperte in sospeso:",
+        "totals_header": "Riepilogo Saldi Scaduti per Valuta:",
+        "action_prompt": "Vi invitiamo a verificare la corrispondenza con i Vostri archivi e a procedere con il saldo del dovuto. Qualora il pagamento fosse già stato effettuato, Vi preghiamo di trasmetterci la relativa contabile bancaria.",
+        "bank_header": "Coordinate bancarie per il bonifico:",
+        "iban_label": "IBAN:",
+        "regards": "Distinti saluti,",
+    },
+    "en": {
+        "subject": "Statement of Account & Outstanding Invoices Summary - {client_name}",
+        "greeting": "Dear {client_name},",
+        "intro": "According to our accounting records, the following invoice(s) are currently outstanding:",
+        "totals_header": "Outstanding Balances by Currency:",
+        "action_prompt": "Please review your records and confirm settlement of the open balance. If payment has already been remitted, please provide the remittance confirmation so we may update our records.",
+        "bank_header": "Bank Details for Remittance:",
+        "iban_label": "IBAN:",
+        "regards": "Kind regards,",
+    },
+    "de": {
+        "subject": "Kontoauszug und Übersicht offener Rechnungen - {client_name}",
+        "greeting": "Sehr geehrte Damen und Herren ({client_name}),",
+        "intro": "Gemäß unserer Buchhaltung sind aktuell folgende Rechnungen noch zur Zahlung offen:",
+        "totals_header": "Offene Beträge nach Währung:",
+        "action_prompt": "Wir bitten Sie, Ihren Kontenstand zu prüfen und den fälligen Ausgleich zu veranlassen. Sollte die Zahlung bereits erfolgt sein, betrachten Sie dieses Schreiben bitte als gegenstandslos.",
+        "bank_header": "Bankverbindung:",
+        "iban_label": "IBAN:",
+        "regards": "Mit freundlichen Grüßen,",
+    },
+    "fr": {
+        "subject": "Relevé de compte et récapitulatif des factures en attente - {client_name}",
+        "greeting": "Madame, Monsieur ({client_name}),",
+        "intro": "D'après nos écritures comptables, les factures suivantes restent à ce jour en attente de règlement :",
+        "totals_header": "Récapitulatif des soldes par devise :",
+        "action_prompt": "Nous vous remercions de bien vouloir vérifier vos écritures et procéder au règlement du solde ouvert. Si le paiement a déjà été effectué, merci d'ignorer ce rappel.",
+        "bank_header": "Coordonnées bancaires pour le virement :",
+        "iban_label": "IBAN :",
+        "regards": "Cordialement,",
+    },
+    "es": {
+        "subject": "Estado de Cuenta y Resumen de Facturas Pendientes - {client_name}",
+        "greeting": "Estimado/a {client_name},",
+        "intro": "Según nuestros registros contables, a la fecha figuran las siguientes facturas pendientes de pago:",
+        "totals_header": "Resumen de saldos pendientes por moneda:",
+        "action_prompt": "Le solicitamos tenga a bien revisar sus registros y gestionar el saldo pendiente a la brevedad. Si ya ha efectuado el pago, le rogamos desestime este mensaje.",
+        "bank_header": "Datos bancarios para transferencia:",
+        "iban_label": "IBAN:",
+        "regards": "Atentamente,",
+    },
+    "pt": {
+        "subject": "Extrato de Conta e Resumo de Faturas em Aberto - {client_name}",
+        "greeting": "Prezado(a) {client_name},",
+        "intro": "De acordo com os nossos registos contabilísticos, encontram-se atualmente em aberto as seguintes faturas:",
+        "totals_header": "Resumo dos saldos em aberto por moeda:",
+        "action_prompt": "Agradecemos que verifique os seus registos e proceda à regularização do valor em dívida. Caso o pagamento já tenha sido emitido, queira desconsiderar este aviso.",
+        "bank_header": "Dados bancários para transferência:",
+        "iban_label": "IBAN:",
+        "regards": "Com os melhores cumprimentos,",
+    }
+}
+
+
+def _extract_invoice_record(item: dict) -> dict:
+    """Normalizza un elemento invoice da report o dict grezzo."""
+    if isinstance(item, dict) and "invoice" in item:
+        inv = item["invoice"]
+        clf = item.get("classification", {})
+        bill = item.get("billing", {})
+    elif isinstance(item, dict) and "data" in item and isinstance(item["data"], dict) and "invoice" in item["data"]:
+        inv = item["data"]["invoice"]
+        clf = item["data"].get("classification", {})
+        bill = item["data"].get("billing", {})
+    elif isinstance(item, dict):
+        inv = item
+        clf = item.get("classification", {})
+        bill = item.get("billing", {})
+    else:
+        inv = {}
+        clf = {}
+        bill = {}
+
+    num = str(inv.get("number") or inv.get("invoice_number") or "N/A")
+    iss_d = str(inv.get("issue_date") or inv.get("issue_date_iso") or "N/A")
+    due_d = str(inv.get("due_date") or inv.get("due_date_iso") or "N/A")
+    iss_d_iso = str(inv.get("issue_date_iso") or inv.get("issue_date") or "N/A")
+    due_d_iso = str(inv.get("due_date_iso") or inv.get("due_date") or "N/A")
+    days_od = int(clf.get("days_overdue") or inv.get("days_overdue") or 0)
+    st = str(clf.get("payment_status") or clf.get("payment_status_raw") or "OVERDUE")
+    amt = float(inv.get("amount") or 0.0)
+    curr = str(inv.get("currency") or "EUR").upper()
+    client = str(inv.get("client") or inv.get("client_name") or "Client")
+    client_addr = str(inv.get("client_address") or inv.get("address") or "")
+    client_vat = str(inv.get("client_vat") or inv.get("vat_number") or "")
+    risk_lbl = str(clf.get("risk_level_label") or clf.get("risk_level_raw") or "MEDIUM")
+    rem_lvl = int(clf.get("reminder_level") or 0)
+    action = str(bill.get("action") or "SEND_REMINDER")
+
+    return {
+        "number": num,
+        "issue_date": iss_d,
+        "due_date": due_d,
+        "issue_date_iso": iss_d_iso,
+        "due_date_iso": due_d_iso,
+        "days_overdue": days_od,
+        "status": st,
+        "amount": amt,
+        "currency": curr,
+        "client": client,
+        "client_address": client_addr,
+        "client_vat": client_vat,
+        "risk_level_label": risk_lbl,
+        "reminder_level": rem_lvl,
+        "action": action,
+    }
+
+
+def generate_consolidated_statement_pdf(
+    client_data: dict,
+    invoices: list,
+    output_path: Union[str, Path],
+    language: str = "en",
+    is_demo: bool = False,
+    branding: Optional[dict] = None
+) -> Path:
+    """
+    Genera STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf per il dossier cliente.
+    Tabella analitica dettagliata con SUBTOTALI SEPARATI PER VALUTA.
+    """
+    out_file = Path(output_path)
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+
+    lang_code = (language or "en").lower()[:2]
+    labels = REPORT_LABELS.get(lang_code, REPORT_LABELS["en"])
+    if branding is None:
+        try:
+            from custom_branding import get_branding
+            branding = get_branding()
+        except Exception:
+            branding = {}
+
+    client_name = client_data.get("client_name") or "CLIENT"
+    client_vat = client_data.get("vat") or "N/A"
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    records = [_extract_invoice_record(i) for i in invoices]
+
+    # Calcolo subtotali separati per valuta (nessuna somma algebrica incrociata)
+    subtotals_by_curr = {}
+    for r in records:
+        c = r["currency"]
+        subtotals_by_curr[c] = round(subtotals_by_curr.get(c, 0.0) + r["amount"], 2)
+
+    # Tentativo ReportLab
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import cm
+        from reportlab.lib import colors
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+
+        doc = SimpleDocTemplate(
+            str(out_file),
+            pagesize=A4,
+            leftMargin=1.5 * cm,
+            rightMargin=1.5 * cm,
+            topMargin=1.5 * cm,
+            bottomMargin=1.5 * cm,
+        )
+
+        styles = getSampleStyleSheet()
+        for _st in styles.byName.values():
+            _is_bold = "bold" in str(getattr(_st, "fontName", "")).lower()
+            _st.fontName = PDF_FONT_BOLD if _is_bold else PDF_FONT_REGULAR
+
+        brand_col = colors.HexColor(BRAND_COLOR_HEX)
+        dark_col = colors.HexColor("#1E293B")
+        subtotal_bg = colors.HexColor("#FEF3C7")
+
+        story = []
+
+        # Logo opzionale
+        if branding.get("logo_path") and os.path.exists(branding["logo_path"]):
+            try:
+                from reportlab.platypus import Image as RLImage
+                story.append(RLImage(branding["logo_path"], width=4.5 * cm, height=1.6 * cm, kind="proportional"))
+                story.append(Spacer(1, 0.2 * cm))
+            except Exception as e_img:
+                logger.warning(f"Consolidated PDF logo load error: {e_img}")
+
+        title_style = ParagraphStyle(
+            "ConsolidatedTitle",
+            parent=styles["Title"],
+            textColor=brand_col,
+            fontSize=16,
+            fontName=PDF_FONT_BOLD,
+            spaceAfter=3,
+        )
+        subtitle_style = ParagraphStyle(
+            "ConsolidatedSubtitle",
+            parent=styles["Normal"],
+            textColor=colors.HexColor("#4B5563"),
+            fontSize=10,
+            spaceAfter=10,
+        )
+        body_style = ParagraphStyle(
+            "ConsolidatedBody",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=12,
+        )
+        bold_style = ParagraphStyle(
+            "ConsolidatedBold",
+            parent=styles["Normal"],
+            fontName=PDF_FONT_BOLD,
+            fontSize=9,
+            leading=12,
+        )
+
+        title_text = "STATEMENT OF ACCOUNT" if lang_code != "it" else "ESTRATTO CONTO CLIENTI CONSOLIDATO"
+        story.append(Paragraph(_pdf_text(f"ZUKWEND — {title_text}"), title_style))
+        story.append(Paragraph(_pdf_text(f"Consolidated Dossier: {client_name} | Date: {today_str}"), subtitle_style))
+
+        # Blocco Intestazione: Mittente vs Destinatario
+        sender_lines = [
+            f"<b>{branding.get('company_name', 'OLTREVISTA / ZUKWEND')}</b>",
+            branding.get("address", ""),
+            f"IBAN: {branding.get('iban', 'N/A')}" if branding.get("iban") else "",
+            f"Email: {branding.get('email', 'N/A')}" if branding.get("email") else "",
+        ]
+        sender_html = "<br/>".join([l for l in sender_lines if l])
+
+        client_lines = [
+            f"<b>{client_name}</b>",
+            f"VAT / Tax ID: <b>{client_vat}</b>",
+            f"Total Invoices: {len(records)}",
+            f"Dossier Key: {client_data.get('folder_slug', 'N/A')}",
+        ]
+        client_html = "<br/>".join(client_lines)
+
+        meta_table = Table(
+            [
+                [
+                    Paragraph(_pdf_text_raw(sender_html), body_style),
+                    Paragraph(_pdf_text_raw(client_html), body_style),
+                ]
+            ],
+            colWidths=[9.0 * cm, 8.5 * cm],
+        )
+        meta_table.setStyle(
+            TableStyle(
+                [
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
+                    ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
+                    ("PADDING", (0, 0), (-1, -1), 6),
+                ]
+            )
+        )
+        story.append(meta_table)
+        story.append(Spacer(1, 0.4 * cm))
+
+        # Tabella analitica fatture
+        th_inv = labels.get("inv_num", "Invoice #")
+        th_iss = labels.get("issue_date", "Issue Date")
+        th_due = labels.get("due_date", "Due Date")
+        th_od = labels.get("overdue", "Days Overdue")
+        th_st = labels.get("status", "Status")
+        th_amt = labels.get("amount", "Amount")
+
+        table_data = [
+            [
+                Paragraph(_pdf_text(th_inv), bold_style),
+                Paragraph(_pdf_text(th_iss), bold_style),
+                Paragraph(_pdf_text(th_due), bold_style),
+                Paragraph(_pdf_text(th_od), bold_style),
+                Paragraph(_pdf_text(th_st), bold_style),
+                Paragraph(_pdf_text(th_amt), bold_style),
+            ]
+        ]
+
+        for r in records:
+            amt_str = f"{r['amount']:,.2f} {r['currency']}"
+            table_data.append(
+                [
+                    Paragraph(_pdf_text(r["number"]), body_style),
+                    Paragraph(_pdf_text(r["issue_date"]), body_style),
+                    Paragraph(_pdf_text(r["due_date"]), body_style),
+                    Paragraph(_pdf_text(f"{r['days_overdue']} d"), body_style),
+                    Paragraph(_pdf_text(r["status"]), body_style),
+                    Paragraph(_pdf_text(amt_str), bold_style),
+                ]
+            )
+
+        # Righe subtotali separati per valuta (MAI sommare valute diverse)
+        subtotal_row_start = len(table_data)
+        for curr, tot in subtotals_by_curr.items():
+            tot_str = f"{tot:,.2f} {curr}"
+            table_data.append(
+                [
+                    Paragraph("", body_style),
+                    Paragraph("", body_style),
+                    Paragraph("", body_style),
+                    Paragraph("", body_style),
+                    Paragraph(_pdf_text(f"Total {curr}:"), bold_style),
+                    Paragraph(_pdf_text(tot_str), bold_style),
+                ]
+            )
+
+        inv_table = Table(
+            table_data,
+            colWidths=[3.6 * cm, 2.7 * cm, 2.7 * cm, 2.3 * cm, 2.8 * cm, 3.4 * cm],
+        )
+
+        t_style = [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1E293B")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("PADDING", (0, 0), (-1, -1), 4),
+        ]
+        for row_idx in range(subtotal_row_start, len(table_data)):
+            t_style.append(("BACKGROUND", (0, row_idx), (-1, row_idx), subtotal_bg))
+            t_style.append(("LINEABOVE", (0, row_idx), (-1, row_idx), 1, brand_col))
+
+        inv_table.setStyle(TableStyle(t_style))
+        story.append(inv_table)
+        story.append(Spacer(1, 0.4 * cm))
+
+        # Disclaimer
+        discl_text = get_legal_disclaimer(lang_code)
+        story.append(
+            Paragraph(
+                _pdf_text(f"Note: Multi-currency balances are strictly partitioned. {discl_text}"),
+                ParagraphStyle("Discl", parent=styles["Normal"], fontSize=7.5, textColor=colors.HexColor("#64748B")),
+            )
+        )
+
+        doc.build(story)
+        logger.info(f"Consolidated Statement PDF created: {out_file}")
+        return out_file
+
+    except Exception as e:
+        logger.warning(f"ReportLab consolidated PDF generation failed ({e}), writing text fallback.")
+        lines = [
+            f"=== ZUKWEND CONSOLIDATED STATEMENT OF ACCOUNT ===",
+            f"Client: {client_name}",
+            f"VAT / Tax ID: {client_vat}",
+            f"Generated: {today_str}",
+            "",
+            "INVOICE BREAKDOWN:",
+        ]
+        for r in records:
+            lines.append(f"- #{r['number']} | Issue: {r['issue_date']} | Due: {r['due_date']} | Overdue: {r['days_overdue']} d | Status: {r['status']} | Amount: {r['amount']:,.2f} {r['currency']}")
+        lines.append("")
+        lines.append("SUBTOTALS BY CURRENCY:")
+        for curr, tot in subtotals_by_curr.items():
+            lines.append(f"  * Total {curr}: {tot:,.2f} {curr}")
+        out_file.write_text("\n".join(lines), encoding="utf-8")
+        return out_file
+
+
+def generate_consolidated_reminder_email(
+    client_data: dict,
+    invoices: list,
+    output_path: Union[str, Path],
+    language: str = "en",
+    branding: Optional[dict] = None
+) -> Path:
+    """
+    Genera REMINDER_EMAIL_CONSOLIDATED.txt contenente OGGETTO e CORPO unificato
+    con riepilogo analitico e subtotali separati per valuta.
+    """
+    out_file = Path(output_path)
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+
+    lang_code = (language or "en").lower()[:2]
+    i18n = CONSOLIDATED_EMAIL_I18N.get(lang_code, CONSOLIDATED_EMAIL_I18N["en"])
+
+    if branding is None:
+        try:
+            from custom_branding import get_branding
+            branding = get_branding()
+        except Exception:
+            branding = {}
+
+    client_name = client_data.get("client_name") or "Client"
+    records = [_extract_invoice_record(i) for i in invoices]
+
+    # Subtotali valuta
+    subtotals_by_curr = {}
+    for r in records:
+        c = r["currency"]
+        subtotals_by_curr[c] = round(subtotals_by_curr.get(c, 0.0) + r["amount"], 2)
+
+    subject = i18n["subject"].format(client_name=client_name)
+    greeting = i18n["greeting"].format(client_name=client_name)
+    intro = i18n["intro"]
+
+    body_lines = [
+        f"SUBJECT: {subject}",
+        "",
+        "BODY:",
+        greeting,
+        "",
+        intro,
+        "",
+    ]
+
+    for r in records:
+        line = f"  • Invoice #{r['number']} | Date: {r['issue_date']} | Due: {r['due_date']} | Overdue: {r['days_overdue']} days | Amount: {r['amount']:,.2f} {r['currency']}"
+        body_lines.append(line)
+
+    body_lines.append("")
+    body_lines.append(i18n["totals_header"])
+    for curr, tot in subtotals_by_curr.items():
+        body_lines.append(f"  • Total {curr}: {tot:,.2f} {curr}")
+
+    body_lines.append("")
+    body_lines.append(i18n["action_prompt"])
+
+    if branding.get("iban"):
+        body_lines.append("")
+        body_lines.append(i18n["bank_header"])
+        body_lines.append(f"  {i18n['iban_label']} {branding['iban']}")
+
+    body_lines.append("")
+    body_lines.append(i18n["regards"])
+    vendor_name = branding.get("company_name", "Accounts Receivable Department")
+    body_lines.append(vendor_name)
+    if branding.get("email"):
+        body_lines.append(branding["email"])
+
+    content = "\n".join(body_lines)
+    out_file.write_text(content, encoding="utf-8")
+    logger.info(f"Consolidated Reminder Email generated: {out_file}")
+    return out_file
+

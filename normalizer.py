@@ -119,6 +119,20 @@ def normalize(raw_fields: dict, locale: str = "it") -> dict:
     if raw_fields.get("invoice_number"):
         result["invoice_number"] = normalize_invoice_number(raw_fields["invoice_number"])
 
+    # Partita IVA / VAT ID (Strict P.IVA)
+    raw_vat = (
+        raw_fields.get("client_vat")
+        or raw_fields.get("vat_number")
+        or raw_fields.get("tax_id")
+        or raw_fields.get("piva")
+    )
+    if raw_vat:
+        clean_v = re.sub(r"[\s\-_.]+", "", str(raw_vat).strip().upper())
+        result["client_vat"] = clean_v if len(clean_v) >= 5 else None
+    else:
+        result["client_vat"] = None
+    result["vat_number"] = result["client_vat"]
+
     # Rilevamento Credit Note e preservazione rigorosa importo negativo
     text_corpus = (
         (raw_text or "") + " " +

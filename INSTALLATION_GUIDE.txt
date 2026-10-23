@@ -1,6 +1,7 @@
 ===============================================================================
-ZUKWEND v2.1.5 ENTERPRISE — USER MANUAL & OPERATIONAL GUIDE
+ZUKWEND v2.1.6 ENTERPRISE — USER MANUAL & OPERATIONAL GUIDE
 Local-First Accounts Receivable & Credit Management AI Agent
+Consolidated Client Dossier Edition
 ===============================================================================
 
 1. QUICK START (TIER 1 NATIVE ENGINE)
@@ -10,7 +11,7 @@ ZUKWEND is designed to work immediately out-of-the-box with zero setup:
 1. Extract the "Zukwend_Full" ZIP archive to any local directory (e.g., C:\Zukwend\).
 2. Double-click "ZUKWEND.exe" to launch the application.
 3. Click "Select Invoice File / Folder" in the main interface to choose your target PDF invoices (ready-to-test sample invoices are provided in the "demo\" folder).
-4. Click "Run Analysis". In ~1 second, ZUKWEND extracts invoice data, calculates aging risk, generates branded PDF reports, and prepares 1-click email reminders.
+4. Click "Run Document Analysis". In ~1 second, ZUKWEND extracts invoice data, calculates aging risk, generates branded PDF reports, and prepares 1-click email reminders.
 
 No internet connection, external servers, or API keys are required for Tier 1 operation.
 
@@ -23,7 +24,7 @@ To proceed:
 1. Click on "More info".
 2. Click on the "Run anyway" button.
 
-Note: ZUKWEND.exe is digitally signed with an Authenticode EV Code Signing Certificate (Certum EV CA) verifying software integrity and publisher identity.
+Note: ZUKWEND is verified and packaged by OLTREVISTA with strict security and file integrity guarantees.
 
 -------------------------------------------------------------------------------
 3. AI EXECUTION ENGINES: THE 3-TIER ARCHITECTURE
@@ -54,47 +55,80 @@ ZUKWEND provides three flexible execution tiers to match your corporate privacy 
 - Privacy: API calls are sent securely directly from your machine to your chosen provider via encrypted TLS. No middleman servers used.
 
 -------------------------------------------------------------------------------
-4. COMPANY BRANDING & SETTINGS CONFIGURATION
+4. CONSOLIDATED CLIENT DOSSIERS & FOLDER HIERARCHY (v2.1.6)
+-------------------------------------------------------------------------------
+ZUKWEND v2.1.6 introduces enterprise Client Dossier Automation:
+
+Strict P.IVA / Tax ID Matching & Anti-Data Leak:
+- Multiple invoices for the same debtor are consolidated into a unified client dossier ONLY when the VAT Registration Number / Tax ID matches 100%.
+- If a VAT ID is missing, incomplete, or doubtful (< 5 characters), ZUKWEND automatically falls back to an isolated single dossier, preventing any cross-client data leak.
+- Windows-illegal folder characters (/ \ : * ? " < > | &) are automatically sanitized and folder names are limited to 40 characters maximum.
+
+Permanent Folder Structure (dossier_mode = True):
+output/
+├── CLIENTS/
+│   └── {CLIENT_SLUG_VAT}/
+│       └── {YYYY-MM-DD}/
+│           ├── STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf  (Consolidated statement table)
+│           ├── REMINDER_EMAIL_CONSOLIDATED.txt        (Unified email: SUBJECT + BODY)
+│           └── Individual_Invoices_Archive/           (Clean archival subfolder)
+│               ├── report_AR_INV-001_{TS}.pdf
+│               ├── report_AR_INV-001_{TS}.xlsx
+│               └── report_AR_INV-001_{TS}.json
+├── MASTER_SUMMARY_AGING_{YYYYMMDD}.xlsx               (Global batch Excel)
+└── master_erp_ingestion_{YYYYMMDD}.json               (Global batch JSON payload)
+
+Multi-Currency Partitioning:
+- Outstanding invoices are listed line-by-line.
+- Subtotals are strictly partitioned per currency (e.g. Total EUR: € 18,450.00 | Total USD: $ 4,200.00).
+- Currencies are NEVER algebraically summed together, preserving accounting accuracy.
+
+-------------------------------------------------------------------------------
+5. COMPANY BRANDING & SETTINGS CONFIGURATION
 -------------------------------------------------------------------------------
 Customize ZUKWEND to match your corporate identity for generated reports and collection notices:
-1. Click the "Settings" icon in the top navigation bar.
-2. Enter your company details: Legal Business Name, Address, VAT ID, IBAN, BIC/SWIFT, and Admin Email.
+1. Click the "⚙️ Settings & Branding" button in the top navigation bar.
+2. Enter your company details: Legal Business Name, Address, IBAN, and Admin Email.
 3. Upload your corporate logo (PNG or JPG format) to automatically brand generated PDF reports.
-4. Settings are stored securely in your local configuration file (.zukwend/config.json).
+4. Configure Dossier Mode settings:
+   - "Attiva Modalità Dossier Cliente Consolidato (Strict P.IVA)": Enabled by default.
+   - "Archivia singoli titoli in Individual_Invoices_Archive/": Enabled by default.
+5. Configure Watch Directory & Daemon.
+6. Click "💾 Salva Configurazione" to persist your settings in zukwend_config.json.
 
 -------------------------------------------------------------------------------
-5. AUTOMATED WATCH DIRECTORY DAEMON
+6. ACTION PANEL & QUICK BUTTONS
+-------------------------------------------------------------------------------
+Upon completing document processing, the bottom action panel provides 3 quick buttons:
+- [📄 Apri Estratto Conto]: Instantly opens the consolidated STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf in your default PDF viewer.
+- [📊 Apri Master Excel]: Opens the global MASTER_SUMMARY_AGING_YYYYMMDD.xlsx workbook.
+- [📁 Apri Cartella Output]: Opens the Windows Explorer directory containing your output files.
+
+-------------------------------------------------------------------------------
+7. AUTOMATED WATCH DIRECTORY DAEMON
 -------------------------------------------------------------------------------
 For automated background processing:
-1. Open the "Watch Directory" tab in ZUKWEND.
-2. Select an inbound folder (e.g., C:\Invoices_Inbound\).
-3. Activate the daemon. ZUKWEND will continuously monitor the folder, automatically processing new PDFs in real time as they arrive and exporting reports directly to the "output\" directory.
+1. Open "Settings & Branding" in ZUKWEND.
+2. Specify an inbound directory (e.g., C:\Invoices_Inbound\).
+3. Toggle "Attiva Monitoraggio Automatico Background (Watch Daemon)".
+4. Click Save. ZUKWEND will continuously monitor the folder, automatically processing incoming invoice PDFs in real time and filing them into client dossiers.
 
 -------------------------------------------------------------------------------
-6. TRIPLE-EXPORT DELIVERABLES & ERP INTEGRATION (output/ DIRECTORY)
+8. DELIVERABLES & ERP INTEGRATION
 -------------------------------------------------------------------------------
-ZUKWEND exports three standardized formats into the "output\" folder for every processed batch:
-1. Branded PDF Audit Report: Fully formatted report with company header, risk breakdown, aging analysis, and legal footer.
-2. Excel Workbook (.xlsx):
-   - Sheet 1 ("AR Aging Analysis"): Human-readable summary with local dates and aging buckets (0-30, 31-60, 61-90, 90+ days).
-   - Sheet 2 ("ERP_Ingestion"): Strict ISO YYYY-MM-DD formatted data for seamless import into SAP, Zucchetti, and TeamSystem.
-3. JSON Audit File (.json): Structured metadata containing full compliance and ERP ingestion payloads.
+ZUKWEND exports standardized deliverables designed for enterprise finance operations:
+1. Consolidated Account Statement (PDF): High-resolution document with company header, client dossier metadata, aging table, and partitioned currency subtotals.
+2. Consolidated Reminder Notice (TXT): 1-click email text with clean SUBJECT: and BODY: sections.
+3. Global Master Excel Workbook (.xlsx):
+   - Sheet 1 ("AR Aging Analysis"): Visual aging summary with partitioned currency subtotals.
+   - Sheet 2 ("ERP_Ingestion"): Strict ISO YYYY-MM-DD formatted columns ready for automated ingestion in SAP, Zucchetti, and TeamSystem.
+4. Master ERP JSON Payload (.json): Unified batch payload with complete aging buckets, risk scores, and raw financial data.
 
 -------------------------------------------------------------------------------
-7. 1-CLICK REMINDER WORKFLOW & EMAIL COPY-PASTE
+9. PRIVACY, AIR-GAP SECURITY & LEGAL DISCLAIMER
 -------------------------------------------------------------------------------
-ZUKWEND generates clean, pre-formatted collection e-mails ready for immediate sending:
-- Structure: Each reminder is strictly separated into two distinct blocks:
-  SUBJECT: [Localized Email Subject Line]
-  BODY: [Clean Message Body]
-- How to use: Copy the SUBJECT line into your email client (Outlook/Gmail), then copy the BODY text and paste it into your message.
-- Clean Text Guarantee: Reminders contain zero hardcoded fake signatures and zero internal legal disclaimers, ensuring your default corporate email signature remains clean and untouched.
-
--------------------------------------------------------------------------------
-8. PRIVACY, AIR-GAP SECURITY & LEGAL DISCLAIMER
--------------------------------------------------------------------------------
-- Privacy Guarantee: ZUKWEND operates under a strict Local-First & Air-Gapped architecture. Your financial data, client names, and invoice details never leave your computer unless you explicitly configure a Tier 3 Cloud provider.
-- Legal Disclaimer: ZUKWEND provides automated operational risk analysis and recommended collection notices. It does not constitute formal legal counsel. Always review Level 3 formal notices with your legal department before business dispatch.
+- Privacy Guarantee: ZUKWEND operates under a strict Local-First & Air-Gapped architecture. Financial data, client names, and invoice records never leave your computer unless you explicitly configure a Tier 3 Cloud provider.
+- Legal Disclaimer: ZUKWEND provides automated operational risk analysis and recommended collection notices. It does not constitute formal legal counsel. Always review Level 3 formal notices with your legal department before formal legal dispatch.
 
 ===============================================================================
 (C) 2026 OLTREVISTA / ZUKWEND. All Rights Reserved.

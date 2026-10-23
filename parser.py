@@ -169,6 +169,8 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
                         data["requires_manual_input"] = False
                         data["extraction_timestamp"] = datetime.now().isoformat()
                         data["extraction_method"] = "Ollama Local LLM"
+                        if not data.get("client_vat"):
+                            data["client_vat"] = _extract_vat_number(raw_text)
                         logger.info("Extraction completed via Ollama Local LLM.")
                         return data
             except Exception as e:
@@ -198,6 +200,8 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
                         data["requires_manual_input"] = False
                         data["extraction_timestamp"] = datetime.now().isoformat()
                         data["extraction_method"] = "Cloud BYOC LLM"
+                        if not data.get("client_vat"):
+                            data["client_vat"] = _extract_vat_number(raw_text)
                         logger.info("Extraction completed via Cloud LLM.")
                         return data
             except Exception as e:
@@ -233,6 +237,7 @@ def _fallback_regex_extraction(raw_text: str) -> dict:
         "payment_status": "CREDIT_NOTE" if (is_credit_note or (amount is not None and amount < 0)) else None,
         "client_name": _extract_client_name(raw_text, text_lower),
         "client_address": _extract_client_address(raw_text, text_lower),
+        "client_vat": _extract_vat_number(raw_text),
         "vendor_name": _extract_vendor_name(raw_text, text_lower),
         "payment_terms": _extract_payment_terms(text_lower),
         "raw_text": raw_text,
@@ -556,6 +561,55 @@ def _extract_vendor_name(text: str, text_lower: str) -> Optional[str]:
     lines = [l.strip() for l in text.split("\n") if l.strip()]
     for line in lines[:5]:
         if len(line) > 5 and not re.match(r"^\d", line): return line[:80]
+    return None
+
+def _extract_vat_number(text: str) -> Optional[str]:
+    """
+    Estrae il numero di Partita IVA / VAT Registration Number / Tax ID.
+    Cerca prioritariamente nei blocchi cliente (Bill to, Spett.le, Customer, ecc.)
+    oppure mediante etichette esplicite (P.IVA, VAT ID, Tax ID, CIF, TVA, USt-IdNr).
+    """
+    if not text:
+        return None
+    text_lower = text.lower()
+
+    # 1. Cerca prima in prossimità del blocco cliente
+    client_keywords = [
+        "spett.le", "spettabile", "bill to", "billed to", "client", "customer",
+        "sold to", "fatturato a", "destinatario"
+    ]
+    for kw in client_keywords:
+        idx = text_lower.find(kw)
+        if idx != -1:
+            segment = text[idx: idx + 400]
+            m_cl = re.search(
+                r"(?:p\.?\s*iva|partita\s*iva|c\.?\s*f\.?|codice\s*fiscale|vat\s*(?:reg\.?|id|no\.?|number)?|tax\s*id|tva|uid|ust[\s\-_]?idnr|cif|nif)[\s:#]+([A-Z0-9\-\s]{5,22})",
+                segment,
+                re.IGNORECASE
+            )
+            if m_cl:
+                candidate = re.sub(r"[\s\-_.]+", "", m_cl.group(1)).upper()
+                if len(candidate) >= 5 and candidate not in ("00000000000", "UNKNOWN", "NOTAVAILABLE"):
+                    return candidate
+
+    # 2. Cerca etichette esplicite ovunque nel documento
+    explicit_patterns = [
+        r"(?:client|customer|buyer|destinatario)?[\s\-_]*(?:p\.?\s*iva|partita\s*iva|c\.?\s*f\.?|codice\s*fiscale|vat\s*(?:reg\.?|id|no\.?|number)?|tax\s*id|tva|uid|ust[\s\-_]?idnr|cif|nif)[\s:#]+([A-Z0-9\-\s]{5,22})",
+        r"\b(IT[0-9]{11})\b",
+        r"\b(DE[0-9]{9})\b",
+        r"\b(FR[0-9A-Z]{2}[0-9]{9})\b",
+        r"\b(GB[0-9]{9})\b",
+        r"\b(ES[0-9A-Z]{9})\b",
+        r"\b(CHE[\s\-]?[0-9]{3}[\s\-]?[0-9]{3}[\s\-]?[0-9]{3})\b",
+    ]
+    for pat in explicit_patterns:
+        matches = list(re.finditer(pat, text, re.IGNORECASE))
+        if matches:
+            for match in reversed(matches):
+                candidate = re.sub(r"[\s\-_.]+", "", match.group(1)).upper()
+                if len(candidate) >= 5 and candidate not in ("00000000000", "UNKNOWN", "NOTAVAILABLE"):
+                    return candidate
+
     return None
 
 def _extract_payment_terms(text_lower: str) -> Optional[str]:

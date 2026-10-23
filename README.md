@@ -36,6 +36,41 @@ ZUKWEND adotta un'architettura di calcolo ibrida e modulare a 3 livelli, studiat
 
 ---
 
+## 📁 Gerarchia Cartelle, Dossier Cliente & Multi-Valuta (v2.1.6)
+
+ZUKWEND v2.1.6 introduce l'automazione dei **Dossier Cliente Consolidati** con logica **Anti-Data Leak** e supporto **Multi-Valuta**:
+
+### 1. Raggruppamento Strict P.IVA (100% Match)
+- Le posizioni aperte dello stesso debitore vengono consolidate in un unico dossier cliente **esclusivamente se la Partita IVA / Tax ID coincide al 100%**.
+- Se la P.IVA manca o ha lunghezza insufficiente (< 5 caratteri), la fattura viene isolata in un dossier singolo autonomo per evitare contaminazioni tra debitori diversi.
+- I caratteri speciali non ammessi da Windows (`/ \ : * ? " < > | &`) vengono automaticamente sanitizzati e la lunghezza del nome cartella è limitata a 40 caratteri.
+
+### 2. Struttura Output
+```
+output/
+├── CLIENTS/
+│   └── {CLIENT_SLUG_VAT}/
+│       └── {YYYY-MM-DD}/
+│           ├── STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf  (Estratto conto unico con tabella analitica)
+│           ├── REMINDER_EMAIL_CONSOLIDATED.txt        (E-mail unificata: OGGETTO + CORPO)
+│           └── Individual_Invoices_Archive/           (Trittici .pdf, .xlsx, .json dei singoli titoli)
+├── MASTER_SUMMARY_AGING_{YYYYMMDD}.xlsx               (Foglio 1: AR Aging Analysis | Foglio 2: ERP_Ingestion date ISO)
+└── master_erp_ingestion_{YYYYMMDD}.json               (Batch payload per SAP, Zucchetti, TeamSystem)
+```
+
+### 3. Gestione Multi-Valuta Rigorosa
+- Nell'Estratto Conto PDF e nell'e-mail di sollecito, le fatture in valute differenti (es. EUR, USD, GBP) vengono analiticamente elencate e sommate **esclusivamente in subtotali separati per valuta**.
+- È matematicamente esclusa qualsiasi somma algebrica incrociata tra valute diverse.
+
+### 4. Opzioni GUI nei Settings & Pulsanti Veloci
+- Nei Settings della GUI sono disponibili i controlli per `dossier_mode` (default: Attivo) e `generate_individual_archive` (default: Attivo).
+- Al completamento dell'analisi, il pannello inferiore espone 3 pulsanti veloci:
+  - **[📄 Apri Estratto Conto]**: Apre istantaneamente `STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf`.
+  - **[📊 Apri Master Excel]**: Apre `MASTER_SUMMARY_AGING_YYYYMMDD.xlsx`.
+  - **[📁 Apri Cartella Output]**: Apre la cartella Windows del batch.
+
+---
+
 ## 🛡️ Note Tecniche Windows Defender (SmartScreen)
 
 Trattandosi di un software desktop nativo offline, distribuito tramite pacchetto autonomo e privo di telemetria cloud verso server centralizzati, al primo avvio su Windows 10/11 Microsoft Defender SmartScreen potrebbe mostrare la schermata informativa blu:

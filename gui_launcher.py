@@ -44,7 +44,7 @@ LEMON_CHECKOUT_URL = "https://oltrevista.lemonsqueezy.com/checkout/buy/191492c7-
 
 # Configurazione: default di sola lettura nel bundle (sys._MEIPASS) + file utente scrivibile.
 CONFIG_FILENAME = "zukwend_config.json"
-DEFAULT_CONFIG = {"mode": "local", "api_key": "", "lang": "en"}
+DEFAULT_CONFIG = {"mode": "local", "api_key": "", "lang": "en", "dossier_mode": True, "generate_individual_archive": True}
 BUNDLED_CONFIG_FILE = Path(get_resource_path(CONFIG_FILENAME))
 
 def _user_config_file() -> Path:
@@ -97,7 +97,7 @@ def launch_gui_launcher():
     cfg = load_user_config()
 
     root = ctk.CTk()
-    root.title("ZUKWEND Billing Agent")
+    root.title("ZUKWEND v2.1.6 (Consolidated Dossier Edition)")
     root.geometry("640x800")
     root.resizable(False, False)
 
@@ -153,7 +153,7 @@ def launch_gui_launcher():
 
     lbl_title = ctk.CTkLabel(
         root, 
-        text="ZUKWEND Billing Agent", 
+        text="ZUKWEND v2.1.6 (Consolidated Dossier Edition)", 
         font=ctk.CTkFont(family="Segoe UI", size=20, weight="bold")
     )
     lbl_title.pack(pady=(14, 2))
@@ -360,7 +360,7 @@ def launch_gui_launcher():
     def open_settings_dialog():
         dialog = ctk.CTkToplevel(root)
         dialog.title("Impostazioni Aziendali & Watch Directory — ZUKWEND")
-        dialog.geometry("560x530")
+        dialog.geometry("560x600")
         dialog.resizable(False, False)
         dialog.transient(root)
         dialog.grab_set()
@@ -455,7 +455,16 @@ def launch_gui_launcher():
 
         sw_var = ctk.BooleanVar(value=bool(current_b.get("watch_enabled", False)))
         sw_watch = ctk.CTkSwitch(frm_fields, text="Attiva Monitoraggio Automatico Background (Watch Daemon)", variable=sw_var, font=ctk.CTkFont(family="Segoe UI", size=11))
-        sw_watch.pack(anchor="w", pady=(4, 10))
+        sw_watch.pack(anchor="w", pady=(4, 6))
+
+        curr_cfg = load_user_config()
+        sw_dossier_var = ctk.BooleanVar(value=bool(curr_cfg.get("dossier_mode", True)))
+        sw_dossier = ctk.CTkSwitch(frm_fields, text="Attiva Modalità Dossier Cliente Consolidato (Strict P.IVA)", variable=sw_dossier_var, font=ctk.CTkFont(family="Segoe UI", size=11))
+        sw_dossier.pack(anchor="w", pady=(2, 4))
+
+        sw_arch_var = ctk.BooleanVar(value=bool(curr_cfg.get("generate_individual_archive", True)))
+        sw_arch = ctk.CTkSwitch(frm_fields, text="Archivia singoli titoli in Individual_Invoices_Archive/", variable=sw_arch_var, font=ctk.CTkFont(family="Segoe UI", size=11))
+        sw_arch.pack(anchor="w", pady=(2, 10))
 
         def salva_e_chiudi():
             new_b = {
@@ -468,6 +477,11 @@ def launch_gui_launcher():
                 "watch_enabled": sw_var.get(),
             }
             custom_branding.save_branding(new_b)
+
+            user_cfg = load_user_config()
+            user_cfg["dossier_mode"] = sw_dossier_var.get()
+            user_cfg["generate_individual_archive"] = sw_arch_var.get()
+            save_user_config(user_cfg)
             
             # Gestione daemon
             if new_b["watch_enabled"] and new_b["watch_folder"] and os.path.exists(new_b["watch_folder"]):
@@ -706,7 +720,9 @@ def launch_gui_launcher():
         try:
             progress_bar.set(1.0)
             progress_bar.configure(progress_color="#10B981")
-            btn_open_folder.configure(state="normal", text="OPEN OUTPUT FOLDER  (REPORT READY)")
+            btn_open_folder.configure(state="normal", text="Apri Cartella Output")
+            btn_open_statement.configure(state="normal")
+            btn_open_excel.configure(state="normal")
             root.update_idletasks()
             root.deiconify()
             root.lift()
@@ -749,13 +765,59 @@ def launch_gui_launcher():
     frame_actions = ctk.CTkFrame(frame_main, fg_color="transparent")
     frame_actions.pack(fill="x", padx=20, pady=(0, 12))
 
+    def _find_latest_file(pattern: str, search_dir: Path) -> Optional[Path]:
+        try:
+            files = list(search_dir.glob(pattern))
+            if not files:
+                return None
+            files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+            return files[0]
+        except Exception:
+            return None
+
+    def open_statement_pdf():
+        """Apre STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf più recente."""
+        target = output_dir_ref.get("statement_path")
+        out_root = Path(os.path.abspath("output"))
+        if not target or not os.path.exists(target):
+            cand = _find_latest_file("CLIENTS/**/STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf", out_root)
+            if cand and cand.exists():
+                target = str(cand)
+        if target and os.path.exists(target):
+            try:
+                os.startfile(target)
+            except Exception as e:
+                logger.error(f"Failed to open statement PDF ({target}): {e}")
+                append_log(f"[WARN] Unable to open statement PDF: {e}")
+                messagebox.showwarning("Statement PDF", f"Unable to open file:\n{target}\n\n{e}")
+        else:
+            messagebox.showinfo("Estratto Conto", "Nessun Estratto Conto Consolidato trovato nell'output.")
+
+    def open_master_excel():
+        """Apre MASTER_SUMMARY_AGING_YYYYMMDD.xlsx più recente."""
+        target = output_dir_ref.get("master_excel_path")
+        out_root = Path(os.path.abspath("output"))
+        if not target or not os.path.exists(target):
+            cand = _find_latest_file("MASTER_SUMMARY_AGING_*.xlsx", out_root)
+            if cand and cand.exists():
+                target = str(cand)
+        if target and os.path.exists(target):
+            try:
+                os.startfile(target)
+            except Exception as e:
+                logger.error(f"Failed to open master excel ({target}): {e}")
+                append_log(f"[WARN] Unable to open master excel: {e}")
+                messagebox.showwarning("Master Excel", f"Unable to open file:\n{target}\n\n{e}")
+        else:
+            messagebox.showinfo("Master Excel", "Nessun file Master Excel trovato nella cartella output.")
+
     def open_output_folder():
         """
         Apre la cartella output nell'Esplora risorse.
         os.startfile e' non bloccante (ShellExecute): il main thread non si ferma;
         qualsiasi errore e' intercettato e non puo' mai far crashare la GUI.
         """
-        target = os.path.abspath("output")
+        target = output_dir_ref.get("path") or os.path.abspath("output")
         try:
             target = ensure_output_folder()
             os.startfile(target)
@@ -768,14 +830,40 @@ def launch_gui_launcher():
                 logger.error(f"Fallback explorer failed: {e2}")
                 messagebox.showwarning("Output Folder", f"Unable to open folder:\n{target}\n\n{e2}")
 
+    frame_quick_buttons = ctk.CTkFrame(frame_actions, fg_color="transparent")
+
+    btn_open_statement = ctk.CTkButton(
+        frame_quick_buttons,
+        text="Apri Estratto Conto",
+        command=open_statement_pdf,
+        state="normal",
+        height=38,
+        corner_radius=8,
+        font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+        fg_color="#1E40AF",
+        hover_color="#1E3A8A"
+    )
+
+    btn_open_excel = ctk.CTkButton(
+        frame_quick_buttons,
+        text="Apri Master Excel",
+        command=open_master_excel,
+        state="normal",
+        height=38,
+        corner_radius=8,
+        font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+        fg_color="#D97706",
+        hover_color="#B45309"
+    )
+
     btn_open_folder = ctk.CTkButton(
-        frame_actions,
-        text="OPEN OUTPUT FOLDER",
+        frame_quick_buttons,
+        text="Apri Cartella Output",
         command=open_output_folder,
         state="normal",
         height=38,
         corner_radius=8,
-        font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
+        font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
         fg_color="#059669",
         hover_color="#047857"
     )
@@ -828,6 +916,12 @@ def launch_gui_launcher():
                 out_dir = os.path.abspath("output")
 
             output_dir_ref["path"] = out_dir
+            if result.export_paths:
+                for p in result.export_paths:
+                    if p.endswith("STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf"):
+                        output_dir_ref["statement_path"] = p
+                    elif "MASTER_SUMMARY_AGING_" in p and p.endswith(".xlsx"):
+                        output_dir_ref["master_excel_path"] = p
 
             def on_complete():
                 restore_run_button()
@@ -926,8 +1020,10 @@ def launch_gui_launcher():
         hover_color="#1D4ED8"
     )
     btn_run.pack(fill="x")
-    # "Apri cartella output" ABILITATO e visibile fin dall'avvio (state='normal')
-    btn_open_folder.pack(fill="x", pady=(6, 0))
+    frame_quick_buttons.pack(fill="x", pady=(8, 0))
+    btn_open_statement.pack(side="left", fill="x", expand=True, padx=(0, 4))
+    btn_open_excel.pack(side="left", fill="x", expand=True, padx=(2, 4))
+    btn_open_folder.pack(side="left", fill="x", expand=True, padx=(2, 0))
 
     # Initial UI refresh and startup check
     refresh_license_ui()

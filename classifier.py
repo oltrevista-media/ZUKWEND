@@ -6,6 +6,7 @@ REPTANA MODE | OLTREVISTA 2030 | Offline-First
 """
 
 import logging
+import re
 from datetime import date, datetime, timedelta
 from typing import Optional
 
@@ -411,3 +412,93 @@ def compute_aging_summary(classifications: list, currency: str = "EUR") -> dict:
     summary["total_overdue_amount"] = round(summary["total_overdue_amount"], 2)
 
     return summary
+
+
+# ------------------------------------------------------------
+# Dossier Grouping & Sanitization (Strict P.IVA / Anti-Data Leak)
+# ------------------------------------------------------------
+def slugify_folder_name(name: str, max_length: int = 40) -> str:
+    """
+    Rimuove caratteri illegali Windows (/ \ : * ? " < > | &)
+    e tronca il nome della cartella a 40 caratteri max.
+    """
+    if not name:
+        return "UNKNOWN"
+    clean = re.sub(r'[/\\:*?"<>|&]+', '_', str(name))
+    clean = re.sub(r'[\s_]+', '_', clean).strip('._ ')
+    if not clean:
+        clean = "UNKNOWN"
+    return clean[:max_length]
+
+
+def group_invoices_by_client(invoices: list) -> dict:
+    """
+    Raggruppa le fatture nello stesso dossier cliente ESCLUSIVAMENTE se la P.IVA / VAT ID coincide al 100%.
+    FALLBACK DI SICUREZZA: Se la P.IVA manca, è incompleta o dubbia (< 5 caratteri o assente),
+    NON raggruppare: ciascuna fattura viene gestita in un dossier singolo isolato (Anti-Data Leak).
+
+    Returns:
+        dict: {
+            client_group_key: {
+                "group_key": str,
+                "client_name": str,
+                "vat": Optional[str],
+                "is_isolated": bool,
+                "folder_slug": str,
+                "invoices": list
+            }
+        }
+    """
+    groups = {}
+    isolated_counter = 1
+
+    for inv in invoices:
+        raw_vat = (
+            inv.get("client_vat")
+            or inv.get("vat_number")
+            or inv.get("tax_id")
+            or inv.get("piva")
+            or (inv.get("invoice", {}).get("client_vat") if isinstance(inv.get("invoice"), dict) else None)
+            or (inv.get("invoice", {}).get("vat_number") if isinstance(inv.get("invoice"), dict) else None)
+        )
+        vat = str(raw_vat).strip().upper() if raw_vat else ""
+        vat = re.sub(r"[\s\-_.]+", "", vat)
+
+        # Validazione P.IVA / VAT ID al 100%: min 5 caratteri alfanumerici e non generico
+        is_valid_vat = bool(
+            vat
+            and len(vat) >= 5
+            and vat not in ("NONE", "NULL", "UNKNOWN", "NOTAVAILABLE", "00000000000", "N/A")
+        )
+
+        client_name = inv.get("client_name") or inv.get("client")
+        if not client_name and isinstance(inv.get("invoice"), dict):
+            client_name = inv["invoice"].get("client") or inv["invoice"].get("client_name")
+        client_name = str(client_name or "Client").strip()
+
+        if is_valid_vat:
+            group_key = f"VAT_{vat}"
+            folder_slug = slugify_folder_name(f"{client_name}_{vat}", max_length=40)
+        else:
+            inv_num = inv.get("invoice_number") or inv.get("number")
+            if not inv_num and isinstance(inv.get("invoice"), dict):
+                inv_num = inv["invoice"].get("number") or inv["invoice"].get("invoice_number")
+            inv_num_clean = slugify_folder_name(str(inv_num or f"NOID_{isolated_counter}"), max_length=15)
+            group_key = f"ISOLATED_{client_name}_{inv_num_clean}_{isolated_counter}"
+            folder_slug = slugify_folder_name(f"{client_name}_{inv_num_clean}", max_length=40)
+            isolated_counter += 1
+
+        if group_key not in groups:
+            groups[group_key] = {
+                "group_key": group_key,
+                "client_name": client_name,
+                "vat": vat if is_valid_vat else None,
+                "is_isolated": not is_valid_vat,
+                "folder_slug": folder_slug,
+                "invoices": []
+            }
+
+        groups[group_key]["invoices"].append(inv)
+
+    return groups
+

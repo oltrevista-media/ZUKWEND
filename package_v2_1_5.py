@@ -41,6 +41,12 @@ with zipfile.ZipFile(TEMP_ZIP, "w", compression=zipfile.ZIP_DEFLATED, compressle
     print(f"  [+] Adding {guide_path.name}...")
     zf.write(guide_path, "INSTALLATION_GUIDE.txt")
 
+    # 2b. USER_MANUAL_EN.pdf
+    manual_path = REPO_DIR / "USER_MANUAL_EN.pdf"
+    if manual_path.exists():
+        print(f"  [+] Adding {manual_path.name}...")
+        zf.write(manual_path, "USER_MANUAL_EN.pdf")
+
     # 3. LICENSE_EULA.txt
     eula_path = REPO_DIR / "LICENSE_EULA.txt"
     assert eula_path.exists(), f"Missing {eula_path}"
