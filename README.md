@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/License-Lifetime%20(2%20Activations)-success.svg)](https://zukwend.com)
 [![AI Architecture](https://img.shields.io/badge/AI%20Engine-3--Tier%20Native%20Out--of--the--Box-purple.svg)](https://zukwend.com)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Offline%20First-green.svg)](https://zukwend.com)
-[![Ecosystem](https://img.shields.io/badge/Ecosystem-OLTREVISTA%20AI-orange.svg)](https://oltrevista.com)
+[![Ecosystem](https://img.shields.io/badge/Ecosystem-OLTREVISTA-orange.svg)](https://oltrevista.com)
 
 **ZUKWEND** è l'agente desktop intelligente sviluppato per l'automazione dei processi di Accounts Receivable (AR), il monitoraggio dello scaduto commerciale, l'analisi dell'aging delle fatture e la generazione guidata di comunicazioni e solleciti professionali in 6 lingue.
 
@@ -130,4 +130,4 @@ ZUKWEND è un agente software desktop autonomo fornito "Così com'è" (As-Is) pe
 - **Contatti Ufficiali & Licenze:** contact@oltrevista.com *(destinato esclusivamente a quesiti amministrativi e licenze commerciali per il software autonomo desktop fornito As-Is)*
 
 ---
-© 2026 **OLTREVISTA AI** — [oltrevista.com](https://oltrevista.com). Tutti i diritti riservati.
+© 2026 **OLTREVISTA** — [oltrevista.com](https://oltrevista.com). Tutti i diritti riservati.

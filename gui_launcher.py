@@ -17,8 +17,21 @@ import urllib.request
 import re
 import webbrowser
 from pathlib import Path
+from typing import Optional
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
+
+def _global_exception_handler(exctype, value, tb):
+    import traceback
+    err_msg = "".join(traceback.format_exception(exctype, value, tb))
+    logging.getLogger("zukwend.gui").critical(f"Unhandled Top-Level Exception:\n{err_msg}")
+    try:
+        messagebox.showerror("Fatal Error", f"An unexpected error occurred:\n{value}\n\nCheck logs for details.")
+    except Exception:
+        pass
+    sys.__excepthook__(exctype, value, tb)
+
+sys.excepthook = _global_exception_handler
 
 from license_manager import check_license, activate_license, increment_invoice_count, get_machine_id_short
 from resource_utils import get_resource_path, get_user_data_dir, get_output_dir
@@ -1032,4 +1045,19 @@ def launch_gui_launcher():
     root.mainloop()
 
 if __name__ == "__main__":
+    if "--smoke-test" in sys.argv:
+        print("[*] ZUKWEND Smoke Test: Initializing core modules...")
+        try:
+            assert workflow_engine is not None
+            assert parser is not None
+            assert normalizer is not None
+            assert classifier is not None
+            assert deducer is not None
+            assert report_generator is not None
+            assert export_engine is not None
+            print("[OK] ZUKWEND Smoke Test passed successfully.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"[FAIL] ZUKWEND Smoke Test failed: {e}")
+            sys.exit(1)
     launch_gui_launcher()

@@ -24,6 +24,7 @@ To proceed:
 1. Click on "More info".
 2. Click on the "Run anyway" button.
 
+Publisher: OLTREVISTA
 Note: ZUKWEND is verified and packaged by OLTREVISTA with strict security and file integrity guarantees.
 
 -------------------------------------------------------------------------------

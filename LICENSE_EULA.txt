@@ -1,10 +1,10 @@
 ================================================================================
   DISCLAIMER & END USER LICENSE AGREEMENT (EULA) — ZUKWEND
-  Version: 2.1.5 Enterprise | OLTREVISTA AI
+  Version: 2.1.5 Enterprise | OLTREVISTA
 ================================================================================
 
 By installing, copying, or using ZUKWEND ("the Software"), developed by
-OLTREVISTA AI, the user acknowledges that they have read, understood, and agreed
+OLTREVISTA, the user acknowledges that they have read, understood, and agreed
 to the following terms and conditions.
 
 
@@ -41,7 +41,7 @@ legal, tax, accounting, or financial advice.
 
 The user is solely responsible for reviewing and verifying all generated results
 prior to any business use, dispatch, or decision. To the maximum extent permitted
-by applicable law, OLTREVISTA AI and its developers are released from all
+by applicable law, OLTREVISTA and its developers are released from all
 liability for direct, indirect, incidental, or consequential damages (including
 uncollected debts, penalties, loss of data, or lost business opportunities)
 resulting from the use of or inability to use the Software.
@@ -84,6 +84,6 @@ this document. If you do not agree to these terms, you must discontinue use and
 uninstall the Software immediately.
 
 --------------------------------------------------------------------------------
-OLTREVISTA AI — ZUKWEND Enterprise
+OLTREVISTA — ZUKWEND Enterprise
 https://oltrevista.com
 ================================================================================
