@@ -62,17 +62,24 @@ DATE_PATTERNS = [
 ]
 
 INVOICE_NUMBER_PATTERNS = [
-    r"(?:fattura|invoice|facture|rechnung|factura|fatura)\s*(?:n\.|n°|nr\.|no\.|num\.|number|numero|#|n|nr|no)?\s*[:\s]?\s*([A-Za-z0-9\-_/]+)",
-    r"(?:n\.|n°|nr\.|no\.)\s*([A-Za-z0-9\-_/]+)",
-    r"\b(INV[-/][A-Za-z0-9\-_/]+)\b",
-    r"\b(FT[-/][A-Za-z0-9\-_/]+)\b",
+    r"\b((?:INV|FT|FAC|RECH|FAT)[-/][A-Za-z0-9\-_/]+)\b",
+    r"\b(?:fattura|invoice|facture|rechnung|factura|fatura)\s*(?:n\.|n°|nr\.|no\.|num\.|number|numero|#)?\s*[:#\s]\s*([A-Za-z0-9\-_/]+)",
+    r"\b(?:n\.|n°|nr\.|no\.)\s*[:#\s]?\s*([A-Za-z0-9\-_/]+)",
 ]
 
+GENERIC_INVOICE_WORDS = {
+    "invoice", "invoices", "fattura", "fatture", "facture", "factures",
+    "rechnung", "rechnungen", "factura", "facturas", "fatura", "faturas",
+    "date", "data", "datum", "due", "scadenza", "no", "nr", "num", "number",
+    "numero", "client", "cliente", "customer", "total", "totale", "amount",
+    "bill", "to", "uk", "usa"
+}
+
 AMOUNT_PATTERNS = [
-    r"(?:[-−–]\s*)?(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)\s*\(?\s*[-−–]?\s*[\d\.,'’`\s]+\)?",
-    r"\(?\s*[-−–]?\s*[\d\.,'’`\s]+\)?\s*(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)",
+    r"(?:(?<![-−–])[-−–](?![-−–])\s*)?(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)\s*\(?\s*(?:(?<![-−–])[-−–](?![-−–]))?\s*[\d\.,'’`\s]+\)?",
+    r"\(?\s*(?:(?<![-−–])[-−–](?![-−–]))?\s*[\d\.,'’`\s]+\)?\s*(?:EUR|€|USD|\$|GBP|£|BRL|R\$|CHF|JPY|¥)",
     r"(?:totale|total|amount|balance\s*due|montant|betrag|importe|valor)\s*[:\s|]\s*([^\n\r]+)",
-    r"\(?\s*[-−–]\s*[\d\.,'’`\s]+\)?",
+    r"\(?\s*(?<![-−–])[-−–](?![-−–])\s*[\d\.,'’`\s]+\)?",
 ]
 
 DUE_DATE_KEYWORDS = {
@@ -242,8 +249,12 @@ def _fallback_regex_extraction(raw_text: str) -> dict:
 
 def _extract_invoice_number(text: str) -> Optional[str]:
     for pattern in INVOICE_NUMBER_PATTERNS:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match and len(match.group(1).strip()) >= 3: return match.group(1).strip()
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            candidate = match.group(1).strip().strip(':').strip('#').strip('.')
+            if candidate.lower() in GENERIC_INVOICE_WORDS:
+                continue
+            if len(candidate) >= 2 and (any(c.isdigit() for c in candidate) or '-' in candidate or '/' in candidate):
+                return candidate
     return None
 
 def _extract_issue_date(text: str, text_lower: str) -> Optional[str]:
@@ -338,11 +349,16 @@ def normalize_currency(raw_val) -> CurrencyResult:
     if not s:
         return CurrencyResult(None, "EUR", "EUR")
 
-    # 1. Rileva indicatore negativo esplicito (segno meno o parentesi contabili)
+    # 1. Rileva indicatore negativo esplicito (segno meno singolo o parentesi contabili)
+    # Considera '-' come segno negativo SOLO se è un segno singolo adiacente alla cifra/valuta e non parte di linee divisorie '---'
     is_neg = False
     if re.search(r"\(\s*[-+]?[^)]*\d+[^)]*\)", s):
         is_neg = True
-    elif re.search(r"(?:^|[\s\$€£¥CHF\(\[])\s*[-−–]\s*[\d\$€£¥CHF\s]", s) or re.search(r"[-−–]\s*[\d\$€£¥CHF]", s) or s.startswith("-") or s.endswith("-"):
+    elif (
+        re.search(r"(?<![-−–])[-−–](?![-−–])\s*(?:[\$€£¥]|EUR|USD|GBP|CHF|BRL)?\s*\d", s)
+        or re.search(r"(?:[\$€£¥]|EUR|USD|GBP|CHF|BRL)\s*(?<![-−–])[-−–](?![-−–])\s*\d", s)
+        or re.search(r"\d\s*(?<![-−–])[-−–](?![-−–])$", s)
+    ):
         is_neg = True
 
     # 2. Estrazione valuta: conserva simbolo originale ($, €, £, CHF)

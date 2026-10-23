@@ -213,10 +213,15 @@ def normalize_amount(raw: Optional[str], locale: str = "it") -> Optional[float]:
         return res.amount
 
     raw_str = str(raw).strip()
+    # 1. Rileva indicatore negativo esplicito (segno meno singolo o parentesi contabili)
     is_neg = False
     if re.search(r"\(\s*[-+]?[^)]*\d+[^)]*\)", raw_str):
         is_neg = True
-    elif re.search(r"(?:^|[\s\$€£¥CHF\(\[])\s*[-−–]\s*[\d\$€£¥CHF\s]", raw_str) or re.search(r"[-−–]\s*[\d\$€£¥CHF]", raw_str) or raw_str.startswith("-") or raw_str.endswith("-"):
+    elif (
+        re.search(r"(?<![-−–])[-−–](?![-−–])\s*(?:[\$€£¥]|EUR|USD|GBP|CHF|BRL)?\s*\d", raw_str)
+        or re.search(r"(?:[\$€£¥]|EUR|USD|GBP|CHF|BRL)\s*(?<![-−–])[-−–](?![-−–])\s*\d", raw_str)
+        or re.search(r"\d\s*(?<![-−–])[-−–](?![-−–])$", raw_str)
+    ):
         is_neg = True
 
     cleaned = re.sub(r"[€$£¥\sA-Za-z'’`\(\)]", "", raw_str)
@@ -328,11 +333,15 @@ def normalize_currency(raw: Optional[str]) -> CurrencyResult:
     if not s:
         return CurrencyResult(None, "EUR", "EUR")
 
-    # 1. Rileva indicatore negativo esplicito (segno meno o parentesi contabili)
+    # 1. Rileva indicatore negativo esplicito (segno meno singolo o parentesi contabili)
     is_neg = False
     if re.search(r"\(\s*[-+]?[^)]*\d+[^)]*\)", s):
         is_neg = True
-    elif re.search(r"(?:^|[\s\$€£¥CHF\(\[])\s*[-−–]\s*[\d\$€£¥CHF\s]", s) or re.search(r"[-−–]\s*[\d\$€£¥CHF]", s) or s.startswith("-") or s.endswith("-"):
+    elif (
+        re.search(r"(?<![-−–])[-−–](?![-−–])\s*(?:[\$€£¥]|EUR|USD|GBP|CHF|BRL)?\s*\d", s)
+        or re.search(r"(?:[\$€£¥]|EUR|USD|GBP|CHF|BRL)\s*(?<![-−–])[-−–](?![-−–])\s*\d", s)
+        or re.search(r"\d\s*(?<![-−–])[-−–](?![-−–])$", s)
+    ):
         is_neg = True
 
     curr = "EUR"

@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Callable
-from i18n_catalog import get_legal_disclaimer
+from i18n_catalog import get_legal_disclaimer, format_human_date
 
 # ---------------------------------------------------------------------------
 # Logging setup
@@ -578,75 +578,116 @@ def _static_reminder(normalized: dict, billing: dict, language: str) -> str:
     vendor = re.sub(r"^[\s:,\-;|]+|[\s:,\-;|]+$", "", str(vendor).strip())
     vendor = re.sub(r"\s+", " ", vendor)
 
-    due = normalized.get("due_date") or "N/A"
+    due_raw = normalized.get("due_date") or "N/A"
+    due = format_human_date(due_raw, language)
     days_overdue = billing.get("days_overdue") or normalized.get("days_overdue") or 0
     grace_days = billing.get("grace_days") or (7 if level == 3 else (3 if level == 2 else 5))
 
     templates = {
         "it": {
-            1: (f"Gentile {client},\n\nla fattura n. {num} per {currency} {amount:,.2f}, "
-                f"con scadenza {due}, risulta ancora non saldata.\n"
-                f"La invitiamo cortesemente a procedere al pagamento entro {grace_days} giorni lavorativi.\n\n"
-                f"Cordiali saluti,\n{vendor}"),
-            2: (f"Gentile {client},\n\nNonostante i precedenti solleciti, la fattura n. {num} "
-                f"per {currency} {amount:,.2f} ({days_overdue} giorni di ritardo) risulta ancora impagata.\n"
-                f"La invitiamo a saldare entro {grace_days} giorni per evitare ulteriori azioni.\n\n"
-                f"Distinti saluti,\n{vendor}"),
-            3: (f"DIFFIDA FORMALE\n\n{client},\n\nla fattura n. {num} per {currency} {amount:,.2f} "
-                f"è gravemente scaduta da {days_overdue} giorni. Si diffida a pagare entro {grace_days} giorni, pena azioni legali.\n\n"
-                f"NOTA: Consultare un legale prima di inviare questa comunicazione.\n{vendor}"),
+            1: (f"OGGETTO: Sollecito di pagamento fattura n. {num} - {client}\n\n"
+                f"CORPO:\n"
+                f"Gentile {client},\n"
+                f"La fattura n. {num}, emessa per {currency} {amount:,.2f}, con scadenza {due}, risulta ancora non saldata.\n"
+                f"La invitiamo cortesemente a procedere al pagamento entro {grace_days} giorni lavorativi."),
+            2: (f"OGGETTO: Secondo sollecito di pagamento fattura n. {num} - {client}\n\n"
+                f"CORPO:\n"
+                f"Gentile {client},\n"
+                f"Nonostante i precedenti solleciti, la fattura n. {num} per {currency} {amount:,.2f} "
+                f"({days_overdue} giorni di ritardo) risulta ancora impagata.\n"
+                f"La invitiamo a saldare entro {grace_days} giorni per evitare ulteriori azioni."),
+            3: (f"OGGETTO: Diffida formale e messa in mora - Fattura n. {num}\n\n"
+                f"CORPO:\n"
+                f"Gentile {client},\n"
+                f"La diffidiamo a saldare la fattura n. {num} per {currency} {amount:,.2f}, "
+                f"scaduta il {due} ({days_overdue} giorni fa), entro {grace_days} giorni, pena il ricorso alle vie legali."),
         },
         "en": {
-            1: (f"Dear {client},\n\nInvoice no. {num} for {currency} {amount:,.2f} "
-                f"(due {due}) remains unpaid.\nWe kindly ask you to arrange payment within {grace_days} business days.\n\n"
-                f"Kind regards,\n{vendor}"),
-            2: (f"Dear {client},\n\nDespite our previous notice, invoice no. {num} ({currency} {amount:,.2f}) "
+            1: (f"SUBJECT: Payment Reminder: Invoice no. {num} - {client}\n\n"
+                f"BODY:\n"
+                f"Dear {client},\n"
+                f"Invoice no. {num} for {currency} {amount:,.2f} (due {due}) remains unpaid.\n"
+                f"We kindly ask you to arrange payment within {grace_days} business days."),
+            2: (f"SUBJECT: Overdue Notice: Invoice no. {num} - {client}\n\n"
+                f"BODY:\n"
+                f"Dear {client},\n"
+                f"Despite our previous notice, invoice no. {num} ({currency} {amount:,.2f}) "
                 f"due on {due} is overdue by {days_overdue} days.\n"
-                f"Please settle within {grace_days} days to prevent further escalation.\n\nBest regards,\n{vendor}"),
-            3: (f"FORMAL COLLECTION NOTICE\n\n{client},\n\n"
+                f"Please settle within {grace_days} days to prevent further escalation."),
+            3: (f"SUBJECT: Formal Collection Notice: Invoice no. {num}\n\n"
+                f"BODY:\n"
+                f"Dear {client},\n"
                 f"You are formally required to settle invoice no. {num} ({currency} {amount:,.2f}), "
                 f"overdue by {days_overdue} days, within {grace_days} days. "
-                f"Failure to comply will result in immediate legal action.\n\n{vendor}"),
+                f"Failure to comply will result in immediate legal action."),
         },
         "de": {
-            1: (f"Sehr geehrte(r) {client},\n\ndie Rechnung Nr. {num} über {currency} {amount:,.2f} "
-                f"(Fälligkeit: {due}) ist noch offen.\nBitte überweisen Sie den Betrag innerhalb von {grace_days} Werktagen.\n\n"
-                f"Mit freundlichen Grüßen,\n{vendor}"),
-            2: (f"Sehr geehrte(r) {client},\n\ntrotz Erinnerung ist die Rechnung Nr. {num} "
-                f"über {currency} {amount:,.2f} seit {days_overdue} Tagen überfällig.\nBitte begleichen Sie den Betrag innerhalb von {grace_days} Tagen.\n\n"
-                f"Mit freundlichen Grüßen,\n{vendor}"),
-            3: (f"LETZTE MAHNUNG\n\nSehr geehrte(r) {client},\n\ndie Rechnung Nr. {num} über {currency} {amount:,.2f} "
-                f"ist stark überfällig ({days_overdue} Tage). Zahlen Sie binnen {grace_days} Tagen, andernfalls werden rechtliche Schritte eingeleitet.\n{vendor}"),
+            1: (f"BETREFF: Zahlungserinnerung: Rechnung Nr. {num} - {client}\n\n"
+                f"TEXT:\n"
+                f"Sehr geehrte(r) {client},\n"
+                f"die Rechnung Nr. {num} über {currency} {amount:,.2f} (Fälligkeit: {due}) ist noch offen.\n"
+                f"Bitte überweisen Sie den Betrag innerhalb von {grace_days} Werktagen."),
+            2: (f"BETREFF: Zweite Mahnung: Rechnung Nr. {num} - {client}\n\n"
+                f"TEXT:\n"
+                f"Sehr geehrte(r) {client},\n"
+                f"trotz Erinnerung ist die Rechnung Nr. {num} über {currency} {amount:,.2f} seit {days_overdue} Tagen überfällig.\n"
+                f"Bitte begleichen Sie den Betrag innerhalb von {grace_days} Tagen."),
+            3: (f"BETREFF: Letzte Mahnung vor rechtlichen Schritten: Rechnung Nr. {num}\n\n"
+                f"TEXT:\n"
+                f"Sehr geehrte(r) {client},\n"
+                f"Sie werden aufgefordert, die Rechnung Nr. {num} über {currency} {amount:,.2f} "
+                f"binnen {grace_days} Tagen zu begleichen. Andernfalls werden unverzüglich rechtliche Schritte eingeleitet."),
         },
         "fr": {
-            1: (f"Bonjour {client},\n\nLa facture n° {num} d'un montant de {currency} {amount:,.2f} "
-                f"(échéance le {due}) est toujours en attente.\nMerci de procéder au règlement sous {grace_days} jours ouvrés.\n\n"
-                f"Cordialement,\n{vendor}"),
-            2: (f"Bonjour {client},\n\nSauf erreur, la facture n° {num} "
-                f"de {currency} {amount:,.2f} est en retard de {days_overdue} jours.\nMerci de régulariser la situation sous {grace_days} jours.\n\n"
-                f"Cordialement,\n{vendor}"),
-            3: (f"MISE EN DEMEURE\n\n{client},\n\nLa facture n° {num} de {currency} {amount:,.2f} "
-                f"est en retard critique ({days_overdue} jours). Sans règlement sous {grace_days} jours, une procédure légale sera engagée.\n{vendor}"),
+            1: (f"OBJET: Relance de paiement : Facture n° {num} - {client}\n\n"
+                f"CORPS:\n"
+                f"Bonjour {client},\n"
+                f"La facture n° {num} d'un montant de {currency} {amount:,.2f} (échéance le {due}) est toujours en attente.\n"
+                f"Merci de procéder au règlement sous {grace_days} jours ouvrés."),
+            2: (f"OBJET: Deuxième rappel de paiement : Facture n° {num} - {client}\n\n"
+                f"CORPS:\n"
+                f"Bonjour {client},\n"
+                f"Sauf erreur, la facture n° {num} de {currency} {amount:,.2f} est en retard de {days_overdue} jours.\n"
+                f"Merci de régulariser la situation sous {grace_days} jours."),
+            3: (f"OBJET: Mise en demeure formelle : Facture n° {num}\n\n"
+                f"CORPS:\n"
+                f"Bonjour {client},\n"
+                f"Nous vous mettons en demeure de régler la facture n° {num} de {currency} {amount:,.2f} "
+                f"sous {grace_days} jours. À défaut, une procédure légale sera engagée."),
         },
         "es": {
-            1: (f"Estimado/a {client},\n\nLa factura n.° {num} por importe de {currency} {amount:,.2f} "
-                f"(vencimiento {due}) se encuentra pendiente.\nLe rogamos efectúe el pago en un plazo de {grace_days} días hábiles.\n\n"
-                f"Atentamente,\n{vendor}"),
-            2: (f"Estimado/a {client},\n\nA pesar de los avisos, la factura n.° {num} "
-                f"por {currency} {amount:,.2f} acumula {days_overdue} días de retraso.\nRogamos regularice la situación en {grace_days} días.\n\n"
-                f"Saludos cordiales,\n{vendor}"),
-            3: (f"REQUERIMIENTO FORMAL DE PAGO\n\n{client},\n\nLa factura n.° {num} por {currency} {amount:,.2f} "
-                f"acumula {days_overdue} días de retraso. Dispone de {grace_days} días para abonarla antes de acciones legales.\n{vendor}"),
+            1: (f"ASUNTO: Recordatorio de pago: Factura n.° {num} - {client}\n\n"
+                f"CUERPO:\n"
+                f"Estimado/a {client},\n"
+                f"La factura n.° {num} por importe de {currency} {amount:,.2f} (vencimiento {due}) se encuentra pendiente.\n"
+                f"Le rogamos efectúe el pago en un plazo de {grace_days} días hábiles."),
+            2: (f"ASUNTO: Segundo aviso de vencimiento: Factura n.° {num} - {client}\n\n"
+                f"CUERPO:\n"
+                f"Estimado/a {client},\n"
+                f"A pesar de los avisos, la factura n.° {num} por {currency} {amount:,.2f} acumula {days_overdue} días de retraso.\n"
+                f"Rogamos regularice la situación en {grace_days} días."),
+            3: (f"ASUNTO: Requerimiento formal de pago: Factura n.° {num}\n\n"
+                f"CUERPO:\n"
+                f"Estimado/a {client},\n"
+                f"Le requerimos formalmente el pago de la factura n.° {num} por {currency} {amount:,.2f} "
+                f"en el plazo de {grace_days} días, bajo apercibimiento de acciones legales."),
         },
         "pt": {
-            1: (f"Prezado(a) {client},\n\nA fatura n.º {num} no valor de {currency} {amount:,.2f} "
-                f"(vencimento a {due}) permanece em aberto.\nSolicitamos a regularização no prazo de {grace_days} dias úteis.\n\n"
-                f"Com os melhores cumprimentos,\n{vendor}"),
-            2: (f"Prezado(a) {client},\n\nApesar dos avisos, a fatura n.º {num} "
-                f"de {currency} {amount:,.2f} encontra-se vencida há {days_overdue} dias.\nPedimos a liquidação em {grace_days} dias.\n\n"
-                f"Atenciosamente,\n{vendor}"),
-            3: (f"NOTIFICAÇÃO FORMAL DE COBRANÇA\n\n{client},\n\nA fatura n.º {num} de {currency} {amount:,.2f} "
-                f"encontra-se vencida há {days_overdue} dias. Exige-se o pagamento no prazo de {grace_days} dias sob pena judicial.\n{vendor}"),
+            1: (f"ASSUNTO: Lembrete de pagamento: Fatura n.º {num} - {client}\n\n"
+                f"CORPO:\n"
+                f"Prezado(a) {client},\n"
+                f"A fatura n.º {num} no valor de {currency} {amount:,.2f} (vencimento a {due}) permanece em aberto.\n"
+                f"Solicitamos a regularização no prazo de {grace_days} dias úteis."),
+            2: (f"ASSUNTO: Segundo aviso de cobrança: Fatura n.º {num} - {client}\n\n"
+                f"CORPO:\n"
+                f"Prezado(a) {client},\n"
+                f"Apesar dos avisos, a fatura n.º {num} de {currency} {amount:,.2f} encontra-se vencida há {days_overdue} dias.\n"
+                f"Pedimos a liquidação em {grace_days} dias."),
+            3: (f"ASSUNTO: Notificação formal de cobrança: Fatura n.º {num}\n\n"
+                f"CORPO:\n"
+                f"Prezado(a) {client},\n"
+                f"Fica notificado a liquidar a fatura n.º {num} de {currency} {amount:,.2f} "
+                f"no prazo de {grace_days} dias sob pena de recurso às vias judiciais."),
         },
     }
     lang_templates = templates.get(language, templates["en"])

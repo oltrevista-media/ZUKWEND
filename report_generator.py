@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union, List
 from xml.sax.saxutils import escape as _xml_escape
-from i18n_catalog import get_rationale, scan_and_sanitize_text, sanitize_data_recursively, get_legal_disclaimer, get_aging_bucket
+from i18n_catalog import get_rationale, scan_and_sanitize_text, sanitize_data_recursively, get_legal_disclaimer, get_aging_bucket, format_human_date
 
 try:
     from resource_utils import APP_VERSION, get_output_dir, _is_inside_meipass
@@ -548,8 +548,15 @@ def sanitize_reminder_text(text: str, deadline_days: int = 7) -> str:
     clean = re.sub(r"\[insert\s+date[^\]]*\]", deadline_date, clean, flags=re.IGNORECASE)
     clean = re.sub(r"\[insert\s+[^\]]+\]", "", clean, flags=re.IGNORECASE)
     clean = re.sub(r"\[inserisci\s+[^\]]+\]", "", clean, flags=re.IGNORECASE)
+
+    # Rimuovi qualsiasi nota legale / disclaimer dal testo del sollecito
+    clean = re.sub(r"(?i)\n*\s*(?:NOTA|NOTE|HINWEIS|AVERTISSEMENT|AVISO)\s*:\s*(?:Questo documento|This document|Dieses Dokument|Ce document|Este documento).*$", "", clean, flags=re.DOTALL)
+    # Rimuovi firme fittizie residue in calce (es. Cordiali saluti, The Management, ecc.)
+    clean = re.sub(r"(?i)\n*\s*(?:Cordiali saluti|Distinti saluti|Kind regards|Best regards|Mit freundlichen Grüßen|Cordialement|Atentamente|Com os melhores cumprimentos)\s*,?\s*\n+.*$", "", clean, flags=re.DOTALL)
+    clean = re.sub(r"(?i)\n*\s*(?:The Management|La Direzione|Die Geschäftsleitung|La Direction|La Dirección|A Direção)\s*$", "", clean)
+
     clean = re.sub(r"[ \t]+", " ", clean)
-    clean = re.sub(r"\n\s*\n\s*\n", "\n\n", clean)
+    clean = re.sub(r"\n\s*\n\s*\n+", "\n\n", clean)
     return clean.strip()
 
 # ---------------------------------------------------------------------------
@@ -646,8 +653,8 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
         "branding": branding,
         "invoice": {
             "number":         str(invoice.get("invoice_number") or "N/A"),
-            "issue_date":     str(invoice.get("issue_date") or "N/A"),
-            "due_date":       str(invoice.get("due_date") or "N/A"),
+            "issue_date":     format_human_date(invoice.get("issue_date"), lang_code),
+            "due_date":       format_human_date(invoice.get("due_date"), lang_code),
             "amount":         safe_amount,
             "currency":       str(invoice.get("currency") or "EUR"),
             "client":         client_name or "N/A",

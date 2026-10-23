@@ -490,3 +490,62 @@ def sanitize_data_recursively(obj: Any, language: Optional[str] = None, exclude_
     elif isinstance(obj, list):
         return [sanitize_data_recursively(item, lang, exclude_keys) for item in obj]
     return obj
+
+
+def format_human_date(date_val: Any, lang: str = "it") -> str:
+    """
+    Formatta una data (stringa ISO 'YYYY-MM-DD', oggetto date/datetime o testo)
+    nel formato umano nativo per la lingua specificata:
+    - it, fr, es, pt, en: DD/MM/YYYY (es. 13/06/2026)
+    - de: DD.MM.YYYY (es. 13.06.2026)
+    """
+    if not date_val:
+        return "N/A"
+
+    import datetime
+
+    if isinstance(date_val, (datetime.date, datetime.datetime)):
+        d = date_val
+    else:
+        s = str(date_val).strip()
+        if not s or s.upper() in ("N/A", "NONE", "NULL"):
+            return "N/A"
+
+        m_iso = re.match(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})", s)
+        if m_iso:
+            y, m, day = int(m_iso.group(1)), int(m_iso.group(2)), int(m_iso.group(3))
+            try:
+                d = datetime.date(y, m, day)
+            except ValueError:
+                return s
+        else:
+            m_eu = re.match(r"^(\d{1,2})[-/](\d{1,2})[-/](\d{4})", s)
+            if m_eu:
+                day, m, y = int(m_eu.group(1)), int(m_eu.group(2)), int(m_eu.group(3))
+                try:
+                    d = datetime.date(y, m, day)
+                except ValueError:
+                    return s
+            else:
+                try:
+                    from datetime import datetime as dt
+                    parsed = None
+                    for fmt in ("%B %d, %Y", "%b %d, %Y", "%d %B %Y", "%d %b %Y", "%Y-%m-%d"):
+                        try:
+                            parsed = dt.strptime(s, fmt).date()
+                            break
+                        except ValueError:
+                            pass
+                    if parsed:
+                        d = parsed
+                    else:
+                        return s
+                except Exception:
+                    return s
+
+    l = (lang or "it").lower()
+    if l == "de":
+        return d.strftime("%d.%m.%Y")
+    else:
+        return d.strftime("%d/%m/%Y")
+
