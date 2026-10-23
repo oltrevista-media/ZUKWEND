@@ -484,8 +484,13 @@ def group_invoices_by_client(invoices: list) -> dict:
             inv_num = inv.get("invoice_number") or inv.get("number")
             if not inv_num and isinstance(inv.get("invoice"), dict):
                 inv_num = inv["invoice"].get("number") or inv["invoice"].get("invoice_number")
-            c_slug = slugify_folder_name(client_name, 22)
-            i_slug = slugify_folder_name(str(inv_num or f"NOID_{isolated_counter}"), 17)
+            c_slug = slugify_folder_name(client_name, 20)
+            max_i_len = 40 - len(c_slug) - 1
+            i_full = slugify_folder_name(str(inv_num or f"NOID_{isolated_counter}"), 80)
+            if len(i_full) > max_i_len:
+                i_slug = i_full[-max_i_len:].lstrip("_-.") or i_full[-max_i_len:]
+            else:
+                i_slug = i_full
             group_key = f"ISOLATED_{c_slug}_{i_slug}_{isolated_counter}"
             folder_slug = f"{c_slug}_{i_slug}"
             isolated_counter += 1

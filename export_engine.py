@@ -53,8 +53,12 @@ except ImportError:
                 key = f"VAT_{c_vat.upper()}"
                 folder_slug = slugify_folder_name(f"{c_name}_{c_vat}", 40)
             else:
-                key = f"ISOLATED_{slugify_folder_name(c_name, 22)}_{slugify_folder_name(inv_num, 17)}"
-                folder_slug = f"{slugify_folder_name(c_name, 22)}_{slugify_folder_name(inv_num, 17)}"
+                c_slug = slugify_folder_name(c_name, 20)
+                max_i_len = 40 - len(c_slug) - 1
+                i_full = slugify_folder_name(str(inv_num or "INV"), 80)
+                i_slug = (i_full[-max_i_len:].lstrip("_-.") or i_full[-max_i_len:]) if len(i_full) > max_i_len else i_full
+                key = f"ISOLATED_{c_slug}_{i_slug}"
+                folder_slug = f"{c_slug}_{i_slug}"
 
             if key not in groups:
                 groups[key] = {
