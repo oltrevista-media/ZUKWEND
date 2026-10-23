@@ -655,6 +655,8 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
             "number":         str(invoice.get("invoice_number") or "N/A"),
             "issue_date":     format_human_date(invoice.get("issue_date"), lang_code),
             "due_date":       format_human_date(invoice.get("due_date"), lang_code),
+            "issue_date_iso": str(invoice.get("issue_date") or "N/A"),
+            "due_date_iso":   str(invoice.get("due_date") or "N/A"),
             "amount":         safe_amount,
             "currency":       str(invoice.get("currency") or "EUR"),
             "client":         client_name or "N/A",
@@ -970,6 +972,8 @@ def _generate_json(data: dict, path: Path) -> Path:
             "invoice_number": data["invoice"]["number"],
             "client": data["invoice"]["client"],
             "client_address": data["invoice"].get("client_address", ""),
+            "issue_date": data["invoice"].get("issue_date_iso", data["invoice"]["issue_date"]),
+            "due_date": data["invoice"].get("due_date_iso", data["invoice"]["due_date"]),
             "currency": data["invoice"]["currency"],
             "amount": data["invoice"]["amount"],
             "payment_status": data["classification"]["payment_status"],
@@ -1167,7 +1171,7 @@ def _generate_xlsx(data: dict, path: Path) -> Path:
     bucket_str = get_aging_bucket(days_od)
 
     erp_row_data = [
-        inv["number"], inv["client"], inv.get("client_address", ""), inv["issue_date"], inv["due_date"],
+        inv["number"], inv["client"], inv.get("client_address", ""), inv.get("issue_date_iso", inv["issue_date"]), inv.get("due_date_iso", inv["due_date"]),
         inv["currency"], inv["amount"], clf["payment_status"], clf["days_overdue"], bucket_str,
         clf["risk_level_label"], clf["reminder_level"], data["billing"]["action"], data["audit"]["processed_at"]
     ]
