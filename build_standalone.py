@@ -70,6 +70,7 @@ def run_build():
         "--hidden-import=export_engine",
         "--hidden-import=license_manager",
         "--hidden-import=reminder_engine",
+        "--hidden-import=engine_dispatcher",
     ]
 
     if VERSION_FILE.exists():
@@ -97,37 +98,44 @@ def run_build():
 
 def sign_executable(exe_path: Path):
     """
-    Predisposizione firma digitale EV Code Signing OLTREVISTA tramite signtool.
-    Comando standard:
-      signtool sign /f oltrevista_cert.pfx /p PASSWORD /tr SERVER_TIMESTAMP /td sha256 ZUKWEND.exe
+    EV Code Signing via Certum SimplySign and RFC 3161 SHA256 timestamping (time.certum.pl).
     """
-    cert_file = os.environ.get("OLTREVISTA_CERT_PFX", "oltrevista_cert.pfx")
-    cert_pass = os.environ.get("OLTREVISTA_CERT_PASSWORD", "PASSWORD")
-    timestamp_server = os.environ.get("OLTREVISTA_TIMESTAMP_URL", "http://timestamp.digicert.com")
+    signtool_candidates = [
+        r"C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe",
+        r"C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe",
+        "signtool.exe"
+    ]
+    signtool = None
+    for cand in signtool_candidates:
+        if os.path.exists(cand) or cand == "signtool.exe":
+            signtool = cand
+            break
 
-    sign_cmd_template = (
-        f'signtool sign /f {cert_file} /p {cert_pass} '
-        f'/tr {timestamp_server} /td sha256 /fd sha256 "{exe_path}"'
+    thumbprint = "15524BC0B781512EB092F60A6F60E7223B61C43B"
+    timestamp_server = "http://time.certum.pl"
+
+    print("\n[*] Applying Certum EV Code Signing with SHA256 RFC 3161 timestamping...")
+    cmd = [
+        signtool, "sign",
+        "/sha1", thumbprint,
+        "/fd", "sha256",
+        "/tr", timestamp_server,
+        "/td", "sha256",
+        str(exe_path)
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    print(res.stdout)
+    if res.stderr:
+        print(res.stderr)
+
+    # Verification
+    verify = subprocess.run(
+        ["powershell", "-NoProfile", "-Command", f"Get-AuthenticodeSignature '{exe_path}' | Format-List Status, SignerCertificate"],
+        capture_output=True,
+        text=True
     )
-    print("\n[*] Predisposizione EV Code Signing (OLTREVISTA):")
-    print(f"    signtool sign /f oltrevista_cert.pfx /p PASSWORD /tr SERVER_TIMESTAMP /td sha256 ZUKWEND.exe")
-
-    if Path(cert_file).exists():
-        print(f"[*] Certificato rilevato ({cert_file}). Avvio firma digitale...")
-        subprocess.run(
-            [
-                "signtool", "sign",
-                "/f", cert_file,
-                "/p", cert_pass,
-                "/tr", timestamp_server,
-                "/td", "sha256",
-                "/fd", "sha256",
-                str(exe_path),
-            ],
-            check=False,
-        )
-    else:
-        print(f"[i] Certificato '{cert_file}' non presente in locale — step signtool pronto per pipeline release.")
+    print("[*] Signature Status Verification:")
+    print(verify.stdout)
 
 
 if __name__ == "__main__":

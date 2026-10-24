@@ -38,6 +38,7 @@ from resource_utils import get_resource_path, get_user_data_dir, get_output_dir
 import custom_branding
 import watch_directory
 from watch_directory import DirectoryWatcher
+from i18n_catalog import get_gui_strings, GUI_I18N
 
 # Explicit internal & PDF library imports for PyInstaller bundling
 import workflow_engine
@@ -110,7 +111,7 @@ def launch_gui_launcher():
     cfg = load_user_config()
 
     root = ctk.CTk()
-    root.title("ZUKWEND v2.1.6 (Consolidated Dossier Edition)")
+    root.title("ZUKWEND")
     root.geometry("640x800")
     root.resizable(False, False)
 
@@ -166,14 +167,14 @@ def launch_gui_launcher():
 
     lbl_title = ctk.CTkLabel(
         root, 
-        text="ZUKWEND v2.1.6 (Consolidated Dossier Edition)", 
+        text="ZUKWEND — Privacy-First Accounts Receivable Agent", 
         font=ctk.CTkFont(family="Segoe UI", size=20, weight="bold")
     )
     lbl_title.pack(pady=(14, 2))
 
     lbl_sub = ctk.CTkLabel(
         root, 
-        text="Autonomous Document Deductive Engine — Privacy-First", 
+        text="Local Autonomous Engine for Invoice Aging & Reminders | Publisher: OLTREVISTA", 
         font=ctk.CTkFont(family="Segoe UI", size=12), 
         text_color="#9E9E9E"
     )
@@ -235,17 +236,20 @@ def launch_gui_launcher():
         max_inv = lic.get("max_invoices", 10)
         days_rem = lic.get("days_remaining", 0)
 
+        g = get_gui_strings(cfg.get("lang", "en"))
+
         # Unpack elements
         btn_activate_license.pack_forget()
         btn_buy_full.pack_forget()
         btn_settings.pack_forget()
 
         # Always show Settings & Branding on right
+        btn_settings.configure(text=g.get("btn_settings", "⚙️ Settings & Branding"))
         btn_settings.pack(side="right")
 
         if lic_type == "FULL":
             badge_license.configure(
-                text="🟢 ZUKWEND FULL — License Active",
+                text=g.get("badge_full", "● ZUKWEND FULL — License Active"),
                 text_color="#10B981",
                 fg_color="#064E3B"
             )
@@ -253,21 +257,25 @@ def launch_gui_launcher():
                 btn_run.configure(state="normal")
         elif lic_type == "EXPIRED":
             badge_license.configure(
-                text=f"🔴 LICENSE EXPIRED ({inv_count}/{max_inv} invoices or 7 days)",
+                text=g.get("badge_expired", "🔴 LICENSE EXPIRED ({count}/{max_count} invoices or 7 days)").format(count=inv_count, max_count=max_inv),
                 text_color="#EF4444",
                 fg_color="#450A0A"
             )
+            btn_buy_full.configure(text=g.get("btn_buy_full", "🚀 Buy FULL"))
             btn_buy_full.pack(side="right", padx=(6, 6))
+            btn_activate_license.configure(text=g.get("btn_activate_license", "🔑 Activate License"))
             btn_activate_license.pack(side="right")
             if "btn_run" in locals() or "btn_run" in globals():
                 btn_run.configure(state="disabled")
         else:  # DEMO
             badge_license.configure(
-                text=f"🟡 EVALUATION ({inv_count}/{max_inv} invoices | {days_rem} days remaining)",
+                text=g.get("badge_demo", "🟡 EVALUATION ({count}/{max_count} invoices | {days} days remaining)").format(count=inv_count, max_count=max_inv, days=days_rem),
                 text_color="#F59E0B",
                 fg_color="#451A03"
             )
+            btn_buy_full.configure(text=g.get("btn_buy_full", "🚀 Buy FULL"))
             btn_buy_full.pack(side="right", padx=(6, 6))
+            btn_activate_license.configure(text=g.get("btn_activate_license", "🔑 Activate License"))
             btn_activate_license.pack(side="right")
             if "btn_run" in locals() or "btn_run" in globals():
                 btn_run.configure(state="normal")
@@ -372,7 +380,10 @@ def launch_gui_launcher():
 
     def open_settings_dialog():
         dialog = ctk.CTkToplevel(root)
-        dialog.title("Impostazioni Aziendali & Watch Directory — ZUKWEND")
+        current_lang = cfg.get("lang", "en")
+        g = get_gui_strings(current_lang)
+
+        dialog.title(g.get("settings_title", "Company Profile & Watch Directory — ZUKWEND"))
         dialog.geometry("560x600")
         dialog.resizable(False, False)
         dialog.transient(root)
@@ -382,14 +393,14 @@ def launch_gui_launcher():
 
         lbl_dlg_title = ctk.CTkLabel(
             dialog,
-            text="Personalizzazione Mittente & Automazione",
+            text=g.get("settings_header", "Sender Customization & Automation"),
             font=ctk.CTkFont(family="Segoe UI", size=15, weight="bold")
         )
         lbl_dlg_title.pack(pady=(14, 2))
 
         lbl_dlg_sub = ctk.CTkLabel(
             dialog,
-            text="Dati mittente stampati sui report PDF/Excel e monitoraggio cartella.",
+            text=g.get("settings_subheader", "Sender details printed on PDF/Excel reports and folder watch daemon."),
             font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color="#9CA3AF"
         )
@@ -398,16 +409,16 @@ def launch_gui_launcher():
         frm_fields = ctk.CTkFrame(dialog, fg_color="transparent")
         frm_fields.pack(fill="x", padx=20)
 
-        # 1. Ragione Sociale
-        ctk.CTkLabel(frm_fields, text="Ragione Sociale / Intestazione Mittente:", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
-        ent_comp = ctk.CTkEntry(frm_fields, placeholder_text="Es. Acme Corp S.r.l.", height=28)
+        # 1. Company Name
+        ctk.CTkLabel(frm_fields, text=g.get("company_name_lbl", "Company Name / Sender Letterhead:"), font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
+        ent_comp = ctk.CTkEntry(frm_fields, placeholder_text=g.get("company_name_ph", "e.g. Acme Corp Ltd."), height=28)
         ent_comp.pack(fill="x", pady=(0, 5))
         if current_b.get("company_name"):
             ent_comp.insert(0, current_b["company_name"])
 
-        # 2. Indirizzo
-        ctk.CTkLabel(frm_fields, text="Indirizzo Completo:", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
-        ent_addr = ctk.CTkEntry(frm_fields, placeholder_text="Es. Via Roma 123, 20121 Milano (MI)", height=28)
+        # 2. Address
+        ctk.CTkLabel(frm_fields, text=g.get("address_lbl", "Full Address:"), font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
+        ent_addr = ctk.CTkEntry(frm_fields, placeholder_text=g.get("address_ph", "e.g. 100 Innovation Way, London, EC1A 1BB"), height=28)
         ent_addr.pack(fill="x", pady=(0, 5))
         if current_b.get("address"):
             ent_addr.insert(0, current_b["address"])
@@ -418,65 +429,65 @@ def launch_gui_launcher():
         
         frm_iban = ctk.CTkFrame(frm_row3, fg_color="transparent")
         frm_iban.pack(side="left", fill="x", expand=True, padx=(0, 5))
-        ctk.CTkLabel(frm_iban, text="IBAN Bancario:", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(0, 1))
-        ent_iban = ctk.CTkEntry(frm_iban, placeholder_text="IT00X0000000000000000000000", height=28)
+        ctk.CTkLabel(frm_iban, text=g.get("iban_lbl", "Bank IBAN / Swift:"), font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(0, 1))
+        ent_iban = ctk.CTkEntry(frm_iban, placeholder_text=g.get("iban_ph", "GB00BARC20000012345678"), height=28)
         ent_iban.pack(fill="x")
         if current_b.get("iban"):
             ent_iban.insert(0, current_b["iban"])
 
         frm_email = ctk.CTkFrame(frm_row3, fg_color="transparent")
         frm_email.pack(side="right", fill="x", expand=True, padx=(5, 0))
-        ctk.CTkLabel(frm_email, text="Email Amministrazione:", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(0, 1))
-        ent_email = ctk.CTkEntry(frm_email, placeholder_text="amministrazione@azienda.com", height=28)
+        ctk.CTkLabel(frm_email, text=g.get("email_lbl", "Finance / AR Email:"), font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(0, 1))
+        ent_email = ctk.CTkEntry(frm_email, placeholder_text=g.get("email_ph", "ar@company.com"), height=28)
         ent_email.pack(fill="x")
         if current_b.get("email"):
             ent_email.insert(0, current_b["email"])
 
         # 4. Logo PNG/JPG
-        ctk.CTkLabel(frm_fields, text="Logo Aziendale (PNG/JPG):", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
+        ctk.CTkLabel(frm_fields, text=g.get("logo_lbl", "Company Logo (PNG/JPG):"), font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
         frm_logo = ctk.CTkFrame(frm_fields, fg_color="transparent")
         frm_logo.pack(fill="x", pady=(0, 5))
-        ent_logo = ctk.CTkEntry(frm_logo, placeholder_text="Percorso logo per carta intestata...", height=28)
+        ent_logo = ctk.CTkEntry(frm_logo, placeholder_text=g.get("logo_ph", "Logo path for invoice letterhead..."), height=28)
         ent_logo.pack(side="left", fill="x", expand=True, padx=(0, 6))
         if current_b.get("logo_path"):
             ent_logo.insert(0, current_b["logo_path"])
         
         def sfoglia_logo():
-            f = filedialog.askopenfilename(title="Seleziona Logo Aziendale", filetypes=[("Immagini", "*.png;*.jpg;*.jpeg"), ("Tutti i file", "*.*")])
+            f = filedialog.askopenfilename(title="Select Company Logo", filetypes=[("Image Files", "*.png;*.jpg;*.jpeg"), ("All Files", "*.*")])
             if f:
                 ent_logo.delete(0, "end")
                 ent_logo.insert(0, f)
 
-        ctk.CTkButton(frm_logo, text="Sfoglia...", width=75, height=28, command=sfoglia_logo).pack(side="right")
+        ctk.CTkButton(frm_logo, text=g.get("browse_button", "Browse..."), width=75, height=28, command=sfoglia_logo).pack(side="right")
 
         # 5. Watch Directory & Switch
-        ctk.CTkLabel(frm_fields, text="Cartella di Monitoraggio Automatico (Watch Directory):", font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
+        ctk.CTkLabel(frm_fields, text=g.get("watch_folder_lbl", "Automated Watch Directory:"), font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold")).pack(anchor="w", pady=(2, 1))
         frm_watch = ctk.CTkFrame(frm_fields, fg_color="transparent")
         frm_watch.pack(fill="x", pady=(0, 5))
-        ent_watch = ctk.CTkEntry(frm_watch, placeholder_text="Es. C:/Fatture_In_Arrivo", height=28)
+        ent_watch = ctk.CTkEntry(frm_watch, placeholder_text=g.get("watch_folder_ph", "e.g. C:/Incoming_Invoices"), height=28)
         ent_watch.pack(side="left", fill="x", expand=True, padx=(0, 6))
         if current_b.get("watch_folder"):
             ent_watch.insert(0, current_b["watch_folder"])
 
         def sfoglia_watch():
-            d = filedialog.askdirectory(title="Seleziona Cartella da Monitorare")
+            d = filedialog.askdirectory(title="Select Watch Directory")
             if d:
                 ent_watch.delete(0, "end")
                 ent_watch.insert(0, d)
 
-        ctk.CTkButton(frm_watch, text="Sfoglia...", width=75, height=28, command=sfoglia_watch).pack(side="right")
+        ctk.CTkButton(frm_watch, text=g.get("browse_button", "Browse..."), width=75, height=28, command=sfoglia_watch).pack(side="right")
 
         sw_var = ctk.BooleanVar(value=bool(current_b.get("watch_enabled", False)))
-        sw_watch = ctk.CTkSwitch(frm_fields, text="Attiva Monitoraggio Automatico Background (Watch Daemon)", variable=sw_var, font=ctk.CTkFont(family="Segoe UI", size=11))
+        sw_watch = ctk.CTkSwitch(frm_fields, text=g.get("switch_watch", "Enable Background Automatic Watch Daemon"), variable=sw_var, font=ctk.CTkFont(family="Segoe UI", size=11))
         sw_watch.pack(anchor="w", pady=(4, 6))
 
         curr_cfg = load_user_config()
         sw_dossier_var = ctk.BooleanVar(value=bool(curr_cfg.get("dossier_mode", True)))
-        sw_dossier = ctk.CTkSwitch(frm_fields, text="Attiva Modalità Dossier Cliente Consolidato (Strict P.IVA)", variable=sw_dossier_var, font=ctk.CTkFont(family="Segoe UI", size=11))
+        sw_dossier = ctk.CTkSwitch(frm_fields, text=g.get("switch_dossier", "Enable Consolidated Customer Dossier Mode (Strict Tax ID)"), variable=sw_dossier_var, font=ctk.CTkFont(family="Segoe UI", size=11))
         sw_dossier.pack(anchor="w", pady=(2, 4))
 
         sw_arch_var = ctk.BooleanVar(value=bool(curr_cfg.get("generate_individual_archive", True)))
-        sw_arch = ctk.CTkSwitch(frm_fields, text="Archivia singoli titoli in Individual_Invoices_Archive/", variable=sw_arch_var, font=ctk.CTkFont(family="Segoe UI", size=11))
+        sw_arch = ctk.CTkSwitch(frm_fields, text=g.get("switch_archive", "Archive individual records in Individual_Invoices_Archive/"), variable=sw_arch_var, font=ctk.CTkFont(family="Segoe UI", size=11))
         sw_arch.pack(anchor="w", pady=(2, 10))
 
         def salva_e_chiudi():
@@ -509,17 +520,17 @@ def launch_gui_launcher():
                 )
                 if w.start():
                     global_watcher["daemon"] = w
-                    post_ui(append_log, f"[WATCH] Daemon attivo sulla cartella: {new_b['watch_folder']}")
+                    post_ui(append_log, f"[WATCH] Daemon running on folder: {new_b['watch_folder']}")
             else:
                 if global_watcher["daemon"]:
                     global_watcher["daemon"].stop()
                     global_watcher["daemon"] = None
-                    post_ui(append_log, "[WATCH] Daemon disattivato.")
+                    post_ui(append_log, "[WATCH] Daemon stopped.")
 
-            messagebox.showinfo("Configurazione Salvata", "Impostazioni di branding e cartella salvate con successo!")
+            messagebox.showinfo(g.get("cfg_saved_title", "Configuration Saved"), g.get("cfg_saved_msg", "Branding and watch directory settings saved successfully!"))
             dialog.destroy()
 
-        ctk.CTkButton(dialog, text="💾 Salva Configurazione", font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"), width=200, height=34, fg_color="#059669", hover_color="#047857", command=salva_e_chiudi).pack(pady=(4, 8))
+        ctk.CTkButton(dialog, text=g.get("btn_save_config", "💾 Save Configuration"), font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"), width=200, height=34, fg_color="#059669", hover_color="#047857", command=salva_e_chiudi).pack(pady=(4, 8))
 
     btn_settings.configure(command=open_settings_dialog)
 
@@ -593,7 +604,7 @@ def launch_gui_launcher():
 
     rb_core = ctk.CTkRadioButton(
         frame_main, 
-        text="⚡ ZUKWEND CORE AI (Engine Proprietario Local-First)", 
+        text="⚡ ZUKWEND CORE AI (Proprietary Local-First Engine)", 
         variable=mode_var, 
         value="local", 
         font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold")
@@ -602,7 +613,7 @@ def launch_gui_launcher():
 
     lbl_core_desc = ctk.CTkLabel(
         frame_main, 
-        text="Massima velocità (1s), 100% deterministico e riservato. Zero dati inviati al cloud | Privacy & GDPR-Native by Design.", 
+        text="Maximum speed (1s), 100% deterministic and confidential. Privacy-Native by Design.", 
         font=ctk.CTkFont(family="Segoe UI", size=10), 
         text_color="#9CA3AF", 
         justify="left"
@@ -620,7 +631,7 @@ def launch_gui_launcher():
 
     lbl_ollama_desc = ctk.CTkLabel(
         frame_main, 
-        text="Usa il tuo modello Ollama locale su localhost:11434.", 
+        text="Use your local Ollama model on localhost:11434.", 
         font=ctk.CTkFont(family="Segoe UI", size=10), 
         text_color="#9CA3AF", 
         justify="left"
@@ -638,7 +649,7 @@ def launch_gui_launcher():
 
     lbl_cloud_desc = ctk.CTkLabel(
         frame_main, 
-        text="Collega la tua API Key aziendale (OpenAI / Claude / Gemini).", 
+        text="Connect your enterprise API Key (OpenAI / Claude / Gemini).", 
         font=ctk.CTkFont(family="Segoe UI", size=10), 
         text_color="#9CA3AF", 
         justify="left"
@@ -692,6 +703,7 @@ def launch_gui_launcher():
         selected_code = lang_map.get(selected_label, "en")
         cfg["lang"] = selected_code
         save_user_config(cfg)
+        update_gui_language(selected_code)
 
     combo_lang = ctk.CTkComboBox(
         frame_lang, 
@@ -733,9 +745,8 @@ def launch_gui_launcher():
         try:
             progress_bar.set(1.0)
             progress_bar.configure(progress_color="#10B981")
-            btn_open_folder.configure(state="normal", text="Apri Cartella Output")
-            btn_open_statement.configure(state="normal")
-            btn_open_excel.configure(state="normal")
+            g = get_gui_strings(cfg.get("lang", "en"))
+            btn_open_folder.configure(state="normal", text=g.get("btn_open_folder", "📁 Open Output Folder"))
             root.update_idletasks()
             root.deiconify()
             root.lift()
@@ -778,52 +789,6 @@ def launch_gui_launcher():
     frame_actions = ctk.CTkFrame(frame_main, fg_color="transparent")
     frame_actions.pack(fill="x", padx=20, pady=(0, 12))
 
-    def _find_latest_file(pattern: str, search_dir: Path) -> Optional[Path]:
-        try:
-            files = list(search_dir.glob(pattern))
-            if not files:
-                return None
-            files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-            return files[0]
-        except Exception:
-            return None
-
-    def open_statement_pdf():
-        """Apre STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf più recente."""
-        target = output_dir_ref.get("statement_path")
-        out_root = Path(os.path.abspath("output"))
-        if not target or not os.path.exists(target):
-            cand = _find_latest_file("CLIENTS/**/STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf", out_root)
-            if cand and cand.exists():
-                target = str(cand)
-        if target and os.path.exists(target):
-            try:
-                os.startfile(target)
-            except Exception as e:
-                logger.error(f"Failed to open statement PDF ({target}): {e}")
-                append_log(f"[WARN] Unable to open statement PDF: {e}")
-                messagebox.showwarning("Statement PDF", f"Unable to open file:\n{target}\n\n{e}")
-        else:
-            messagebox.showinfo("Estratto Conto", "Nessun Estratto Conto Consolidato trovato nell'output.")
-
-    def open_master_excel():
-        """Apre MASTER_SUMMARY_AGING_YYYYMMDD.xlsx più recente."""
-        target = output_dir_ref.get("master_excel_path")
-        out_root = Path(os.path.abspath("output"))
-        if not target or not os.path.exists(target):
-            cand = _find_latest_file("MASTER_SUMMARY_AGING_*.xlsx", out_root)
-            if cand and cand.exists():
-                target = str(cand)
-        if target and os.path.exists(target):
-            try:
-                os.startfile(target)
-            except Exception as e:
-                logger.error(f"Failed to open master excel ({target}): {e}")
-                append_log(f"[WARN] Unable to open master excel: {e}")
-                messagebox.showwarning("Master Excel", f"Unable to open file:\n{target}\n\n{e}")
-        else:
-            messagebox.showinfo("Master Excel", "Nessun file Master Excel trovato nella cartella output.")
-
     def open_output_folder():
         """
         Apre la cartella output nell'Esplora risorse.
@@ -843,47 +808,10 @@ def launch_gui_launcher():
                 logger.error(f"Fallback explorer failed: {e2}")
                 messagebox.showwarning("Output Folder", f"Unable to open folder:\n{target}\n\n{e2}")
 
-    frame_quick_buttons = ctk.CTkFrame(frame_actions, fg_color="transparent")
-
-    btn_open_statement = ctk.CTkButton(
-        frame_quick_buttons,
-        text="Apri Estratto Conto",
-        command=open_statement_pdf,
-        state="normal",
-        height=38,
-        corner_radius=8,
-        font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
-        fg_color="#1E40AF",
-        hover_color="#1E3A8A"
-    )
-
-    btn_open_excel = ctk.CTkButton(
-        frame_quick_buttons,
-        text="Apri Master Excel",
-        command=open_master_excel,
-        state="normal",
-        height=38,
-        corner_radius=8,
-        font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
-        fg_color="#D97706",
-        hover_color="#B45309"
-    )
-
-    btn_open_folder = ctk.CTkButton(
-        frame_quick_buttons,
-        text="Apri Cartella Output",
-        command=open_output_folder,
-        state="normal",
-        height=38,
-        corner_radius=8,
-        font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
-        fg_color="#059669",
-        hover_color="#047857"
-    )
-
     def restore_run_button():
         refresh_license_ui()
-        btn_run.configure(text="RUN DOCUMENT ANALYSIS")
+        g = get_gui_strings(cfg.get("lang", "en"))
+        btn_run.configure(text=g.get("btn_run", "RUN DOCUMENT ANALYSIS"))
         # Re-evaluate btn_run disabled if expired
         if current_lic_status["data"].get("license_type") == "EXPIRED":
             btn_run.configure(state="disabled")
@@ -929,16 +857,17 @@ def launch_gui_launcher():
                 out_dir = os.path.abspath("output")
 
             output_dir_ref["path"] = out_dir
-            if result.export_paths:
-                for p in result.export_paths:
-                    if p.endswith("STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf"):
-                        output_dir_ref["statement_path"] = p
-                    elif "MASTER_SUMMARY_AGING_" in p and p.endswith(".xlsx"):
-                        output_dir_ref["master_excel_path"] = p
 
             def on_complete():
                 restore_run_button()
-                if not result.invoice:
+                if not result.invoice or not result.success:
+                    # Check for cloud authentication failure
+                    auth_errs = [e.get("error", "") for e in result.errors if "Cloud API Authentication Failed" in str(e.get("error", "")) or e.get("code") == "ERR_CLOUD_AUTH"]
+                    if auth_errs or (selected_mode == "cloud" and not result.success):
+                        err_msg = "[ERROR] Cloud API Authentication Failed: Invalid or missing API Key. Please verify credentials in Settings."
+                        append_log(err_msg)
+                        messagebox.showerror("Authentication Error", err_msg)
+                        return
                     # Pipeline interrotta prima dell'analisi (es. licenza non valida, PDF illeggibile)
                     details = "; ".join(str(e.get("error", "")) for e in result.errors) or "unknown error"
                     append_log(f"[ERROR] Pipeline interrupted: {details}")
@@ -997,17 +926,20 @@ def launch_gui_launcher():
 
             if not ollama_alive:
                 messagebox.showwarning(
-                    "Ollama Non Rilevato",
-                    "Ollama non rilevato su localhost:11434. Avvia il server Ollama oppure seleziona ⚡ ZUKWEND CORE AI."
+                    "Ollama Not Detected",
+                    "Ollama was not detected on localhost:11434. Please start the Ollama service or select ⚡ ZUKWEND CORE AI."
                 )
                 return
 
         if selected_mode == "cloud" and not selected_key:
-            messagebox.showwarning("Missing API Key", "Cloud AI mode selected: please provide your API Key.")
+            err_msg = "[ERROR] Cloud API Authentication Failed: Invalid or missing API Key. Please verify credentials in Settings."
+            append_log(err_msg)
+            messagebox.showwarning("Missing API Key", err_msg)
             return
 
-        btn_run.configure(state="disabled", text="PROCESSING INVOICE...")
-        btn_open_folder.configure(text="OPEN OUTPUT FOLDER")  # resta sempre abilitato
+        g = get_gui_strings(selected_lang)
+        btn_run.configure(state="disabled", text=g.get("btn_run_processing", "PROCESSING INVOICE..."))
+        btn_open_folder.configure(text=g.get("btn_open_folder", "📁 Open Output Folder"))
         progress_bar.configure(progress_color=progress_default_color)
         progress_bar.set(0)
 
@@ -1033,12 +965,45 @@ def launch_gui_launcher():
         hover_color="#1D4ED8"
     )
     btn_run.pack(fill="x")
-    frame_quick_buttons.pack(fill="x", pady=(8, 0))
-    btn_open_statement.pack(side="left", fill="x", expand=True, padx=(0, 4))
-    btn_open_excel.pack(side="left", fill="x", expand=True, padx=(2, 4))
-    btn_open_folder.pack(side="left", fill="x", expand=True, padx=(2, 0))
+
+    btn_open_folder = ctk.CTkButton(
+        frame_actions, 
+        text="📁 Open Output Folder", 
+        command=open_output_folder, 
+        state="normal", 
+        height=38, 
+        corner_radius=8, 
+        font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"), 
+        fg_color="#059669", 
+        hover_color="#047857"
+    )
+    btn_open_folder.pack(fill="x", pady=(8, 0))
+
+    def update_gui_language(lang_code: str):
+        g = get_gui_strings(lang_code)
+        root.title(g.get("window_title", "ZUKWEND"))
+        lbl_title.configure(text=g.get("header_title", "ZUKWEND — Privacy-First Accounts Receivable Agent"))
+        lbl_sub.configure(text=g.get("header_subtitle", "Local Autonomous Engine for Invoice Aging & Reminders | Publisher: OLTREVISTA"))
+        btn_settings.configure(text=g.get("btn_settings", "⚙️ Settings & Branding"))
+        lbl_pdf.configure(text=g.get("target_doc_label", "TARGET INVOICE DOCUMENT (PDF)"))
+        entry_pdf.configure(placeholder_text=g.get("doc_placeholder", "Select invoice PDF file..."))
+        btn_sfoglia.configure(text=g.get("browse_button", "Browse..."))
+        lbl_engine.configure(text=g.get("engine_label", "PROCESSING ENGINE"))
+        rb_core.configure(text=g.get("core_radio", "⚡ ZUKWEND CORE AI (Proprietary Local-First Engine)"))
+        lbl_core_desc.configure(text=g.get("core_desc", "Maximum speed (1s), 100% deterministic and confidential. Privacy-Native by Design."))
+        rb_ollama.configure(text=g.get("ollama_radio", "🦙 OLLAMA AI POWER-UP (Local LLM Offline)"))
+        lbl_ollama_desc.configure(text=g.get("ollama_desc", "Use your local Ollama model on localhost:11434."))
+        rb_cloud.configure(text=g.get("cloud_radio", "☁️ CLOUD BYOC (Bring Your Own Key — Global Enterprise)"))
+        lbl_cloud_desc.configure(text=g.get("cloud_desc", "Connect your enterprise API Key (OpenAI / Claude / Gemini)."))
+        entry_key.configure(placeholder_text=g.get("api_key_placeholder", "Enter your API Key..."))
+        lbl_lang.configure(text=g.get("doc_lang_label", "DOCUMENT & NOTICE LANGUAGE:"))
+        if btn_run.cget("state") != "disabled" or "PROCESSING" not in btn_run.cget("text"):
+            btn_run.configure(text=g.get("btn_run", "RUN DOCUMENT ANALYSIS"))
+        btn_open_folder.configure(text=g.get("btn_open_folder", "📁 Open Output Folder"))
+        refresh_license_ui()
 
     # Initial UI refresh and startup check
+    update_gui_language(cfg.get("lang", "en"))
     refresh_license_ui()
     root.after(100, check_startup_license_modal)
 
@@ -1046,6 +1011,13 @@ def launch_gui_launcher():
 
 if __name__ == "__main__":
     if "--smoke-test" in sys.argv:
+        try:
+            import ctypes
+            if ctypes.windll.kernel32.AttachConsole(-1):
+                sys.stdout = open("CONOUT$", "w", encoding="utf-8", buffering=1)
+                sys.stderr = open("CONOUT$", "w", encoding="utf-8", buffering=1)
+        except Exception:
+            pass
         print("[*] ZUKWEND Smoke Test: Initializing core modules...")
         try:
             assert workflow_engine is not None
@@ -1055,6 +1027,18 @@ if __name__ == "__main__":
             assert deducer is not None
             assert report_generator is not None
             assert export_engine is not None
+            from i18n_catalog import get_gui_strings, GUI_I18N
+            g_en = get_gui_strings("en")
+            assert g_en["btn_run"] == "RUN DOCUMENT ANALYSIS", f"Unexpected btn_run: {g_en['btn_run']}"
+            assert "Settings & Branding" in g_en["btn_settings"], f"Unexpected btn_settings: {g_en['btn_settings']}"
+            assert "Open Output Folder" in g_en["btn_open_folder"], f"Unexpected btn_open_folder: {g_en['btn_open_folder']}"
+            # Verify obsolete buttons are eliminated from source
+            import inspect
+            src = inspect.getsource(launch_gui_launcher)
+            assert "btn_open_statement" not in src, "Obsolete btn_open_statement still present!"
+            assert "btn_open_excel" not in src, "Obsolete btn_open_excel still present!"
+            assert "open_statement_pdf" not in src, "Obsolete open_statement_pdf still present!"
+            assert "open_master_excel" not in src, "Obsolete open_master_excel still present!"
             print("[OK] ZUKWEND Smoke Test passed successfully.")
             sys.exit(0)
         except Exception as e:

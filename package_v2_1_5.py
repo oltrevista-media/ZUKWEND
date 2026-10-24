@@ -126,7 +126,12 @@ print(f"  Dimensione: {stat.st_size / (1024*1024):.2f} MB ({stat.st_size} bytes)
 print("=" * 70)
 
 # Sincronizza anche in 02_VERTICALI/ZUKWEND/FULL se presente
+shutil.copy2(exe_path, DIST_DIR / "ZUKWEND.exe")
+print(f"[+] Eseguibile firmato copiato in: {DIST_DIR / 'ZUKWEND.exe'}")
+
 if VERTICAL_DIR.exists():
     vert_target = VERTICAL_DIR / ZIP_FILENAME
     shutil.copy2(TARGET_ZIP, vert_target)
     print(f"[+] Pacchetto sincronizzato anche in: {vert_target}")
+    shutil.copy2(exe_path, VERTICAL_DIR / "ZUKWEND.exe")
+    print(f"[+] Eseguibile firmato sincronizzato anche in: {VERTICAL_DIR / 'ZUKWEND.exe'}")

@@ -1192,6 +1192,10 @@ def _generate_xlsx(data: dict, path: Path) -> Path:
             c.number_format = "#,##0.00"
             c.alignment = Alignment(horizontal="right")
 
+    ws.oddFooter.center.text = "ZUKWEND — Multilingual Billing Agent 2.1.5"
+    ws_erp.oddFooter.center.text = "ZUKWEND — Multilingual Billing Agent 2.1.5"
+    ws.cell(row=row + 1, column=1, value="ZUKWEND — Multilingual Billing Agent 2.1.5").font = font_muted
+
     for col in ws.columns:
         max_len = max(len(str(cell.value or '')) for cell in col)
         col_letter = get_column_letter(col[0].column)
@@ -1695,6 +1699,13 @@ def generate_consolidated_statement_pdf(
             Paragraph(
                 _pdf_text(f"Note: Multi-currency balances are strictly partitioned. {discl_text}"),
                 ParagraphStyle("Discl", parent=styles["Normal"], fontSize=7.5, textColor=colors.HexColor("#64748B")),
+            )
+        )
+        story.append(Spacer(1, 0.2 * cm))
+        story.append(
+            Paragraph(
+                _pdf_text(f"{labels['processed']}: {today_str} | ZUKWEND — Multilingual Billing Agent 2.1.5"),
+                ParagraphStyle("AuditConsolidated", parent=styles["Normal"], fontSize=8, textColor=colors.gray),
             )
         )
 

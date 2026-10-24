@@ -798,6 +798,26 @@ def run_pipeline(
         else:
             _audit("OLLAMA", "OK", "Server Ollama connesso su localhost:11434")
 
+    # Controllo esplicito Cloud BYOC: zero fallback silenzioso su credenziali non valide
+    if mode == "cloud":
+        from engine_dispatcher import validate_cloud_api_key, AuthenticationError, CLOUD_AUTH_ERROR_MSG
+        try:
+            validate_cloud_api_key(api_key)
+            _audit("CLOUD_AUTH", "OK", "Cloud API Key validated.")
+        except AuthenticationError as e:
+            msg = str(e)
+            logger.error(msg)
+            _audit("CLOUD_AUTH", "FAILED", msg)
+            errors.append({"step": "CLOUD_AUTH", "code": "ERR_CLOUD_AUTH", "error": msg})
+            if progress_callback:
+                try:
+                    progress_callback("CLOUD_AUTH", "FAILED", msg)
+                except Exception:
+                    pass
+            elapsed = round(time.time() - start_time, 2)
+            _audit("PIPELINE_END", "FAILED", f"elapsed={elapsed}s | errors={len(errors)}")
+            return WorkflowResult({}, {}, {}, {}, "", None, [], audit_log, False, errors)
+
     lic_status = _check_license_gate()
     if not lic_status.get("is_valid", False):
         msg = lic_status.get("message") or i18n["invalid_license"]

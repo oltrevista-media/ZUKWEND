@@ -179,34 +179,38 @@ def extract_fields(raw_text: str, use_ocr: bool = False, mode: str = "local", ap
 
     # MODALITÀ 3: CLOUD BYOC (mode == "cloud")
     if mode == "cloud":
+        from engine_dispatcher import dispatch_cloud_prompt, AuthenticationError, CLOUD_AUTH_ERROR_MSG
+        if not api_key:
+            raise AuthenticationError(CLOUD_AUTH_ERROR_MSG)
+
         prompt_path = Path(get_resource_path("prompts/prompt_parser_ar.md"))
-        if prompt_path.exists() and api_key:
-            try:
-                system_prompt = prompt_path.read_text(encoding="utf-8")
-                full_prompt = f"{system_prompt}\n\nTESTO DELLA FATTURA:\n{raw_text}"
-                headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
-                resp = requests.post(
-                    "https://api.anthropic.com/v1/messages",
-                    headers=headers,
-                    json={"model": "claude-3-5-haiku-20241022", "max_tokens": 1024, "messages": [{"role": "user", "content": full_prompt}]},
-                    timeout=(5, 60)
-                )
-                resp.raise_for_status()
-                response_text = resp.json()["content"][0]["text"]
-                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-                if json_match:
-                    data = json.loads(json_match.group(0))
-                    if data.get("invoice_number") and data.get("amount") is not None:
-                        data["requires_manual_input"] = False
-                        data["extraction_timestamp"] = datetime.now().isoformat()
-                        data["extraction_method"] = "Cloud BYOC LLM"
-                        if not data.get("client_vat"):
-                            data["client_vat"] = _extract_vat_number(raw_text)
-                        logger.info("Extraction completed via Cloud LLM.")
-                        return data
-            except Exception as e:
-                logger.warning(f"Cloud LLM extraction error ({e}), using fallback.")
-        return _fallback_regex_extraction(raw_text)
+        if not prompt_path.exists():
+            raise FileNotFoundError(f"Parser prompt template not found: {prompt_path}")
+
+        system_prompt = prompt_path.read_text(encoding="utf-8")
+        full_prompt = f"{system_prompt}\n\nTESTO DELLA FATTURA:\n{raw_text}"
+        
+        # In Cloud Mode: Strict Authentication & ZERO silent fallback
+        try:
+            response_text = dispatch_cloud_prompt(api_key, full_prompt, max_tokens=1024, timeout=(5, 60))
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group(0))
+                if data.get("invoice_number") and data.get("amount") is not None:
+                    data["requires_manual_input"] = False
+                    data["extraction_timestamp"] = datetime.now().isoformat()
+                    data["extraction_method"] = "Cloud BYOC LLM"
+                    if not data.get("client_vat"):
+                        data["client_vat"] = _extract_vat_number(raw_text)
+                    logger.info("Extraction completed via Cloud LLM.")
+                    return data
+            raise ValueError("Cloud LLM response did not contain valid invoice JSON")
+        except AuthenticationError:
+            # Re-raise authentication failure immediately — zero silent fallback
+            raise
+        except Exception as e:
+            logger.error(f"Cloud LLM extraction error: {e}")
+            raise e
 
     # Fallback Deterministico
     return _fallback_regex_extraction(raw_text)

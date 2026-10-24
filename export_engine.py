@@ -288,6 +288,12 @@ def _generate_master_excel(reports_or_invoices: list, dest_path: Path) -> Path:
         curr_cell.border = thin_border
         current_row += 1
 
+    # Excel Report Footer
+    ws.oddFooter.center.text = "ZUKWEND — Multilingual Billing Agent 2.1.5"
+    current_row += 1
+    footer_cell = ws.cell(row=current_row, column=1, value="ZUKWEND — Multilingual Billing Agent 2.1.5")
+    footer_cell.font = Font(name="Segoe UI", size=9, italic=True, color="64748B")
+
     for col in ws.columns:
         max_len = max(len(str(cell.value or '')) for cell in col)
         col_letter = openpyxl.utils.get_column_letter(col[0].column)
@@ -397,7 +403,7 @@ def _generate_master_json(reports_or_invoices: list, dest_path: Path) -> Path:
     payload = {
         "batch_generated_at": datetime.now().isoformat(),
         "software": "ZUKWEND",
-        "version": "2.1.6",
+        "version": "2.1.5",
         "total_invoices": len(records),
         "currencies": sorted(list(subtotals.keys())),
         "subtotals_by_currency": subtotals,

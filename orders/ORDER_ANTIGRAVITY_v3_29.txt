@@ -1,0 +1,51 @@
+===============================================================================
+ANTIGRAVITY DISPATCH / EXECUTION PROMPT
+Target Model: Flash 3.8 / Sonnet 3.5
+Target Project: ZUKWEND_repo (C:/OLTREVISTA_AI/ZUKWEND_repo)
+===============================================================================
+
+OPERATIONAL ORDER: MASTER RELEASE, CLOUD AUTH HARDENING & EV CODE SIGNING (v3.29)
+
+OBJECTIVE:
+Enforce 100% English native branding "ZUKWEND Enterprise" across the GUI without visible version numbers in the title bar. Fix Cloud BYOC authentication to ensure ZERO silent fallback to local engine if an invalid/fake API key is provided. Lock PE metadata and report footers to version "2.1.5.0". Apply Certum EV Code Signing with SHA256 RFC 3161 timestamping, generate the final ZUKWEND_FULL_v2_1_5_Setup.zip release package, and push to GitHub repository.
+
+STRICT MANDATORY CONSTRAINTS:
+1. ZERO HARDCODED ITALIAN STRINGS. DEFAULT LANGUAGE MUST BE ENGLISH ('EN').
+2. NO SILENT FALLBACK IN CLOUD MODE. INVALID API KEYS MUST RAISE AN EXCEPTION.
+3. TITLE BAR MUST SHOW "ZUKWEND Enterprise" (NO VERSION NUMBERS IN TITLE BAR).
+
+ACTIONABLE EXECUTION STEPS:
+
+1. CLOUD BYOC STRICT AUTHENTICATION & ZERO SILENT FALLBACK (engine_dispatcher.py):
+   - In Cloud Mode, execute the real HTTPS API call to the specified cloud provider endpoint.
+   - If the API key is invalid, missing, or returns an HTTP authentication error (401 / 403):
+     a) IMMEDIATELY HALT PROCESSING (raise explicit AuthenticationError / Non-zero Exit Code).
+     b) DO NOT generate any PDF, XLSX, or JSON reports under invalid credentials.
+     c) DO NOT fallback silently to the local deterministic engine.
+     d) Display explicit error in UI log: "[ERROR] Cloud API Authentication Failed: Invalid or missing API Key. Please verify credentials in Settings."
+
+2. EVERGREEN ENTERPRISE GUI BRANDING (gui_launcher.py):
+   - Remove any visible version numbers (e.g. '2.1.6' or '2.1.5') from the window title bar and main header.
+   - Set Window Title: "ZUKWEND Enterprise"
+   - Set Main Header: "ZUKWEND Enterprise — Autonomous AR Automation & Aging Analysis"
+   - Set Sub-Header: "Local Privacy-Native AI Engine for Accounts Receivable | Publisher: OLTREVISTA"
+   - Ensure all UI widgets default strictly to English ('EN').
+   - Keep the clean 2-button layout: "RUN DOCUMENT ANALYSIS" and "📁 Open Output Folder".
+   - Keep the modal window "⚙ Settings & Branding" fully translated in English.
+
+3. PE METADATA & REPORT FOOTER LOCK (version_info.txt, resource_utils.py):
+   - Set FileVersion and ProductVersion to "2.1.5.0" in version_info.txt.
+   - Ensure PDF/Excel report footers state: "ZUKWEND — Multilingual Billing Agent 2.1.5".
+
+4. EV CODE SIGNING (CERTUM SIMPLYSIGN):
+   - Recompile ZUKWEND.exe using PyInstaller.
+   - Sign ZUKWEND.exe with Authenticode EV certificate via signtool.exe using Certum/SimplySign and RFC 3161 SHA256 timestamping (time.certum.pl).
+   - Validate signature status: Get-AuthenticodeSignature ZUKWEND.exe (must return 'Valid').
+
+5. RELEASE PACKAGING & GIT SYNC:
+   - Package release ZIP to: C:/OLTREVISTA_AI/02_VERTICALI/ZUKWEND/FULL/ZUKWEND_FULL_v2_1_5_Setup.zip containing EV-signed exe, locales/, models, manuals, and license files.
+   - Copy signed exe to ZUKWEND_repo/dist/ZUKWEND.exe.
+   - Execute git commit and git push origin main.
+
+6. RETURN CONFIRMATION AND EXTENDED SMOKE TEST LOG EXTRACT.
+===============================================================================
