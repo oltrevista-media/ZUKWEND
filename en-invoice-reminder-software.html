@@ -165,9 +165,13 @@ footer a:hover{color:#ffffff;text-decoration:underline}
         <h3 style="font-size:1.1rem;margin-bottom:8px;color:#fff;display:flex;align-items:center;gap:8px;">🛡️ Q4: Is the executable binary verified and digitally signed?</h3>
         <p style="color:var(--mut);font-size:0.92rem;line-height:1.5;"><strong>A:</strong> Yes. The Windows desktop binary is cryptographically signed with an Authenticode Extended Validation (EV) certificate, ensuring maximum Microsoft Defender SmartScreen reputation, tamper-proof binary integrity, and zero antivirus false positives.</p>
       </div>
-      <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:12px;padding:22px;grid-column:1/-1;">
+      <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:12px;padding:22px;">
         <h3 style="font-size:1.1rem;margin-bottom:8px;color:#fff;display:flex;align-items:center;gap:8px;">👤 Q5: Can the AI send emails or legal notices autonomously without oversight?</h3>
         <p style="color:var(--mut);font-size:0.92rem;line-height:1.5;"><strong>A:</strong> No. ZUKWEND operates strictly under Human-in-the-Loop governance. No irreversible actions occur automatically: every aging classification, deduction score, formal notice, and export (PDF, Excel, JSON) is fully reviewable and requires human verification prior to dispatch.</p>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:12px;padding:22px;">
+        <h3 style="font-size:1.1rem;margin-bottom:8px;color:#fff;display:flex;align-items:center;gap:8px;">📁 Q6: How does ZUKWEND handle clients with multiple overdue invoices simultaneously?</h3>
+        <p style="color:var(--mut);font-size:0.92rem;line-height:1.5;"><strong>A:</strong> ZUKWEND automatically consolidates open items for the same debtor via strict 100% Tax ID / VAT verification, creating a single, permanent client dossier under <code>output/CLIENTS/{CLIENT_VAT}/{DATE}/</code>. It generates a single Consolidated Statement of Account (STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf) with itemized breakdown and currency-partitioned subtotals (e.g. EUR, USD), alongside a single unified email notice (REMINDER_EMAIL_CONSOLIDATED.txt), eliminating duplicate and fragmented reminders. Individual invoices are neatly archived in the Individual_Invoices_Archive/ subfolder.</p>
       </div>
     </div>
   </div>
