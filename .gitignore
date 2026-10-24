@@ -1,9 +1,48 @@
+# Ambienti ed Environment Secrets
+.env
+.env.*
+*.env
+
+# Chiavi private, credenziali e certificati crittografici
+*.key
+*.pem
+*.pfx
+*.p12
+*.pkcs12
+*.crt
+*.cert
+id_rsa*
+id_ed25519*
+secrets/
+credentials/
+
+# File di configurazione sensibili / utente
+config.json
+*config*.local.json
+.zukwend/
+zukwend_config.local.json
+
+# Cartelle dati personali, elaborazioni e report clienti
+output/
+output/**
+CLIENTS/
+logs/
+*.log
+temp/
+tmp/
+cache/
+
+# Byte-compiled / cache Python
 __pycache__/
 *.py[cod]
 *$py.class
-logs/
-output/
-.DS_Store
-Thumbs.db
+.pytest_cache/
+
+# Build & packaging
 build/
 dist/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
