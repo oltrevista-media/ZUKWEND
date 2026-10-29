@@ -1,0 +1,21 @@
+[ORDER] CHAT 1 ONLY — WEB LANDING PAGES VERSION STANDARDIZATION (v3.42)
+
+OBJECTIVE:
+Standardize version naming across all localized web landing pages to 'v2.1.5' (with dots, matching official release build ZUKWEND_FULL_v2_1_5_Setup.zip).
+
+--------------------------------------------------------------------------------
+
+1. VERSION STANDARDIZATION (v2.1.5)
+- Search and replace all instances of 'v2.15', '2.15', 'v2.1.6', '2.1.6', '2.1.0' across all 6 localized landing pages (IT, EN, DE, FR, ES, PT) in both web repositories (ZUKWEND_repo and oltrevista-site).
+- Enforce exact string 'v2.1.5' (e.g., 'LAUNCH BATCH v2.1.5', 'ZUKWEND v2.1.5 by OLTREVISTA', 'Software Version: v2.1.5').
+
+2. PRESERVE EXISTING FIXES
+- Maintain all previous fixes from v3.40 (no <track> tags in video player, OpenGraph poster metadata, live Lemon Squeezy checkout link).
+
+3. GIT COMMIT & CLOUDFLARE DEPLOY
+- Commit and push changes to main branch in both ZUKWEND_repo and oltrevista-site.
+- Confirm automatic deployment on Cloudflare Pages (zukwend.com and oltrevista.com).
+
+--------------------------------------------------------------------------------
+EXECUTION COMMAND FOR ANTIGRAVITY (CHAT 1 — SITI & LANDING):
+Execute version standardization to v2.1.5 across all web landing pages, footers, badges, and metadata, then commit and push to main.
