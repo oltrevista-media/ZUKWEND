@@ -1,0 +1,38 @@
+[ORDER] RED TEAM ARGON 4: FULL-SPECTRUM QA, BRANDING, SETTINGS & MASS STRESS TEST (v3.45)
+
+OBJECTIVE:
+Execute an extended, full-spectrum Red Team Argon 4 validation audit across ZUKWEND v2.1.5 Enterprise. Combine 2,000-invoice mass stress testing with deep functional testing of the Sender Customization Panel, custom branding elements, automated watch directory background tasks, and special export configurations to ensure total robustness prior to commercial launch.
+
+--------------------------------------------------------------------------------
+
+1. SENDER CUSTOMIZATION & BRANDING AUDIT
+- Test custom logo injection (PNG/JPG/SVG rendering) into generated PDF statements and email reminders without visual distortion or memory bloat.
+- Validate custom corporate metadata injection: Official Company Name, Address, Tax ID/P.IVA, Bank Name, IBAN, BIC/SWIFT, and Support Contact.
+- Verify that custom branding renders properly across all localized email reminder templates (IT, EN, DE, FR, ES, PT).
+
+2. AUTOMATED WATCH DIRECTORY & SPECIAL SETTINGS TEST
+- Verify background folder watcher engine ("Watch Directory") for real-time auto-ingestion of newly dropped PDF invoices without blocking the GUI thread.
+- Test export engine configuration overrides (custom delimiter settings, Excel column mapping, ERP JSON schema compliance).
+- Validate configuration file integrity (.zukwend / settings.json) across app restarts, ensuring zero settings corruption or loss of custom IBAN/logo paths.
+
+3. MASS STRESS TEST (2,000 INVOICES)
+- Process a batch of 2,000 diverse PDF invoices in Tier 1 Native Offline mode.
+- Benchmark processing speed, memory allocation (<250MB RAM footprint), and CPU thread efficiency.
+- Confirm zero crashes, zero thread lockups, and zero memory leaks over long-duration batch execution.
+
+4. STRICT DATA PRIVACY & ANTI-DATA LEAK AUDIT
+- Enforce strict Tax ID (P.IVA/VAT) client dossier grouping. Invoices belonging to distinct Tax IDs must never bleed into the same dossier folder.
+- Fallback routing: Invoices with missing or unverified Tax IDs must be routed to isolated standalone client dossiers.
+
+5. MULTI-CURRENCY PARTITIONING & DELIVERABLE INTEGRITY
+- Verify rigid multi-currency partitioning (EUR, USD, GBP, CHF) in AR Aging Analysis Excel sheets and PDF summaries. Sums across distinct currencies must remain strictly segregated.
+- Validate generated deliverable files: PDF Statements, 1-Click Mail Reminders, Master Excel Workbooks (AR Aging & ERP Ingestion), and ERP JSON Payloads.
+
+6. THREE-TIER ENGINE STABILITY & AIR-GAP VERIFICATION
+- Tier 1 Native: Confirm 100% offline air-gapped execution with zero outbound network calls.
+- Tier 2 Local LLM: Test graceful fallback if Ollama is offline or unresponsive.
+- Tier 3 Cloud BYOC: Verify TLS-encrypted payload transmission and API key handling when Cloud mode is manually engaged.
+
+--------------------------------------------------------------------------------
+EXECUTION COMMAND FOR ANTIGRAVITY (CHAT 3 ONLY):
+Execute full-spectrum Red Team Argon 4 audit (ORDER_ANTIGRAVITY_v3_45_EN.txt) covering 2,000-invoice stress test, sender branding injection, watch directory monitoring, and multi-currency dossier isolation. Return detailed QA compliance report.

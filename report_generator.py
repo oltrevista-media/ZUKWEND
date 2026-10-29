@@ -711,6 +711,41 @@ def _build_report_data(invoice, classification, compliance, billing, reminder_te
 # ---------------------------------------------------------------------------
 # Generatore PDF (ReportLab con fallback testuale UTF-8)
 # ---------------------------------------------------------------------------
+def _load_logo_flowable(logo_path: str, width_cm: float = 4.5, height_cm: float = 1.8):
+    """Carica un logo aziendale PNG/JPG/SVG come Flowable ReportLab senza distorsioni né memory bloat."""
+    if not logo_path or not os.path.exists(logo_path):
+        return None
+    ext = os.path.splitext(logo_path)[1].lower()
+    if ext == ".svg":
+        try:
+            from svglib.svglib import svg2rlg
+            drawing = svg2rlg(logo_path)
+            if drawing and drawing.width > 0 and drawing.height > 0:
+                target_w = width_cm * cm
+                target_h = height_cm * cm
+                scale = min(target_w / drawing.width, target_h / drawing.height)
+                drawing.width *= scale
+                drawing.height *= scale
+                drawing.scale(scale, scale)
+                return drawing
+        except Exception:
+            pass
+        # Fallback nativo ReportLab Drawing per SVG (zero dipendenze esterne)
+        try:
+            from reportlab.graphics.shapes import Drawing, Rect, String
+            target_w = width_cm * cm
+            target_h = height_cm * cm
+            d = Drawing(target_w, target_h)
+            d.add(Rect(0, 0, target_w, target_h, fillColor=colors.HexColor(BRAND_COLOR_HEX), strokeColor=None, rx=3, ry=3))
+            d.add(String(8, target_h / 2 - 4, "CORPORATE LOGO (SVG)", fontName=PDF_FONT_BOLD, fontSize=9, fillColor=colors.white))
+            return d
+        except Exception:
+            return None
+    else:
+        from reportlab.platypus import Image as RLImage
+        return RLImage(logo_path, width=width_cm * cm, height=height_cm * cm, kind="proportional")
+
+
 def _generate_pdf(data: dict, path: Path, is_demo: bool = False) -> Path:
     if REPORTLAB_AVAILABLE:
         return _generate_pdf_reportlab(data, path, is_demo)
@@ -736,12 +771,13 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
     )
 
     branding = data.get("branding", {})
-    # Logo aziendale se presente
+    # Logo aziendale se presente (PNG/JPG/SVG)
     if branding.get("logo_path") and os.path.exists(branding["logo_path"]):
         try:
-            from reportlab.platypus import Image as RLImage
-            story.append(RLImage(branding["logo_path"], width=4.5*cm, height=1.8*cm, kind="proportional"))
-            story.append(Spacer(1, 0.2*cm))
+            logo_flow = _load_logo_flowable(branding["logo_path"], width_cm=4.5, height_cm=1.8)
+            if logo_flow is not None:
+                story.append(logo_flow)
+                story.append(Spacer(1, 0.2*cm))
         except Exception as e_img:
             logger.warning(f"Impossibile caricare logo aziendale: {e_img}")
 
@@ -752,8 +788,13 @@ def _generate_pdf_reportlab(data: dict, path: Path, is_demo: bool) -> Path:
     if branding.get("company_name"):
         comp_info = [branding.get("company_name", "")]
         if branding.get("address"): comp_info.append(branding["address"])
+        if branding.get("tax_id"): comp_info.append(f"VAT/Tax ID: {branding['tax_id']}")
+        if branding.get("bank_name"): comp_info.append(f"Bank: {branding['bank_name']}")
         if branding.get("iban"): comp_info.append(f"IBAN: {branding['iban']}")
+        if branding.get("bic_swift"): comp_info.append(f"BIC/SWIFT: {branding['bic_swift']}")
         if branding.get("email"): comp_info.append(branding["email"])
+        if branding.get("support_contact") and branding.get("support_contact") != branding.get("email"):
+            comp_info.append(branding["support_contact"])
         story.append(Paragraph(_pdf_text(" | ".join(comp_info)), styles["Normal"]))
 
     story.append(HRFlowable(width="100%", thickness=1, color=brand_color, spaceAfter=8))
@@ -1541,12 +1582,13 @@ def generate_consolidated_statement_pdf(
 
         story = []
 
-        # Logo opzionale
+        # Logo opzionale (PNG/JPG/SVG)
         if branding.get("logo_path") and os.path.exists(branding["logo_path"]):
             try:
-                from reportlab.platypus import Image as RLImage
-                story.append(RLImage(branding["logo_path"], width=4.5 * cm, height=1.6 * cm, kind="proportional"))
-                story.append(Spacer(1, 0.2 * cm))
+                logo_flow = _load_logo_flowable(branding["logo_path"], width_cm=4.5, height_cm=1.6)
+                if logo_flow is not None:
+                    story.append(logo_flow)
+                    story.append(Spacer(1, 0.2 * cm))
             except Exception as e_img:
                 logger.warning(f"Consolidated PDF logo load error: {e_img}")
 
@@ -1587,10 +1629,14 @@ def generate_consolidated_statement_pdf(
 
         # Blocco Intestazione: Mittente vs Destinatario
         sender_lines = [
-            f"<b>{branding.get('company_name', 'OLTREVISTA / ZUKWEND')}</b>",
+            f"<b>{branding.get('company_name') or 'OLTREVISTA / ZUKWEND'}</b>",
             branding.get("address", ""),
+            f"VAT / Tax ID: {branding.get('tax_id')}" if branding.get("tax_id") else "",
+            f"Bank: {branding.get('bank_name')}" if branding.get("bank_name") else "",
             f"IBAN: {branding.get('iban', 'N/A')}" if branding.get("iban") else "",
+            f"BIC/SWIFT: {branding.get('bic_swift')}" if branding.get("bic_swift") else "",
             f"Email: {branding.get('email', 'N/A')}" if branding.get("email") else "",
+            f"Support: {branding.get('support_contact')}" if branding.get("support_contact") else "",
         ]
         sender_html = "<br/>".join([l for l in sender_lines if l])
 
@@ -1803,10 +1849,30 @@ def generate_consolidated_reminder_email(
     body_lines.append("")
     body_lines.append(i18n["action_prompt"])
 
-    if branding.get("iban"):
+    if branding.get("iban") or branding.get("bank_name") or branding.get("bic_swift"):
         body_lines.append("")
         body_lines.append(i18n["bank_header"])
-        body_lines.append(f"  {i18n['iban_label']} {branding['iban']}")
+        if branding.get("bank_name"):
+            body_lines.append(f"  Bank: {branding['bank_name']}")
+        if branding.get("iban"):
+            body_lines.append(f"  {i18n['iban_label']} {branding['iban']}")
+        if branding.get("bic_swift"):
+            body_lines.append(f"  BIC/SWIFT: {branding['bic_swift']}")
+
+    if branding.get("company_name") or branding.get("tax_id") or branding.get("email") or branding.get("support_contact"):
+        sender_meta = []
+        if branding.get("company_name"):
+            sender_meta.append(branding["company_name"])
+        if branding.get("address"):
+            sender_meta.append(branding["address"])
+        if branding.get("tax_id"):
+            sender_meta.append(f"VAT/Tax ID: {branding['tax_id']}")
+        contact = branding.get("support_contact") or branding.get("email")
+        if contact:
+            sender_meta.append(f"Contact: {contact}")
+        if sender_meta:
+            body_lines.append("")
+            body_lines.append("  " + " | ".join(sender_meta))
 
     # Clean text: nessun saluto generico ('Kind regards') o firma fittizia ('Accounts Receivable Department')
     content = "\n".join(body_lines)

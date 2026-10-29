@@ -489,6 +489,7 @@ def _build_vars(invoice: dict, billing: dict, language: str, classification: Opt
     return {
         "client_name": client_name,
         "vendor_name": vendor_name,
+        "custom_company": branding.get("company_name", "").strip(),
         "invoice_number": invoice.get("invoice_number") or "N/A",
         "issue_date": issue_date_fmt,
         "due_date": due_date_fmt,
@@ -496,9 +497,13 @@ def _build_vars(invoice: dict, billing: dict, language: str, classification: Opt
         "currency": currency,
         "days_overdue": str(days_overdue),
         "grace_days": str(billing.get("grace_days") or 5),
-        "iban": branding.get("iban", ""),
-        "email": branding.get("email", ""),
-        "address": branding.get("address", ""),
+        "iban": branding.get("iban", "").strip(),
+        "bic_swift": branding.get("bic_swift", "").strip(),
+        "bank_name": branding.get("bank_name", "").strip(),
+        "tax_id": branding.get("tax_id", "").strip(),
+        "email": branding.get("email", "").strip(),
+        "support_contact": branding.get("support_contact", "").strip(),
+        "address": branding.get("address", "").strip(),
         "disclaimer": get_legal_disclaimer(language),
     }
 
@@ -513,4 +518,33 @@ def _render_static(language: str, level: int, vars: dict) -> str:
     out = template
     for k, v in vars.items():
         out = out.replace("{" + k + "}", str(v))
+
+    # Append custom branding remittance & sender block if configured by user
+    brand_lines = []
+    if vars.get("iban") or vars.get("bank_name") or vars.get("bic_swift"):
+        bank_parts = []
+        if vars.get("bank_name"):
+            bank_parts.append(f"Bank: {vars['bank_name']}")
+        if vars.get("iban"):
+            bank_parts.append(f"IBAN: {vars['iban']}")
+        if vars.get("bic_swift"):
+            bank_parts.append(f"BIC/SWIFT: {vars['bic_swift']}")
+        brand_lines.append(" | ".join(bank_parts))
+
+    sender_parts = []
+    if vars.get("custom_company"):
+        sender_parts.append(vars["custom_company"])
+    if vars.get("address"):
+        sender_parts.append(vars["address"])
+    if vars.get("tax_id"):
+        sender_parts.append(f"VAT/Tax ID: {vars['tax_id']}")
+    contact_val = vars.get("support_contact") or vars.get("email")
+    if contact_val:
+        sender_parts.append(f"Contact: {contact_val}")
+    if sender_parts:
+        brand_lines.append(" | ".join(sender_parts))
+
+    if brand_lines:
+        out = out + "\n\n" + "\n".join(brand_lines)
+
     return out

@@ -20,8 +20,12 @@ from typing import Optional, Dict, Any
 DEFAULT_BRANDING = {
     "company_name": "",
     "address": "",
+    "tax_id": "",
+    "bank_name": "",
     "iban": "",
+    "bic_swift": "",
     "email": "",
+    "support_contact": "",
     "logo_path": "",
     "watch_folder": "",
     "watch_enabled": False,

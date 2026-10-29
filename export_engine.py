@@ -51,7 +51,10 @@ except ImportError:
 
             if has_valid_vat:
                 key = f"VAT_{c_vat.upper()}"
-                folder_slug = slugify_folder_name(f"{c_name}_{c_vat}", 40)
+                v_slug = slugify_folder_name(c_vat.upper(), 20)
+                max_c_len = max(10, 40 - len(v_slug) - 1)
+                c_slug = slugify_folder_name(c_name, max_c_len)
+                folder_slug = f"{c_slug}_{v_slug}"
             else:
                 c_slug = slugify_folder_name(c_name, 20)
                 max_i_len = 40 - len(c_slug) - 1
@@ -120,8 +123,13 @@ def _get_unique_fallback_path(target_path: Path) -> Path:
 SUPPORTED_FORMATS = {"pdf", "docx", "json", "html", "xlsx"}
 
 def _load_export_config() -> dict:
-    """Carica le impostazioni di configurazione dossier_mode e generate_individual_archive."""
-    cfg = {"dossier_mode": True, "generate_individual_archive": True}
+    """Carica le impostazioni di configurazione dossier_mode, generate_individual_archive, csv_delimiter ed excel_column_mapping."""
+    cfg = {
+        "dossier_mode": True,
+        "generate_individual_archive": True,
+        "csv_delimiter": ";",
+        "excel_column_mapping": {},
+    }
     try:
         from resource_utils import get_user_data_dir
         for p in [Path("zukwend_config.json"), get_user_data_dir() / "zukwend_config.json"]:
@@ -135,7 +143,7 @@ def _load_export_config() -> dict:
     return cfg
 
 
-def _generate_master_excel(reports_or_invoices: list, dest_path: Path) -> Path:
+def _generate_master_excel(reports_or_invoices: list, dest_path: Path, column_mapping: Optional[dict] = None) -> Path:
     """
     Genera MASTER_SUMMARY_AGING_YYYYMMDD.xlsx contenente:
     - Foglio 1: "AR Aging Analysis"
@@ -175,11 +183,13 @@ def _generate_master_excel(reports_or_invoices: list, dest_path: Path) -> Path:
     ws.row_dimensions[1].height = 36
 
     # 2. Table Headers
-    headers = [
+    cfg_map = column_mapping if isinstance(column_mapping, dict) else (_load_export_config().get("excel_column_mapping") or {})
+    default_headers = [
         "INVOICE #", "CLIENT NAME", "CLIENT VAT / TAX ID", "ISSUE DATE", "DUE DATE",
         "DAYS OVERDUE", "AGING BUCKET", "STATUS", "RISK LEVEL", "REMINDER LEVEL",
         "AMOUNT", "CURRENCY"
     ]
+    headers = [cfg_map.get(h, h) for h in default_headers]
     for c_idx, h_text in enumerate(headers, start=1):
         c = ws.cell(row=3, column=c_idx, value=h_text)
         c.font = font_header
@@ -302,11 +312,12 @@ def _generate_master_excel(reports_or_invoices: list, dest_path: Path) -> Path:
     # 3. Sheet 2: "ERP_Ingestion" (Strict ISO Dates)
     ws_erp = wb.create_sheet(title="ERP_Ingestion")
     ws_erp.views.sheetView[0].showGridLines = True
-    erp_headers = [
+    default_erp_headers = [
         "INVOICE_ID", "CLIENT_NAME", "CLIENT_ADDRESS", "CLIENT_VAT", "ISSUE_DATE",
         "DUE_DATE", "CURRENCY", "AMOUNT", "PAYMENT_STATUS", "DAYS_OVERDUE",
         "AGING_BUCKET", "RISK_LEVEL", "REMINDER_LEVEL", "RECOMMENDED_ACTION", "EXPORT_TIMESTAMP"
     ]
+    erp_headers = [cfg_map.get(h, h) for h in default_erp_headers]
     for c_idx, h_text in enumerate(erp_headers, start=1):
         c = ws_erp.cell(row=1, column=c_idx, value=h_text)
         c.font = font_header
@@ -423,6 +434,55 @@ def _generate_master_json(reports_or_invoices: list, dest_path: Path) -> Path:
             raise e
     logger.info(f"Master JSON generated: {target}")
     return target
+
+
+def _generate_master_csv(
+    reports_or_invoices: list,
+    dest_path: Path,
+    delimiter: Optional[str] = None,
+    column_mapping: Optional[dict] = None,
+) -> Path:
+    """Genera file CSV ERP con delimitatore personalizzabile e mappatura colonne."""
+    import csv
+    cfg = _load_export_config()
+    sep = (delimiter or cfg.get("csv_delimiter") or ";")[:1]
+    col_map = column_mapping if isinstance(column_mapping, dict) else (cfg.get("excel_column_mapping") or {})
+
+    default_cols = [
+        "INVOICE_ID", "CLIENT_NAME", "CLIENT_VAT", "ISSUE_DATE", "DUE_DATE",
+        "CURRENCY", "AMOUNT", "PAYMENT_STATUS", "DAYS_OVERDUE", "AGING_BUCKET",
+        "RISK_LEVEL", "REMINDER_LEVEL", "RECOMMENDED_ACTION",
+    ]
+    mapped_cols = [col_map.get(c, c) for c in default_cols]
+
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(dest_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f, delimiter=sep)
+        writer.writerow(mapped_cols)
+        for item in reports_or_invoices:
+            rdata = item.get("data", item) if isinstance(item, dict) else {}
+            inv = rdata.get("invoice", {})
+            clf = rdata.get("classification", {})
+            bill = rdata.get("billing", {})
+            amt = float(inv.get("amount") or 0.0)
+            curr = normalize_currency_iso(inv.get("currency") or "EUR")
+            days_od = int(clf.get("days_overdue") or 0)
+            writer.writerow([
+                str(inv.get("number") or inv.get("invoice_number") or "N/A"),
+                str(inv.get("client") or inv.get("client_name") or "Client"),
+                str(inv.get("client_vat") or inv.get("vat_number") or "N/A"),
+                str(inv.get("issue_date_iso") or inv.get("issue_date") or "N/A"),
+                str(inv.get("due_date_iso") or inv.get("due_date") or "N/A"),
+                curr,
+                f"{amt:.2f}",
+                str(clf.get("payment_status") or clf.get("payment_status_raw") or "OVERDUE"),
+                days_od,
+                clf.get("aging_bucket") or get_aging_bucket(days_od),
+                str(clf.get("risk_level_label") or clf.get("risk_level_raw") or "MEDIUM"),
+                int(clf.get("reminder_level") or 0),
+                str(bill.get("action") or "SEND_REMINDER"),
+            ])
+    return dest_path
 
 
 # ---------------------------------------------------------------------------

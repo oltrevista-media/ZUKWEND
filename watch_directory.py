@@ -26,6 +26,7 @@ class DirectoryWatcher:
         api_key: Optional[str] = None,
         callback: Optional[Callable[[str, bool, str], None]] = None,
         poll_interval_s: float = 3.0,
+        output_dir: Optional[str] = None,
     ):
         self.watch_folder = Path(watch_folder)
         self.language = language
@@ -33,6 +34,7 @@ class DirectoryWatcher:
         self.api_key = api_key
         self.callback = callback
         self.poll_interval_s = poll_interval_s
+        self.output_dir = output_dir
         
         self._running = False
         self._thread: Optional[threading.Thread] = None
@@ -108,7 +110,7 @@ class DirectoryWatcher:
                 last_size = size
             except Exception:
                 pass
-            time.sleep(0.5)
+            time.sleep(min(0.25, self.poll_interval_s))
         return False
 
     def _process_file(self, pdf_path: Path):
@@ -120,6 +122,7 @@ class DirectoryWatcher:
                 language=self.language,
                 mode=self.mode,
                 api_key=self.api_key,
+                output_dir=self.output_dir,
                 formats=["pdf", "xlsx", "json"],
                 is_demo=False
             )

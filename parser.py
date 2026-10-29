@@ -83,13 +83,21 @@ AMOUNT_PATTERNS = [
 ]
 
 DUE_DATE_KEYWORDS = {
-    "it": ["scadenza", "scade", "pagare entro"],
-    "en": ["due date", "due", "pay by"],
+    "it": ["scadenza", "scade", "data scadenza", "pagare entro"],
+    "en": ["due date", "due", "pay by", "payment due"],
+    "de": ["fälligkeitsdatum", "faelligkeitsdatum", "fällig am", "faellig am", "fällig bis", "faellig bis", "zahlbar bis", "fällig", "faellig"],
+    "fr": ["date d'échéance", "date d'echeance", "date decheance", "échéance", "echeance", "date limite de paiement", "payer avant le"],
+    "es": ["fecha de vencimiento", "fecha vencimiento", "vencimiento", "vence el", "pagar antes de"],
+    "pt": ["data de vencimento", "data vencimento", "vencimento", "vence em", "pagar ate", "pagar até"],
 }
 
 ISSUE_DATE_KEYWORDS = {
     "it": ["data emissione", "data fattura", "emessa il"],
     "en": ["invoice date", "date of issue", "issued on"],
+    "de": ["rechnungsdatum", "ausstellungsdatum", "ausgestellt am"],
+    "fr": ["date de facturation", "date de la facture", "date de facture", "émise le", "emise le"],
+    "es": ["fecha de expedición", "fecha de expedicion", "fecha de factura", "fecha factura", "emitida el"],
+    "pt": ["data de emissão", "data de emissao", "data da fatura", "data fatura", "emitida em"],
 }
 
 # ---------------------------------------------------------------------------
@@ -517,8 +525,12 @@ def clean_layout_tokens(raw: Optional[str]) -> Optional[str]:
 def _extract_client_name(text: str, text_lower: str) -> Optional[str]:
     keywords = [
         "spett.le:", "spett.le", "spettabile:", "spettabile", "intestata a:", "intestata a",
-        "bill to:", "bill to", "billed to:", "billed to", "client:", "client",
-        "customer:", "customer", "sold to:", "sold to", "a:", "fatturare a:"
+        "bill to:", "bill to", "billed to:", "billed to",
+        "cliente:", "cliente", "client:", "client",
+        "customer:", "customer", "sold to:", "sold to", "a:", "fatturare a:",
+        "rechnungsempfänger:", "rechnungsempfänger", "rechnungsempfaenger:", "rechnungsempfaenger",
+        "kunde:", "kunde", "destinatario:", "destinatario", "facturer à:", "facturer à",
+        "facturer a:", "facturer a"
     ]
     for keyword in keywords:
         idx = text_lower.find(keyword)
@@ -536,9 +548,13 @@ def _extract_client_name(text: str, text_lower: str) -> Optional[str]:
 
 def _extract_client_address(text: str, text_lower: str) -> Optional[str]:
     keywords = [
-        "bill to:", "bill to", "billed to:", "billed to", "client:", "client",
+        "bill to:", "bill to", "billed to:", "billed to",
+        "cliente:", "cliente", "client:", "client",
         "customer:", "customer", "sold to:", "sold to", "spett.le:", "spett.le",
-        "spettabile:", "spettabile", "intestata a:", "intestata a", "a:", "fatturare a:"
+        "spettabile:", "spettabile", "intestata a:", "intestata a", "a:", "fatturare a:",
+        "rechnungsempfänger:", "rechnungsempfänger", "rechnungsempfaenger:", "rechnungsempfaenger",
+        "kunde:", "kunde", "destinatario:", "destinatario", "facturer à:", "facturer à",
+        "facturer a:", "facturer a"
     ]
     for keyword in keywords:
         idx = text_lower.find(keyword)
@@ -580,7 +596,7 @@ def _extract_vat_number(text: str) -> Optional[str]:
 
     client_keywords = [
         "bill to", "billed to", "cliente", "client", "spett.le", "spettabile",
-        "destinatario", "rechnungsempfänger", "rechnungsempfaenger", "facturer à", "facturer a",
+        "destinatario", "rechnungsempfänger", "rechnungsempfaenger", "kunde", "facturer à", "facturer a",
         "customer", "sold to", "fatturato a"
     ]
     for kw in client_keywords:
@@ -588,7 +604,7 @@ def _extract_vat_number(text: str) -> Optional[str]:
         if idx != -1:
             segment = text[idx + len(kw): idx + len(kw) + 350]
             m_cl = re.search(
-                r"(?:p\.?[ \t]*iva|partita[ \t]+iva|c\.?[ \t]*f\.?|codice[ \t]+fiscale|vat[ \t]*(?:reg\.?|id|no\.?|number)?|tax[ \t]*id|tva|uid|ust[ \t\-_]?idnr|cif|nif)[ \t:#]+([A-Z0-9\-\.]{5,20})",
+                r"(?:p\.?[ \t]*iva|partita[ \t]+iva|c\.?[ \t]*f\.?|codice[ \t]+fiscale|vat[ \t]*(?:reg\.?|id|no\.?|number)?|tax[ \t]*id|tva|uid|ust[ \t\-_]?(?:idnr|id)\.?|cif|nif)[ \t:#\.]+([A-Z0-9\-\.]{5,20})",
                 segment,
                 re.IGNORECASE
             )

@@ -1,0 +1,24 @@
+# ANTIGRAVITY DIRECTIVE: ORDER v3.46
+# TARGET: CHAT 2 — SOFTWARE REPOSITORY & PACKAGING
+# TASK: DEMO FOLDER STANDARDIZATION (6 LOCALIZED INVOICES) & FINAL RELEASE PACKAGING
+
+1. DEMO FOLDER STANDARDIZATION
+- Replace the 200+ duplicate invoices in the 'demo/' folder with exactly 6 clean B2B sample invoices in PDF format.
+- Languages required (1 invoice per language):
+  1. Italian (IT)
+  2. English (EN)
+  3. German (DE)
+  4. French (FR)
+  5. Spanish (ES)
+  6. Portuguese (PT)
+- Each invoice must feature realistic B2B details, distinct overdue dates, tax IDs, and amounts to showcase the multi-language aging risk engine and dossier grouping on first launch.
+
+2. CLEANUP & PURGE
+- Completely clean the 'output/' directory of any leftover test artifacts from Red Team Argon 4.
+- Preserve only the '.gitkeep' file in 'output/'.
+
+3. FINAL SETUP ARCHIVE PACKAGING
+- Re-run packaging script (e.g. package_v2_1_5.py) to build the final production release:
+  Target Path: C:\OLTREVISTA_AI\02_VERTICALI\ZUKWEND\FULL\ZUKWEND_FULL_v2_1_5_Setup.zip
+- Confirm ZUKWEND.exe inside the archive remains validly signed with Certum EV Code Signing.
+- Commit changes and sync branch main.

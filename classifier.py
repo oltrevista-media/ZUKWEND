@@ -479,7 +479,10 @@ def group_invoices_by_client(invoices: list) -> dict:
 
         if is_valid_vat:
             group_key = f"VAT_{vat}"
-            folder_slug = slugify_folder_name(f"{client_name}_{vat}", max_length=40)
+            v_slug = slugify_folder_name(vat, max_length=20)
+            max_c_len = max(10, 40 - len(v_slug) - 1)
+            c_slug = slugify_folder_name(client_name, max_length=max_c_len)
+            folder_slug = f"{c_slug}_{v_slug}"
         else:
             inv_num = inv.get("invoice_number") or inv.get("number")
             if not inv_num and isinstance(inv.get("invoice"), dict):
