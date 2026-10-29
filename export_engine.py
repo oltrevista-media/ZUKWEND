@@ -2,7 +2,7 @@
 ZUKWEND — Multilingual Billing Agent
 Modulo: export_engine.py
 Ruolo: Engine export multi-formato, batch export, audit log, struttura cartelle
-Versione: 2.1.3
+Versione: 2.1.5
 REPTANA MODE | OLTREVISTA 2030 | Offline-First
 """
 
@@ -435,7 +435,7 @@ def export(
 ) -> list:
     """
     Finalizza e organizza i file generati dal report_generator.
-    Supporta Dossier Mode (v2.1.6):
+    Supporta Dossier Mode (v2.1.5):
       - output/CLIENTS/{CLIENT_SLUG_VAT}/{YYYY-MM-DD}/
       - STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf
       - REMINDER_EMAIL_CONSOLIDATED.txt
@@ -558,16 +558,22 @@ def export(
                 errors.append(f"consolidated_pdf_error:{e_pdf}")
 
         if generate_consolidated_reminder_email:
-            rem_email = session_dir / "REMINDER_EMAIL_CONSOLIDATED.txt"
-            try:
-                generate_consolidated_reminder_email(
-                    client_group, client_session_invoices, rem_email, language=lang
-                )
-                exported_paths.append(str(rem_email))
-                report["consolidated_email_path"] = str(rem_email)
-            except Exception as e_em:
-                logger.error(f"Error generating consolidated reminder email: {e_em}")
-                errors.append(f"consolidated_email_error:{e_em}")
+            actionable_invoices = [
+                inv_item for inv_item in client_session_invoices
+                if float((inv_item.get("invoice", inv_item).get("amount") or 0.0)) > 0
+                and int((inv_item.get("classification", inv_item).get("reminder_level") or 0)) > 0
+            ]
+            if actionable_invoices:
+                rem_email = session_dir / "REMINDER_EMAIL_CONSOLIDATED.txt"
+                try:
+                    generate_consolidated_reminder_email(
+                        client_group, actionable_invoices, rem_email, language=lang
+                    )
+                    exported_paths.append(str(rem_email))
+                    report["consolidated_email_path"] = str(rem_email)
+                except Exception as e_em:
+                    logger.error(f"Error generating consolidated reminder email: {e_em}")
+                    errors.append(f"consolidated_email_error:{e_em}")
 
         # Aggiorna Master Excel e Master JSON nella radice di output/
         master_excel_path = out_root / f"MASTER_SUMMARY_AGING_{today_compact}.xlsx"

@@ -1,0 +1,33 @@
+[ORDER] ZUKWEND GUI ENHANCEMENT & SURGICAL AUDIT - BATCH & FOLDER SELECTION (v3.34)
+
+OBJECTIVE:
+Perform a surgical, non-destructive GUI upgrade on ZUKWEND.exe (v2.1.5 target). Enable seamless single file, multi-file, and full folder selection via the Browse button with clear UI guidance, while strictly preserving core extraction and risk-scoring logic.
+
+--------------------------------------------------------------------------------
+
+0. PRE-MODIFICATION CODE AUDIT (NON-DESTRUCTIVE SURGERY)
+- Audit the existing GUI entry point and button event handlers.
+- Identify the exact handler bound to the "Browse" button.
+- Do NOT alter core backend modules (Tier 1 Native parser, risk engine, reminder generator).
+
+1. BROWSE BUTTON ENHANCEMENT (DUAL-MODE PICKER)
+- Update the "Browse" button file-dialog logic to support:
+  a) Single PDF file selection
+  b) Multi-file selection (`askopenfilenames`)
+  c) Entire folder/directory selection (`askdirectory`)
+- When a directory is selected, automatically collect all `.pdf` invoice files into the processing queue.
+
+2. UX LABEL & GUIDANCE TEXT
+- Add an explicit, clean sub-label next to or directly under the "Browse" button:
+  "(Select single/multiple invoices or entire folder)"
+- Ensure the status bar immediately displays total queued files (e.g., "Loaded 200 invoices ready for processing").
+
+3. VERIFICATION & REBUILD
+- Run a regression check using the 200-invoice demo set (`demo/*.pdf`).
+- Verify zero disruption to extraction or report generation.
+- Recompile `ZUKWEND.exe`.
+- Package into target archive: `C:\OLTREVISTA_AI\02_VERTICALI\ZUKWEND\FULL\ZUKWEND_FULL_v2_1_5_Setup.zip`
+
+--------------------------------------------------------------------------------
+EXECUTION COMMAND FOR ANTIGRAVITY:
+Audit the GUI file-picker handler, apply surgical dual-mode selection and UX label, verify batch queue, and recompile v2.1.5.

@@ -1314,7 +1314,7 @@ def _generate_html(data: dict, path: Path, is_demo: bool = False) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# Consolidated Dossier Exports (v2.1.6 Multi-Currency & Strict P.IVA)
+# Consolidated Dossier Exports (v2.1.5 Multi-Currency & Strict P.IVA)
 # ---------------------------------------------------------------------------
 
 CONSOLIDATED_EMAIL_I18N = {

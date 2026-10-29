@@ -1,0 +1,36 @@
+[ORDER] ZUKWEND GUI FIX & CLEAN ENTERPRISE STYLING - ORDER v3.35
+
+OBJECTIVE:
+1. Fix thread-safe `post_ui()` exception during batch processing in `gui_launcher.py`.
+2. Restyle GUI header to an ultra-clean Enterprise Apple-style layout.
+3. Ensure reactive AI Tier selector with Tier 1 Native default and API key visibility toggling.
+
+--------------------------------------------------------------------------------
+
+1. THREADING BUGFIX IN gui_launcher.py
+- Update `post_ui()` signature to accept `*args, **kwargs` to prevent `TypeError: unexpected keyword argument 'text'`.
+- Ensure status updates, progress bar, and log callbacks operate smoothly across threads without crashing during batch intake.
+
+2. GUI HEADER & TYPOGRAPHY RESTYLING
+- Main Title: "ZUKWEND" in Pure White (`#FFFFFF`), Bold, 22pt, prominent header positioning.
+- Subtitle: "Autonomous Engine for Invoice Aging & Reminders" in Light Neutral Gray (`#94A3B8`), 11pt, Regular.
+- Remove "Publisher: OLTREVISTA" from the header for maximum visual elegance.
+
+3. AI TIER SELECTOR REACTIVITY
+- Tier 1 Native ("Local-First Core AI") set as default selected option.
+- Tier 2 Local LLM ("Ollama") fully preserved and available.
+- Tier 3 Cloud BYOC ("OpenAI / Claude / Gemini"): API Key input box is visible/enabled ONLY when Tier 3 is selected. Hide/disable API key input when Tier 1 or Tier 2 is selected.
+
+4. UX GUIDANCE LABEL & BATCH PICKER
+- Retain label beneath Browse button: "(Select single/multiple invoices or entire folder)"
+- Support single invoice, multi-select, and full folder selection via Browse button.
+
+5. REGRESSION TEST, RECOMPILE & CODE SIGNING
+- Process 202-invoice demo batch (`C:\ZUKWEND\demo` or `demo/*.pdf`) with 0 errors.
+- Recompile via `build_standalone.py`.
+- Apply Certum EV Code Signing (SimplySign) with SHA256 RFC 3161 timestamping.
+- Repackage release zip to: `C:\OLTREVISTA_AI\02_VERTICALI\ZUKWEND\FULL\ZUKWEND_FULL_v2_1_5_Setup.zip`
+
+--------------------------------------------------------------------------------
+EXECUTION COMMAND FOR ANTIGRAVITY:
+Execute surgical fix on `post_ui()` in `gui_launcher.py`, restyle header with Pure White ZUKWEND title, test 202-invoice batch run, recompile, sign with SimplySign, and repackage v2.1.5.

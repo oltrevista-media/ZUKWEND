@@ -36,9 +36,9 @@ ZUKWEND adotta un'architettura di calcolo ibrida e modulare a 3 livelli, studiat
 
 ---
 
-## 📁 Gerarchia Cartelle, Dossier Cliente & Multi-Valuta (v2.1.6)
+## 📁 Gerarchia Cartelle, Dossier Cliente & Multi-Valuta (v2.1.5)
 
-ZUKWEND v2.1.6 introduce l'automazione dei **Dossier Cliente Consolidati** con logica **Anti-Data Leak** e supporto **Multi-Valuta**:
+ZUKWEND v2.1.5 introduce l'automazione dei **Dossier Cliente Consolidati** con logica **Anti-Data Leak** e supporto **Multi-Valuta**:
 
 ### 1. Raggruppamento Strict P.IVA (100% Match)
 - Le posizioni aperte dello stesso debitore vengono consolidate in un unico dossier cliente **esclusivamente se la Partita IVA / Tax ID coincide al 100%**.

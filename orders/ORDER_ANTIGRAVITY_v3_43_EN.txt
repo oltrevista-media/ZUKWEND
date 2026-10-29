@@ -1,0 +1,23 @@
+[ORDER] CHAT 2 ONLY — SOFTWARE CODE & MANUALS VERSION STANDARDIZATION (v3.43)
+
+OBJECTIVE:
+Standardize version naming across all software source code, user manuals, installation guides, legal EULA documents, and setup scripts to 'v2.1.5' (matching official release build ZUKWEND_FULL_v2_1_5_Setup.zip).
+
+--------------------------------------------------------------------------------
+
+1. VERSION STANDARDIZATION (v2.1.5)
+- Search and replace all instances of '2.1.6', 'v2.1.6', 'v2.15', '2.15' with 'v2.1.5' across all documentation and software source files in the desktop application repository:
+  * USER_MANUAL_EN (PDF / MD)
+  * INSTALLATION_GUIDE.txt
+  * LICENSE_EULA.txt
+  * Application source files, setup scripts, and UI title bars/footers.
+
+2. BUILD & RELEASE METADATA ALIGNMENT
+- Ensure all version constants in Python/Tkinter GUI and build config point strictly to 'v2.1.5'.
+
+3. GIT COMMIT
+- Commit and push changes to main branch in the ZUKWEND software repository.
+
+--------------------------------------------------------------------------------
+EXECUTION COMMAND FOR ANTIGRAVITY (CHAT 2 — CODICE SOFTWARE):
+Execute version standardization to v2.1.5 across all user manuals, installation guides, EULA, and software source code files, then commit and push to main.

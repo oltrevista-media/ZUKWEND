@@ -81,12 +81,12 @@ def run_build():
 
     cmd.append("gui_launcher.py")
 
-    print(f"[*] Avvio compilazione PyInstaller v2.1.4...")
+    print(f"[*] Avvio compilazione PyInstaller v2.1.5...")
     res = subprocess.run(cmd)
 
     if res.returncode == 0:
         print("\n" + "=" * 60)
-        print(" BUILD v2.1.4 COMPLETATA CON SUCCESSO!")
+        print(" BUILD v2.1.5 COMPLETATA CON SUCCESSO!")
         exe_path = DIST_DIR / "ZUKWEND" / "ZUKWEND.exe"
         print(f" Eseguibile generato in: {exe_path}")
         print("=" * 60)

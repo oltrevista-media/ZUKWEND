@@ -1,0 +1,63 @@
+===============================================================================
+ORDER_RED_TEAM_ARGON_v3_30.txt — FULL-SPECTRUM DEEP SCAN & MASS STRESS TEST
+PROJECT: ZUKWEND | PUBLISHER: OLTREVISTA | VERSION: 2.1.5.0
+PROTOCOL: HQ PROTOCOL STRICT EN
+===============================================================================
+
+[OBJECTIVE]
+Execute a full-spectrum adversarial audit AND a 2,000-invoice mass stress test 
+on the signed ZUKWEND.exe (v2.1.5.0) build, including live Cloud BYOC API validation.
+
+[TEST SUITE 1: ADVERSARIAL VECTORS (ALL 6 VECTORS)]
+1. PARSER BOUNDARIES & TAIL-TRUNCATION:
+   - Process corrupted PDF/XLSX files and missing VAT (P.IVA) dossiers.
+   - Verify tail-truncation logic to prevent folder collision.
+
+2. CREDIT NOTES & ZERO-LEVEL SYNC:
+   - Classify invoices <= 0 as SETTLED.
+   - Force reminder_level = 0 and 0 emails generated.
+
+3. MULTI-ISO CURRENCY ISOLATION:
+   - Ensure EUR, USD, GBP, BRL are never cross-summed.
+   - Keep currency subtotals strictly segregated in outputs.
+
+4. CLEAN EMAIL TEXT LEAK CHECK:
+   - Verify 100% clean email copy-paste output across EN, ES, DE, FR, PT, IT.
+   - Ensure 0 unrendered placeholders or missing translation keys.
+
+5. DATE FORMATTING (ISO vs LOCAL):
+   - ERP JSON/Excel Sheet 2 must store raw ISO 'YYYY-MM-DD'.
+   - PDF/Email/Excel Sheet 1 must store local 'DD/MM/YYYY'.
+
+6. EV CODE SIGNING VERIFICATION:
+   - Execute Get-AuthenticodeSignature on dist/ZUKWEND.exe.
+   - Confirm Status: Valid with SHA256 RFC 3161 timestamp.
+
+[TEST SUITE 2: MASS STRESS TEST (2,000 SYNTHETIC INVOICES)]
+1. DATASET GENERATION:
+   - Programmatically generate 2,000 synthetic B2B invoice records (multi-currency, 
+     varied aging 1-180 days, valid/invalid VATs, credit notes, edge-case amounts).
+
+2. PERFORMANCE & MEMORY LEAK AUDIT:
+   - Run batch processing through ZUKWEND core engine.
+   - Benchmark throughput, CPU usage, and RAM consumption. Ensure zero memory leaks.
+   - Verify CustomTkinter progress bar accuracy and UI non-blocking execution.
+
+3. EXPORT INTEGRITY AT SCALE:
+   - Verify 2,000 records export cleanly to Excel (Sheet 1 + Sheet 2 ERP Ingestion), 
+     JSON database, and PDF reports without truncation or corruption.
+
+[TEST SUITE 3: LIVE CLOUD BYOC API VALIDATION]
+1. INVALID API KEY BLOCK (NEGATIVE TEST):
+   - Pass fictitious API key -> Confirm immediate AuthenticationError and 0 files written.
+
+2. LIVE API CALL & PAYLOAD AUDIT (POSITIVE TEST):
+   - If valid API key is present in environment/config, execute live API request.
+   - Verify HTTPS request latency, status code 200, payload JSON structure, and AI text integration.
+
+[EXPECTED OUTPUT]
+- Printed Red Team Argon 4 Execution Matrix (ALL PASSED).
+- Benchmarking report for 2,000-invoice batch execution time & memory footprint.
+- Final Confirmation: ZUKWEND v2.1.5.0 READY FOR LIVE COMMERCIAL RELEASE.
+
+===============================================================================

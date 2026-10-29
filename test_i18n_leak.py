@@ -69,6 +69,8 @@ def run_multilingual_test():
         json_path = None
 
         for p in exported_paths:
+            if "report_AR_" not in p:
+                continue
             if p.endswith(".pdf"):
                 pdf_path = Path(p)
             elif p.endswith(".xlsx"):
@@ -286,7 +288,7 @@ def test_e2e_negative_credit_note():
         # Check generated JSON export as well
         json_path = None
         for p in res.export_paths:
-            if p.endswith(".json"):
+            if p.endswith(".json") and "report_AR_" in p:
                 json_path = Path(p)
                 break
         assert json_path and json_path.exists(), "Exported JSON report not found"

@@ -538,6 +538,17 @@ def generate_reminder_text(
     api_key: Optional[str] = None,
     classification: Optional[dict] = None,
 ) -> str:
+    raw_amt = normalized.get("amount")
+    amt_val = 0.0 if raw_amt is None else float(raw_amt)
+    if (
+        billing.get("action") == "NO_REMINDER_NEEDED"
+        or billing.get("reminder_level") == 0
+        or (classification and classification.get("action") == "NO_REMINDER_NEEDED")
+        or (classification and classification.get("payment_status") in ("SETTLED", "CREDIT_NOTE", "PAID", "DISPUTED"))
+        or amt_val <= 0.0
+    ):
+        return ""
+
     deducer_mod = _import_module("deducer")
     if classification and "days_overdue" not in billing:
         billing["days_overdue"] = classification.get("days_overdue", 0)
@@ -568,6 +579,8 @@ def _static_reminder(normalized: dict, billing: dict, language: str) -> str:
     num = normalized.get("invoice_number") or "N/A"
     raw_amt = normalized.get("amount")
     amount = 0.0 if raw_amt is None else float(raw_amt)
+    if billing.get("action") == "NO_REMINDER_NEEDED" or level == 0 or amount <= 0.0:
+        return ""
     currency = normalized.get("currency") or "EUR"
 
     client = normalized.get("client_name") or "Valued Customer"

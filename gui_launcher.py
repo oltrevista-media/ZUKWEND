@@ -2,7 +2,7 @@
 ZUKWEND — Multilingual Billing Agent
 Module: gui_launcher.py
 Role: Professional Windows 11 Dark-Mode Interface with Real-Time Progress & Logs
-Version: 1.0.3-ENTERPRISE
+Version: 2.1.5-ENTERPRISE
 REPTANA MODE | OLTREVISTA 2030 | Offline-First
 """
 
@@ -141,15 +141,15 @@ def launch_gui_launcher():
     # Thread-safe UI queue
     ui_queue = queue.Queue()
 
-    def post_ui(fn, *args):
-        ui_queue.put((fn, args))
+    def post_ui(fn, *args, **kwargs):
+        ui_queue.put((fn, args, kwargs))
 
     def drain_ui_queue():
         try:
             while True:
-                fn, args = ui_queue.get_nowait()
+                fn, args, kwargs = ui_queue.get_nowait()
                 try:
-                    fn(*args)
+                    fn(*args, **kwargs)
                 except Exception:
                     logger.exception("Error in UI callback")
         except queue.Empty:
@@ -167,18 +167,19 @@ def launch_gui_launcher():
 
     lbl_title = ctk.CTkLabel(
         root, 
-        text="ZUKWEND — Privacy-First Accounts Receivable Agent", 
-        font=ctk.CTkFont(family="Segoe UI", size=20, weight="bold")
+        text="ZUKWEND", 
+        font=ctk.CTkFont(family="Segoe UI", size=22, weight="bold"),
+        text_color="#FFFFFF"
     )
-    lbl_title.pack(pady=(14, 2))
+    lbl_title.pack(pady=(16, 2))
 
     lbl_sub = ctk.CTkLabel(
         root, 
-        text="Local Autonomous Engine for Invoice Aging & Reminders | Publisher: OLTREVISTA", 
-        font=ctk.CTkFont(family="Segoe UI", size=12), 
-        text_color="#9E9E9E"
+        text="Autonomous Engine for Invoice Aging & Reminders", 
+        font=ctk.CTkFont(family="Segoe UI", size=11), 
+        text_color="#94A3B8"
     )
-    lbl_sub.pack(pady=(0, 8))
+    lbl_sub.pack(pady=(0, 10))
 
     # --- License Header Status Bar ---
     frame_license_header = ctk.CTkFrame(root, fg_color="transparent")
@@ -563,9 +564,11 @@ def launch_gui_launcher():
     lbl_pdf.pack(anchor="w", padx=20, pady=(12, 4))
 
     frame_file = ctk.CTkFrame(frame_main, fg_color="transparent")
-    frame_file.pack(fill="x", padx=20, pady=(0, 10))
+    frame_file.pack(fill="x", padx=20, pady=(0, 4))
 
     pdf_var = ctk.StringVar(value="")
+    queued_invoices = []
+
     entry_pdf = ctk.CTkEntry(
         frame_file, 
         textvariable=pdf_var, 
@@ -574,13 +577,123 @@ def launch_gui_launcher():
     )
     entry_pdf.pack(side="left", fill="x", expand=True, padx=(0, 10))
 
-    def sfoglia():
-        path = filedialog.askopenfilename(
-            title="Select Invoice PDF", 
+    def update_queue_status(files: list, source_label: str = ""):
+        queued_invoices.clear()
+        queued_invoices.extend(files)
+        count = len(queued_invoices)
+        if count == 1:
+            status_text = "Loaded 1 invoice ready for processing"
+        else:
+            status_text = f"Loaded {count} invoices ready for processing"
+        if "lbl_status" in locals() or "lbl_status" in globals():
+            try:
+                lbl_status.configure(text=status_text, text_color="#10B981" if count > 0 else "#9CA3AF")
+            except Exception:
+                pass
+        append_log(f"[READY] {status_text}")
+
+    def pick_files():
+        paths = filedialog.askopenfilenames(
+            title="Select Invoice PDF(s)", 
             filetypes=[("PDF Documents", "*.pdf"), ("All Files", "*.*")]
         )
-        if path:
-            pdf_var.set(path)
+        if paths:
+            pdf_list = [os.path.abspath(p) for p in paths if p.lower().endswith(".pdf")]
+            if not pdf_list:
+                pdf_list = [os.path.abspath(p) for p in paths]
+            if len(pdf_list) == 1:
+                pdf_var.set(pdf_list[0])
+            else:
+                pdf_var.set(f"{len(pdf_list)} invoices selected ({os.path.basename(pdf_list[0])}, ...)")
+            update_queue_status(pdf_list, source_label="files")
+
+    def pick_directory():
+        d = filedialog.askdirectory(title="Select Folder Containing Invoice PDFs")
+        if d:
+            dir_path = Path(d)
+            pdf_files = sorted([str(f.resolve()) for f in dir_path.iterdir() if f.is_file() and f.suffix.lower() == ".pdf"])
+            if pdf_files:
+                pdf_var.set(f"{d} ({len(pdf_files)} invoices found)")
+                update_queue_status(pdf_files, source_label="folder")
+            else:
+                pdf_var.set(d)
+                queued_invoices.clear()
+                if "lbl_status" in locals() or "lbl_status" in globals():
+                    try:
+                        lbl_status.configure(text="No PDF invoices found in selected folder", text_color="#EF4444")
+                    except Exception:
+                        pass
+                append_log(f"[WARN] No PDF files found in folder: {d}")
+                messagebox.showwarning("No Invoices Found", f"No PDF invoice files found in folder:\n{d}")
+
+    def sfoglia(mode: Optional[str] = None):
+        if mode == "files":
+            pick_files()
+            return
+        if mode in ("folder", "dir", "directory"):
+            pick_directory()
+            return
+
+        # Dual-Mode Picker Dialog
+        dlg = ctk.CTkToplevel(root)
+        dlg.title("Select Invoices — ZUKWEND")
+        dlg.geometry("420x200")
+        dlg.resizable(False, False)
+        dlg.transient(root)
+        dlg.grab_set()
+
+        try:
+            root.update_idletasks()
+            rx = root.winfo_rootx()
+            ry = root.winfo_rooty()
+            rw = root.winfo_width()
+            rh = root.winfo_height()
+            dlg.geometry(f"420x200+{rx + (rw - 420)//2}+{ry + (rh - 200)//2}")
+        except Exception:
+            pass
+
+        lbl_dlg_title = ctk.CTkLabel(
+            dlg, 
+            text="Invoice Document Picker", 
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold")
+        )
+        lbl_dlg_title.pack(pady=(16, 4))
+
+        lbl_dlg_sub = ctk.CTkLabel(
+            dlg, 
+            text="Choose whether to select specific invoice files or a whole folder:", 
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            text_color="#9CA3AF"
+        )
+        lbl_dlg_sub.pack(pady=(0, 14))
+
+        def on_choose_files():
+            dlg.destroy()
+            root.after(40, pick_files)
+
+        def on_choose_folder():
+            dlg.destroy()
+            root.after(40, pick_directory)
+
+        btn_choose_files = ctk.CTkButton(
+            dlg,
+            text="📄 Select PDF File(s) (Single / Multi-file)",
+            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
+            height=34,
+            command=on_choose_files
+        )
+        btn_choose_files.pack(fill="x", padx=30, pady=(0, 8))
+
+        btn_choose_folder = ctk.CTkButton(
+            dlg,
+            text="📁 Select Entire Folder",
+            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold"),
+            fg_color="#059669",
+            hover_color="#047857",
+            height=34,
+            command=on_choose_folder
+        )
+        btn_choose_folder.pack(fill="x", padx=30, pady=(0, 8))
 
     btn_sfoglia = ctk.CTkButton(
         frame_file, 
@@ -590,6 +703,15 @@ def launch_gui_launcher():
         font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold")
     )
     btn_sfoglia.pack(side="right")
+    btn_sfoglia.bind("<Button-3>", lambda e: pick_directory())
+
+    lbl_browse_guidance = ctk.CTkLabel(
+        frame_main, 
+        text="(Select single/multiple invoices or entire folder)", 
+        font=ctk.CTkFont(family="Segoe UI", size=11), 
+        text_color="#9CA3AF"
+    )
+    lbl_browse_guidance.pack(anchor="w", padx=22, pady=(0, 8))
 
     # Engine Selection
     lbl_engine = ctk.CTkLabel(
@@ -664,13 +786,14 @@ def launch_gui_launcher():
         font=ctk.CTkFont(family="Segoe UI", size=12), 
         show="*"
     )
-    entry_key.pack(fill="x", padx=45, pady=(0, 8))
 
     def on_mode_change(*args):
         if mode_var.get() == "cloud":
+            entry_key.pack(fill="x", padx=45, pady=(0, 8), after=lbl_cloud_desc)
             entry_key.configure(state="normal")
         else:
             entry_key.configure(state="disabled")
+            entry_key.pack_forget()
 
     mode_var.trace_add("write", on_mode_change)
     on_mode_change()
@@ -727,9 +850,18 @@ def launch_gui_launcher():
         font=ctk.CTkFont(family="Consolas", size=11), 
         text_color="#A7F3D0"
     )
-    log_box.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+    log_box.pack(fill="both", expand=True, padx=20, pady=(0, 4))
     log_box.insert("end", "[READY] Awaiting document analysis...\n")
     log_box.configure(state="disabled")
+
+    lbl_status = ctk.CTkLabel(
+        frame_main, 
+        text="Awaiting document selection...", 
+        font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"), 
+        text_color="#9CA3AF",
+        anchor="w"
+    )
+    lbl_status.pack(fill="x", padx=22, pady=(0, 8))
 
     output_dir_ref = {"path": None}
     progress_default_color = progress_bar.cget("progress_color")
@@ -818,30 +950,23 @@ def launch_gui_launcher():
         else:
             btn_run.configure(state="normal")
 
-    def worker_thread(pdf_path, selected_mode, selected_key, selected_lang):
+    def worker_thread(file_queue, selected_mode, selected_key, selected_lang):
         # NB: questo thread NON deve toccare widget Tk: ogni aggiornamento passa da post_ui().
         try:
             from workflow_engine import run_pipeline
 
-            post_ui(append_log, f"[INFO] Initializing engine in {selected_mode.upper()} mode...")
+            total_files = len(file_queue)
+            is_batch = total_files > 1
+
+            post_ui(append_log, f"[INFO] Initializing engine in {selected_mode.upper()} mode for {total_files} document(s)...")
             
             # Check current license status
             lic = safe_check_license()
             is_demo = (lic.get("license_type") != "FULL")
 
-            result = run_pipeline(
-                pdf_path=pdf_path,
-                language=selected_lang,
-                mode=selected_mode,
-                api_key=selected_key if selected_mode == "cloud" else None,
-                is_demo=is_demo,
-                progress_callback=lambda s, st, d: post_ui(update_progress, s, st, d)
-            )
-
-            # Increment invoice count if in DEMO mode
-            if is_demo and result.success:
-                new_cnt = increment_invoice_count()
-                post_ui(append_log, f"[LICENSE] Evaluation invoice processed ({new_cnt}/10)")
+            successful_results = []
+            failed_results = []
+            last_out_dir = os.path.abspath("output")
 
             save_user_config({
                 "mode": selected_mode, 
@@ -849,38 +974,108 @@ def launch_gui_launcher():
                 "lang": selected_lang
             })
 
-            if result.report_path:
-                out_dir = str(Path(result.report_path).parent)
-            elif result.export_paths:
-                out_dir = str(Path(result.export_paths[0]).parent)
-            else:
-                out_dir = os.path.abspath("output")
+            for idx, pdf_path in enumerate(file_queue, start=1):
+                # Check license limit in demo mode
+                if is_demo:
+                    curr_lic = safe_check_license()
+                    if not curr_lic.get("is_valid", False):
+                        post_ui(append_log, f"[LICENSE] Evaluation limit reached ({curr_lic.get('invoice_count', 10)}/10). Halting batch.")
+                        break
 
-            output_dir_ref["path"] = out_dir
+                if is_batch:
+                    post_ui(append_log, f"[{idx}/{total_files}] Processing: {os.path.basename(pdf_path)}")
+                    post_ui(lbl_status.configure, text=f"Processing {idx}/{total_files}: {os.path.basename(pdf_path)}")
+                    base_progress = (idx - 1) / total_files
+                    item_scale = 1.0 / total_files
+                    def batch_progress_cb(s, st, d, b_prog=base_progress, it_scale=item_scale):
+                        step_weights = {
+                            "PIPELINE_START": 0.05,
+                            "LOAD": 0.20,
+                            "PARSE": 0.45,
+                            "NORMALIZE": 0.60,
+                            "CLASSIFY": 0.70,
+                            "BILLING": 0.80,
+                            "REMINDER": 0.88,
+                            "REPORT": 0.94,
+                            "PIPELINE_END": 1.0,
+                        }
+                        w = step_weights.get(s, 0.5)
+                        post_ui(progress_bar.set, min(1.0, b_prog + (w * it_scale)))
+                    cb = batch_progress_cb
+                else:
+                    cb = lambda s, st, d: post_ui(update_progress, s, st, d)
+
+                result = run_pipeline(
+                    pdf_path=pdf_path,
+                    language=selected_lang,
+                    mode=selected_mode,
+                    api_key=selected_key if selected_mode == "cloud" else None,
+                    is_demo=is_demo,
+                    progress_callback=cb
+                )
+
+                if result.report_path:
+                    last_out_dir = str(Path(result.report_path).parent)
+                elif result.export_paths:
+                    last_out_dir = str(Path(result.export_paths[0]).parent)
+
+                # Check cloud authentication failure immediately
+                auth_errs = [e.get("error", "") for e in result.errors if "Cloud API Authentication Failed" in str(e.get("error", "")) or e.get("code") == "ERR_CLOUD_AUTH"]
+                if auth_errs or (selected_mode == "cloud" and not result.success):
+                    err_msg = "[ERROR] Cloud API Authentication Failed: Invalid or missing API Key. Please verify credentials in Settings."
+                    post_ui(append_log, err_msg)
+                    post_ui(restore_run_button)
+                    post_ui(messagebox.showerror, "Authentication Error", err_msg)
+                    return
+
+                if is_demo and result.success:
+                    new_cnt = increment_invoice_count()
+                    post_ui(append_log, f"[LICENSE] Evaluation invoice processed ({new_cnt}/10)")
+
+                if result.success and result.invoice:
+                    successful_results.append((pdf_path, result))
+                else:
+                    err_desc = "; ".join(str(e.get("error", "")) for e in result.errors) or "unknown error"
+                    failed_results.append((pdf_path, err_desc))
+                    post_ui(append_log, f"[WARN] Document {os.path.basename(pdf_path)} warning/error: {err_desc}")
+
+            output_dir_ref["path"] = last_out_dir
 
             def on_complete():
                 restore_run_button()
-                if not result.invoice or not result.success:
-                    # Check for cloud authentication failure
-                    auth_errs = [e.get("error", "") for e in result.errors if "Cloud API Authentication Failed" in str(e.get("error", "")) or e.get("code") == "ERR_CLOUD_AUTH"]
-                    if auth_errs or (selected_mode == "cloud" and not result.success):
-                        err_msg = "[ERROR] Cloud API Authentication Failed: Invalid or missing API Key. Please verify credentials in Settings."
-                        append_log(err_msg)
-                        messagebox.showerror("Authentication Error", err_msg)
-                        return
-                    # Pipeline interrotta prima dell'analisi (es. licenza non valida, PDF illeggibile)
-                    details = "; ".join(str(e.get("error", "")) for e in result.errors) or "unknown error"
-                    append_log(f"[ERROR] Pipeline interrupted: {details}")
-                    messagebox.showwarning("Processing Incomplete", f"The document could not be processed:\n\n{details}")
-                    return
-                headline = (
-                    "Document processed successfully!" if result.success
-                    else f"Document processed with {len(result.errors)} warning(s) - see log for details."
-                )
-                messagebox.showinfo(
-                    "Processing Complete", 
-                    f"{headline}\n\nInvoice: {result.invoice.get('invoice_number', 'N/A')}\nAmount: {result.invoice.get('amount', 0.0)} {result.invoice.get('currency', 'EUR')}\nAction: {result.billing.get('action', 'N/A')}"
-                )
+                total_succ = len(successful_results)
+                total_fail = len(failed_results)
+
+                if is_batch:
+                    progress_bar.set(1.0)
+                    progress_bar.configure(progress_color="#10B981")
+                    lbl_status.configure(text=f"Batch complete: {total_succ}/{total_files} processed successfully", text_color="#10B981")
+                    append_log(f"[BATCH_COMPLETE] Batch finished: {total_succ}/{total_files} succeeded, {total_fail} failed.")
+                    messagebox.showinfo(
+                        "Batch Processing Complete", 
+                        f"Batch Processing Completed!\n\n"
+                        f"Total Queued: {total_files}\n"
+                        f"Successfully Processed: {total_succ}\n"
+                        f"Warnings / Errors: {total_fail}\n\n"
+                        f"Output Folder: {last_out_dir}"
+                    )
+                else:
+                    if successful_results:
+                        res = successful_results[0][1]
+                        headline = (
+                            "Document processed successfully!" if res.success
+                            else f"Document processed with {len(res.errors)} warning(s) - see log for details."
+                        )
+                        lbl_status.configure(text="Processing complete: 1 document processed successfully", text_color="#10B981")
+                        messagebox.showinfo(
+                            "Processing Complete", 
+                            f"{headline}\n\nInvoice: {res.invoice.get('invoice_number', 'N/A')}\nAmount: {res.invoice.get('amount', 0.0)} {res.invoice.get('currency', 'EUR')}\nAction: {res.billing.get('action', 'N/A')}"
+                        )
+                    else:
+                        details = failed_results[0][1] if failed_results else "unknown error"
+                        lbl_status.configure(text="Processing incomplete", text_color="#EF4444")
+                        append_log(f"[ERROR] Pipeline interrupted: {details}")
+                        messagebox.showwarning("Processing Incomplete", f"The document could not be processed:\n\n{details}")
 
             post_ui(on_complete)
 
@@ -905,9 +1100,27 @@ def launch_gui_launcher():
             )
             return
 
-        pdf_path = pdf_var.get().strip()
-        if not pdf_path or not os.path.exists(pdf_path):
-            messagebox.showwarning("Missing Document", "Please select a valid PDF invoice document.")
+        # Determine target queue
+        target_queue = list(queued_invoices)
+        raw_val = pdf_var.get().strip()
+
+        # If queued_invoices is empty or user manually changed the text field, re-evaluate
+        if not target_queue or (len(target_queue) == 1 and target_queue[0] != raw_val and os.path.exists(raw_val)):
+            if os.path.isdir(raw_val):
+                dir_path = Path(raw_val)
+                found = sorted([str(f.resolve()) for f in dir_path.iterdir() if f.is_file() and f.suffix.lower() == ".pdf"])
+                if found:
+                    target_queue = found
+                    update_queue_status(found, source_label="folder")
+            elif os.path.isfile(raw_val) and raw_val.lower().endswith(".pdf"):
+                target_queue = [os.path.abspath(raw_val)]
+                update_queue_status(target_queue, source_label="file")
+
+        # Verify all files in target_queue actually exist
+        target_queue = [p for p in target_queue if os.path.isfile(p)]
+
+        if not target_queue:
+            messagebox.showwarning("Missing Document", "Please select valid PDF invoice document(s) or folder.")
             return
 
         selected_mode = mode_var.get()
@@ -938,7 +1151,10 @@ def launch_gui_launcher():
             return
 
         g = get_gui_strings(selected_lang)
-        btn_run.configure(state="disabled", text=g.get("btn_run_processing", "PROCESSING INVOICE..."))
+        processing_text = g.get("btn_run_processing", "PROCESSING INVOICE...")
+        if len(target_queue) > 1:
+            processing_text = f"PROCESSING {len(target_queue)} INVOICES..."
+        btn_run.configure(state="disabled", text=processing_text)
         btn_open_folder.configure(text=g.get("btn_open_folder", "📁 Open Output Folder"))
         progress_bar.configure(progress_color=progress_default_color)
         progress_bar.set(0)
@@ -949,7 +1165,7 @@ def launch_gui_launcher():
 
         t = threading.Thread(
             target=worker_thread, 
-            args=(pdf_path, selected_mode, selected_key, selected_lang),
+            args=(target_queue, selected_mode, selected_key, selected_lang),
             daemon=True
         )
         t.start()
@@ -982,10 +1198,11 @@ def launch_gui_launcher():
     def update_gui_language(lang_code: str):
         g = get_gui_strings(lang_code)
         root.title(g.get("window_title", "ZUKWEND"))
-        lbl_title.configure(text=g.get("header_title", "ZUKWEND — Privacy-First Accounts Receivable Agent"))
-        lbl_sub.configure(text=g.get("header_subtitle", "Local Autonomous Engine for Invoice Aging & Reminders | Publisher: OLTREVISTA"))
+        lbl_title.configure(text=g.get("header_title", "ZUKWEND"))
+        lbl_sub.configure(text=g.get("header_subtitle", "Autonomous Engine for Invoice Aging & Reminders"))
         btn_settings.configure(text=g.get("btn_settings", "⚙️ Settings & Branding"))
         lbl_pdf.configure(text=g.get("target_doc_label", "TARGET INVOICE DOCUMENT (PDF)"))
+        lbl_browse_guidance.configure(text=g.get("browse_guidance", "(Select single/multiple invoices or entire folder)"))
         entry_pdf.configure(placeholder_text=g.get("doc_placeholder", "Select invoice PDF file..."))
         btn_sfoglia.configure(text=g.get("browse_button", "Browse..."))
         lbl_engine.configure(text=g.get("engine_label", "PROCESSING ENGINE"))
@@ -1039,6 +1256,15 @@ if __name__ == "__main__":
             assert "btn_open_excel" not in src, "Obsolete btn_open_excel still present!"
             assert "open_statement_pdf" not in src, "Obsolete open_statement_pdf still present!"
             assert "open_master_excel" not in src, "Obsolete open_master_excel still present!"
+            # Verify batch & folder selection (v3.34)
+            assert "(Select single/multiple invoices or entire folder)" in src, "UX guidance label missing!"
+            assert "askopenfilenames" in src, "Multi-file picker askopenfilenames missing!"
+            assert "askdirectory" in src, "Directory picker askdirectory missing!"
+            assert "Loaded" in src, "Queued status logic missing!"
+            # Verify threading bugfix & Enterprise styling (v3.35)
+            assert "def post_ui(fn, *args, **kwargs):" in src, "post_ui kwargs fix missing!"
+            assert '#FFFFFF' in src, "Pure White title styling missing!"
+            assert 'Autonomous Engine for Invoice Aging & Reminders' in src, "Clean subtitle missing!"
             print("[OK] ZUKWEND Smoke Test passed successfully.")
             sys.exit(0)
         except Exception as e:

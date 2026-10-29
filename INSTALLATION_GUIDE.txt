@@ -1,5 +1,5 @@
 ===============================================================================
-ZUKWEND v2.1.6 ENTERPRISE — USER MANUAL & OPERATIONAL GUIDE
+ZUKWEND v2.1.5 ENTERPRISE — USER MANUAL & OPERATIONAL GUIDE
 Local-First Accounts Receivable & Credit Management AI Agent
 Consolidated Client Dossier Edition
 ===============================================================================
@@ -56,9 +56,9 @@ ZUKWEND provides three flexible execution tiers to match your corporate privacy 
 - Privacy: API calls are sent securely directly from your machine to your chosen provider via encrypted TLS. No middleman servers used.
 
 -------------------------------------------------------------------------------
-4. CONSOLIDATED CLIENT DOSSIERS & FOLDER HIERARCHY (v2.1.6)
+4. CONSOLIDATED CLIENT DOSSIERS & FOLDER HIERARCHY (v2.1.5)
 -------------------------------------------------------------------------------
-ZUKWEND v2.1.6 introduces enterprise Client Dossier Automation:
+ZUKWEND v2.1.5 introduces enterprise Client Dossier Automation:
 
 Strict P.IVA / Tax ID Matching & Anti-Data Leak:
 - Multiple invoices for the same debtor are consolidated into a unified client dossier ONLY when the VAT Registration Number / Tax ID matches 100%.

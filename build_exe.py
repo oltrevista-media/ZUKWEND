@@ -24,7 +24,7 @@ MODULES_TO_INCLUDE = [
 ]
 
 def build():
-    print("[*] Avvio compilazione ZUKWEND v2.1.4 completa per Windows (.exe)...")
+    print("[*] Avvio compilazione ZUKWEND v2.1.5 completa per Windows (.exe)...")
     
     if not ENTRY_POINT.exists():
         print(f"[ERR] Entry point non trovato: {ENTRY_POINT}")

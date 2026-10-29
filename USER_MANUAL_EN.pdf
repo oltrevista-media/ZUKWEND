@@ -1,143 +1,744 @@
 %PDF-1.4
-%“Œ‹ž ReportLab Generated PDF document (opensource)
+%âãÏÓ
 1 0 obj
 <<
-/F1 2 0 R /F2 3 0 R /F3 5 0 R /F4 6 0 R
+/Producer (pypdf)
 >>
 endobj
 2 0 obj
 <<
-/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+/Type /Pages
+/Count 4
+/Kids [ 4 0 R 11 0 R 13 0 R 15 0 R ]
 >>
 endobj
 3 0 obj
 <<
-/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+/Type /Catalog
+/Pages 2 0 R
 >>
 endobj
 4 0 obj
 <<
-/Contents 13 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 12 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/Contents 5 0 R
+/MediaBox [ 0 0 595.2756 841.8898 ]
+/Resources <<
+/Font 6 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
 >>
 endobj
 5 0 obj
 <<
-/BaseFont /Courier /Encoding /WinAnsiEncoding /Name /F3 /Subtype /Type1 /Type /Font
+/Length 5754
 >>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 735.1969 cm
+q
+BT 1 0 0 1 0 26 Tm 11.92488 0 Td 22 TL /F2 18 Tf 1 .419608 0 rg (ZUKWEND v2.1.5 ENTERPRISE \227 USER MANUAL &) Tj T* 126.513 0 Td (OPERATIONAL GUIDE) Tj T* -138.4379 0 Td ET
+Q
+Q
+q
+1 0 0 1 62.69291 707.1969 cm
+q
+BT 1 0 0 1 0 13 Tm 12 TL /F2 11 Tf .117647 .160784 .231373 rg (Local-First Accounts Receivable & Credit Management AI Agent \227 Consolidated Client) Tj T* (Dossier Edition) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 691.6969 cm
+q
+1.5 w
+1 J
+1 .419608 0 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 681.1969 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 670.9449 cm
+Q
+q
+1 0 0 1 62.69291 642.9449 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 6 Tm /F2 12 Tf 18 TL (1. QUICK START \(TIER 1 NATIVE ENGINE\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 638.4449 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 619.4449 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (ZUKWEND is designed to work immediately out-of-the-box with zero setup:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 611.1929 cm
+Q
+q
+1 0 0 1 62.69291 598.1929 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (1. Extract the "Zukwend_Full" ZIP archive to any local directory \(e.g., C:\\Zukwend\\\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 581.1929 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (2. Double-click "ZUKWEND.exe" to launch the application.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 551.1929 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 17 Tm /F1 9 Tf 13 TL (3. Click "Select Invoice File / Folder" in the main interface to choose your target PDF invoices \(ready-to-test sample) Tj T* (invoices are provided in the "demo\\" folder\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 521.1929 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 17 Tm /F1 9 Tf 13 TL (4. Click "Run Document Analysis". In ~1 second, ZUKWEND extracts invoice data, calculates aging risk, generates) Tj T* (branded PDF reports, and prepares 1-click email reminders.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 512.9409 cm
+Q
+q
+1 0 0 1 62.69291 499.9409 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (No internet connection, external servers, or API keys are required for Tier 1 operation.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 491.689 cm
+Q
+q
+1 0 0 1 62.69291 487.189 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 459.189 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 6 Tm /F2 12 Tf 18 TL (2. FIRST-TIME LAUNCH NOTICE \(WINDOWS SMARTSCREEN\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 454.689 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 422.689 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 17 Tm /F1 9 Tf 13 TL (Because ZUKWEND runs as an autonomous, local-first executable without requiring administrative installation rights,) Tj T* (Windows Defender SmartScreen may display a standard protection message on first launch.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 414.437 cm
+Q
+q
+1 0 0 1 62.69291 401.437 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (To proceed:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 384.437 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (1. Click on "More info".) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 367.437 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (2. Click on the "Run anyway" button.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 359.185 cm
+Q
+q
+1 0 0 1 62.69291 346.185 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (Publisher: OLTREVISTA) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 329.185 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (Note: ZUKWEND is verified and packaged by OLTREVISTA with strict security and file integrity guarantees.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 320.9331 cm
+Q
+q
+1 0 0 1 62.69291 316.4331 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 288.4331 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 6 Tm /F2 12 Tf 18 TL (3. AI EXECUTION ENGINES: THE 3-TIER ARCHITECTURE) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 283.9331 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 264.9331 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (ZUKWEND provides three flexible execution tiers to match your corporate privacy and performance requirements:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 256.6811 cm
+Q
+q
+1 0 0 1 62.69291 243.6811 cm
+q
+BT 1 0 0 1 0 4 Tm 13 TL /F1 9 Tf 0 0 0 rg ([TIER 1] ZUKWEND CORE AI \(Default \227 100% Offline & Instant\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 226.6811 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- How it works: Built-in deterministic rules and local AI parser.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 209.6811 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Setup required: NONE.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 192.6811 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Privacy: 100% Air-Gapped and Local. Zero data transmitted anywhere.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 175.6811 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Speed: ~1 second per invoice.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 167.4291 cm
+Q
+q
+1 0 0 1 62.69291 154.4291 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL ([TIER 2] LOCAL OLLAMA POWER-UP \(Optional \227 Local Open-Weights LLMs\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 124.4291 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 17 Tm /F1 9 Tf 13 TL (- How it works: Connects to your local Ollama server for advanced open-weights reasoning \(e.g., Qwen2.5, Gemma3,) Tj T* (DeepSeek-R1\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 107.4291 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Setup steps:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 90.42913 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (1. Download and install Ollama from https://ollama.com) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 73.42913 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (2. Open your Command Prompt / Terminal and pull your preferred model:) Tj T* ET
+Q
+Q
+ 
+
+endstream
 endobj
 6 0 obj
 <<
-/BaseFont /ZapfDingbats /Name /F4 /Subtype /Type1 /Type /Font
+/F1 7 0 R
+/F2 8 0 R
+/F3 9 0 R
+/F4 10 0 R
 >>
 endobj
 7 0 obj
 <<
-/Contents 14 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 12 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 8 0 obj
 <<
-/Contents 15 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 12 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 9 0 obj
 <<
-/Contents 16 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 12 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Courier
+/Encoding /WinAnsiEncoding
+/Name /F3
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 10 0 obj
 <<
-/PageMode /UseNone /Pages 12 0 R /Type /Catalog
+/BaseFont /ZapfDingbats
+/Name /F4
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 11 0 obj
 <<
-/Author (\(anonymous\)) /CreationDate (D:20261023231324+02'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20261023231324+02'00') /Producer (ReportLab PDF Library - \(opensource\)) 
-  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+/Contents 12 0 R
+/MediaBox [ 0 0 595.2756 841.8898 ]
+/Resources <<
+/Font 6 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
 >>
 endobj
 12 0 obj
 <<
-/Count 4 /Kids [ 4 0 R 7 0 R 8 0 R 9 0 R ] /Type /Pages
+/Length 6654
 >>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 62.69291 769.1969 cm
+q
+.058824 .090196 .164706 rg
+BT 1 0 0 1 0 2 Tm /F3 8 Tf 10 TL (Example: "ollama pull qwen2.5:7b-instruct" or "ollama pull gemma3") Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 739.1969 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 17 Tm /F1 9 Tf 13 TL (3. Launch ZUKWEND, open "Settings" in the top bar, enable "Local Ollama Engine", select your model from) Tj T* (localhost:11434, and click "Save".) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 722.1969 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Privacy: 100% Local. Processing stays entirely on your hardware.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 713.9449 cm
+Q
+q
+1 0 0 1 62.69291 700.9449 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL ([TIER 3] CLOUD BYOC \(Optional \227 Bring Your Own API Key\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 670.9449 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 17 Tm /F1 9 Tf 13 TL (- How it works: Allows enterprise teams to utilize top-tier cloud LLMs \(OpenAI GPT-4o, Anthropic Claude 3.5, Google) Tj T* (Gemini 1.5/2.0, Mistral\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 653.9449 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Setup steps:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 636.9449 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (1. Open "Settings" in the ZUKWEND top menu bar.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 619.9449 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (2. Select "Cloud BYOC Provider" and choose your provider.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 602.9449 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (3. Paste your personal API Key into the designated field and click "Save".) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 572.9449 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 17 Tm /F1 9 Tf 13 TL (- Privacy: API calls are sent securely directly from your machine to your chosen provider via encrypted TLS. No) Tj T* (middleman servers used.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 564.6929 cm
+Q
+q
+1 0 0 1 62.69291 560.1929 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 541.1929 cm
+q
+BT 1 0 0 1 0 4 Tm 13 TL /F1 9 Tf 0 0 0 rg (4. CONSOLIDATED CLIENT DOSSIERS & FOLDER HIERARCHY \(v2.1.5\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 536.6929 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+q
+1 0 0 1 62.69291 517.6929 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (ZUKWEND v2.1.5 introduces enterprise Client Dossier Automation:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 509.4409 cm
+Q
+q
+1 0 0 1 62.69291 496.4409 cm
+q
+BT 1 0 0 1 0 4 Tm 13 TL /F1 9 Tf 0 0 0 rg (Strict P.IVA / Tax ID Matching & Anti-Data Leak:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 466.4409 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 17 Tm /F1 9 Tf 13 TL (- Multiple invoices for the same debtor are consolidated into a unified client dossier ONLY when the VAT Registration) Tj T* (Number / Tax ID matches 100%.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 436.4409 cm
+q
+BT 1 0 0 1 0 17 Tm 13 TL /F1 9 Tf 0 0 0 rg (- If a VAT ID is missing, incomplete, or doubtful \() Tj (< 5 characters\), ZUKWEND automatically falls back to an isolated) Tj T* (single dossier, preventing any cross-client data leak.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 406.4409 cm
+q
+BT 1 0 0 1 0 17 Tm 13 TL /F1 9 Tf 0 0 0 rg (- Windows-illegal folder characters \(/ \\ : * ? " < > | &) Tj (\) are automatically sanitized and folder names are limited to 40) Tj T* (characters maximum.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 398.189 cm
+Q
+q
+1 0 0 1 62.69291 385.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (Permanent Folder Structure \(dossier_mode = True\):) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 368.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (output/) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 340.189 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 6 Tm /F2 12 Tf 18 TL /F4 12 Tf 18 TL (nnn) Tj /F2 12 Tf 18 TL ( CLIENTS/) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 312.189 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 6 Tm /F2 12 Tf 18 TL /F4 12 Tf 18 TL (n) Tj /F2 12 Tf 18 TL ( ) Tj /F4 12 Tf 18 TL (nnn) Tj /F2 12 Tf 18 TL ( {CLIENT_SLUG_VAT}/) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 284.189 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 6 Tm /F2 12 Tf 18 TL /F4 12 Tf 18 TL (n) Tj /F2 12 Tf 18 TL ( ) Tj /F4 12 Tf 18 TL (nnn) Tj /F2 12 Tf 18 TL ( {YYYY-MM-DD}/) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 267.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL /F4 9 Tf 13 TL (n) Tj /F1 9 Tf 13 TL ( ) Tj /F4 9 Tf 13 TL (nnn) Tj /F1 9 Tf 13 TL ( STATEMENT_OF_ACCOUNT_CONSOLIDATED.pdf \(Consolidated statement table\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 250.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL /F4 9 Tf 13 TL (n) Tj /F1 9 Tf 13 TL ( ) Tj /F4 9 Tf 13 TL (nnn) Tj /F1 9 Tf 13 TL ( REMINDER_EMAIL_CONSOLIDATED.txt \(Unified email: SUBJECT + BODY\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 233.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL /F4 9 Tf 13 TL (n) Tj /F1 9 Tf 13 TL ( ) Tj /F4 9 Tf 13 TL (nnn) Tj /F1 9 Tf 13 TL ( Individual_Invoices_Archive/ \(Clean archival subfolder\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 216.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL /F4 9 Tf 13 TL (n) Tj /F1 9 Tf 13 TL ( ) Tj /F4 9 Tf 13 TL (nnn) Tj /F1 9 Tf 13 TL ( report_AR_INV-001_{TS}.pdf) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 199.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL /F4 9 Tf 13 TL (n) Tj /F1 9 Tf 13 TL ( ) Tj /F4 9 Tf 13 TL (nnn) Tj /F1 9 Tf 13 TL ( report_AR_INV-001_{TS}.xlsx) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 182.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL /F4 9 Tf 13 TL (n) Tj /F1 9 Tf 13 TL ( ) Tj /F4 9 Tf 13 TL (nnn) Tj /F1 9 Tf 13 TL ( report_AR_INV-001_{TS}.json) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 165.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL /F4 9 Tf 13 TL (nnn) Tj /F1 9 Tf 13 TL ( MASTER_SUMMARY_AGING_{YYYYMMDD}.xlsx \(Global batch Excel\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 148.189 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL /F4 9 Tf 13 TL (nnn) Tj /F1 9 Tf 13 TL ( master_erp_ingestion_{YYYYMMDD}.json \(Global batch JSON payload\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 139.937 cm
+Q
+q
+1 0 0 1 62.69291 126.937 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (Multi-Currency Partitioning:) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 109.937 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Outstanding invoices are listed line-by-line.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 92.93701 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Subtotals are strictly partitioned per currency \(e.g. Total EUR: \200 18,450.00 | Total USD: $ 4,200.00\).) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 75.93701 cm
+q
+0 0 0 rg
+BT 1 0 0 1 0 4 Tm /F1 9 Tf 13 TL (- Currencies are NEVER algebraically summed together, preserving accounting accuracy.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 62.69291 67.68504 cm
+Q
+q
+1 0 0 1 62.69291 63.18504 cm
+q
+.5 w
+1 J
+.796078 .835294 .882353 RG
+n 0 0 m 469.8898 0 l S
+Q
+Q
+ 
+
+endstream
 endobj
 13 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 2330
+/Contents 14 0 R
+/MediaBox [ 0 0 595.2756 841.8898 ]
+/Resources <<
+/Font 6 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >>
-stream
-Gau0DD/\E)')nJ0;*qiojqKnaD8=FUL,^&o#r#aFX'&K$Nnof2fP[SB%`<_)hgX*m+P\A]*-Ogi9opfJf?7)g4V\#mr#t5&3!8pm_;u+,i]sjNin5A@!sk[.Y@hB]fll_*huj0DDTa@m42CU[COD92cZ7_NAO)%l31fU!K.$c@d77L!3'_k437o:dhUGoU-(KIQrGitiYMn0>M;<o*(kn1DUd#;smPl5S9u@:mFbd<k!.ObEdD$k$-bA!>>K!Wr3$4-t8N5pqL1kThlX,E/1Q/cWmCAd\1;n,qj3MKa2*8iF_HV+Q00p-iKM>"8m<.oB]@l^;YT9(?*S1EN&2?n])_ML%h)H0]XpUQ#R.4hcO>?S;HBKRZ_&^ebP%?17]0:>'qLaX8-h9U"4J@WYcq?BJYm]go=qh-Q&je^3MgY9sG\laIe%1U"fI^4#dEcH\FdUsUjlX5b]QR][I\<=10Kj`\:C\#G5L]$'3Zhc,DT`>?/\^\`/baqi4&%g+4ELMf#+i.[5R3=8j8Y$Oi+]2niS<$b4XW.8T(RHF^bk=O,++umIDd+V+bK"2&.s3B+,9@t2,^R8p>XTZT+qtYSDQ/1IikCdKh*=?&\9=+?'"LW&m"L5Njqsgej;P$cS@m567q#D.$Z(oQ?m)mKD5XdXrcOd9F<28.T]\/1-dZKSE"a-"odB:>p3U<_J`&p=95u<NA'DBRcVZ+DTXeQ^mG$;W/Mho1Xgp&Hip?c6V+^tYnD)0AS(S`^4>(jI(k#S5+d>/h[Z[JPLFo&Cq(6,p:M-<4FTVpX#eo")f'+O;d/>RUBuaZ<bOjC:Y0TcosRMho9rIXXVjPh1M&#4#5\/%i%]j'Nne^_2^1t`C]Me@>8bBj4BG3/BP_].5717AfSEFWU2n?iN3@0H`Z.obSgC/R`_sZO$n8ERfd^Q[rn?+(a^?F61J\R@gY3VQbJ\ebJ;*Nf??Mc:;rR+B0e%1F<*WI/SC;RYn=j?$DW&84_&nRt\U[s%YmQ9*/nRACVAFc%MoueR$"I31HjPrP:D\PgcD5p#:Vh[Z\IMf@9sU%GWjk=8-C>:O_R("B[X_eRrY03)N\AJJ:,[pj`TH[poR^Ihn1HC*7>6@6$]b&(&Nbg!$_7`SLoj]3q2A'TJ<8+upYgsGW[^[8[DXssYc8<[4hM&VPtjq7Y^:\Jq0s$?O42k`@BAe&JqN+`d\K/q\EQedOVRQX65XfW_qlaXNhUt5e^!u=Is=,fT>L41a3_1P$,^2BWT1D!?$^rjpl=rdr-R/`,E$8m9X/@P=ltMFr0IL;Q,lB@8jnTrBkq/<'(TL:.\i1!m(m\K"cmOKRU@*(6>>3tc1ASE1eeF8Ygo&#fL>ZQ]>oX<lN46BK'Cj;Bh"qf`fdSH3GjCiTie/dRf]1E-WKC!'<2*kA?71URK7l=*34n,%T]u\G!!aLg*F<!hpm.;d/M"C,rMR(l[(!b6?\$<EB!<=e4Eu&7ZFY.G3>Y?SV%m+!74DudsFeJ%<s:dW^RK%l-S#/Uq9r[p\h_:)rp;I`?URJ0H*?CnCKiR`#A&'_+E5f&V!l$T[f-!q19i2Rc-Nl-cBNs&"<Z>.ZK0W_/Y_"TIM6h)e6Y0o3=*FdQC^!'ZZ5CXNhN"*L,Ha99*YL['AJQ_2f]Za7g+js%B/GM?hb6n@,V\dnA\$cVL_eq@nNs)6r(ioKMrCYSYP2iS3U:I!;3S*tj"V4#m6CS\N]T"niWc*\:4_NGDFopf0,?_D,;/3L<Ts$Il#b=@a,N-robbgf<AA7l[GeDJ(eepQJk*UnS&(3NY3"%WWOYNp#g>^:k4e("PRk>peM-pM*.oA)AlOd3R4QSt@7hdk]`sd\PRo#E0FVPimA_md$:'X#a20ES:Z#]qYcIHkL51oj2Q<`>*bOH)`D0\-YNr</iRQj"sH;:rEK<M[K<@g(-&?NV7I__5Y.CocgkHA610CL1-&\;.-#Bj1)tS<E4r0Qe!bV3a5K<Ik.e_Mr$1rM?]U=H'**CN59+cjNHi`f4geGOd-uf003GBI])PugoMlqrbr;+"Qe=^i*EKc(jGt0_5Ps++Qj9HG?l&Hm_al=)^Ed$/)A@(*<UGJ8f4[4DV[)nLL;gG/*^N53,cG(]#OUgm(I-g0[*ucV#pAsF]q8D)hM2pB_&5B-..W9DQUAXj5sI">`6;O[f.0=FN89)^b*_blFn[ZCW9CR`h'7<WO4(9B'6NVm!>O*CfQ8_Ju6*!4[jd)MfkTu>4om9i9lc;O<T<IV9k(B94=FFZ,kdFW8jK5&;i7QVlGhAJb_g>`otE7_'ML(bcnTh8<i>:Z,7T*_5,r]16Jg5qh2f=rr@#(U4i~>endstream
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
 endobj
 14 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 2381
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 2402
 >>
 stream
-Gb!#\CNJK)(B*Z.EJrPHli^k4&;\Ks('_drKSKY=;VkuCC8<cU9M8*U(,hZC^ZW$N(d'OX9Ia%#<>\:Zof;bdm_(A@a,c@2q]Wb?#FFlf0MM!(^p#[8]E.Z;Z_,R&@\mRLNbc311`TRQ>fXh\n?SqCRn_?99m:_B$_$&,%GcS[Fb\4!p=nMX6eoP1B"!>pSq#UD,iP3@(/tG",UBTh3JX4KBOklN<b#9B;'P&MQPC)%dmYc*L;^)sJG0_%h^GEfi9*,1efe9]]DNs7UQM<-^s15/)*1EC!D+O9*r[tmrl<lo>6V:/&QGW,8f"Ol$Esfs4U!:cYU"3'BLJ/V6=h9e_I8tpm6rN@d7P,db,I%&/(,8$&Prs]Ym>OfcFLON?6lgf(q+!WJOBP6SGAdr9<t6+XTVkWI$(Q0*8)7c`,%g=D$uo0Ig$\l%8R>'-4-u37$;D=$mgf\hh$Z),53>m*_8uJJ28b$[I"CXo*]Yg^Yi,Us6K?)'<qH@S\]R%Kr`sJ#Nk40[:CIJ8'F]6!EZO8EN:dS+!PCUo\k/.SR9$ggM+;/lhM*l_0b\P9YuF<5:%mpF"SLh,LUfWZNNXNOta]PJlFMNrh%/-9emW^k=$<)?nb80.Pto7iVLQpfqJi@8D_Brc$\_oOp2UOX^6]s+]b-$j6<"e/7N"#oh/64X"\(O9SC_F9"<$C>Glb@#+-Fq)P`"hP?*O"/EaC"$k:5&B4I(+=]U868l]VlTkq6:+Ybk8S7Ql?PPHa;5KoW,$YWeee+d5ToQHNTlf(MS9Y,Kf-If1;Jj(T+UiDPD64rj'.?$5tX+2O5'bO">\7:a.VeAi=nM80ql*2$FKa\]O-\,BP8f:4uo$^9I!`U.HiX[?%KmXO5*^s'T:3MTi`I%<UKaf8oAU_9t.r*pKWkh6m1F$Er^hH=`g`t[KE?Ith:kku[B>9HV=P_A%J'D8=XMY.Cq/E2g>Xr]h6#0YHe&?'Y2:JR00Y'B*Z:BRU@p*Y,h'O1^QlZE=)[F^h@iXQah:m5<$ok^Rk_r$\nY"cVHbD$=A\U1pTKA`?;*(WE27sk=\gX<AnZY1@]Y?ncfjHP^S2(^[a#%u=:>SJ#i;'QIKUit@<)her,"Su9*K"fk1DOk7JX$^tVk$El&lh"c#ZtAV2;?]CLP5%UqZX0Dfi5s"7HI#)Ir*"KGiTJ5>o43R6@X\1_^`H:>p9R`./?gDX6glnH!R9W;_AqGCM:SE@*4"DfTR`n8P#e5A1@%N-*Jtr6uWoPWfee?JM^i70:B0q9*^0Ia.pI&4P\Cj\3IDbR*\i6VNgcJq)V-c-*H+Z+B16a"KGBLOgVW?e,q_cUFrK2rsmF,@(7d]+CnV2<(1--:q`p*<RmQC,$i@''O-Rg%+"`n:e+A,1%@!@P5.Oh?^=4p>tXK\dPB'O&enS^W!G<o>Zkr??L<M[02,D8NM@HCKjb7KBFB9J(MZ%DWaOa%$tZN7T5Ko9=VP6g;e)?H("SX3_3O;7-B*,XK_ZTkn.#:7.e"JV$\!f5F5+nlZ8d,ELkJ/i@KVj]T]1M7L/qUm3").3-T%!gmqm-M@7VGBR"coC>Ad@qR`?)mC=[U\?R7Qg1rb]Qh!cpd5L!dVXC5e%_L2gBpVT53Mc2[O.$:g$dl[qq8EDmtQR+Pop!4RjL=*g49hfUUgSi`$AQTE-%pM*jQKE'mD!$jh5<1ogU-+.E>^0RST4o0fLAA<p3s)QE?(/tj3Le!00Y:Ya<;]dKQJ&Y&4KVicWssilDRU<)Vf>>%.R8c/]0l0HRQlFSZ8ObLHKnq"1K6OU^K\',Sad,<*k";e3k3)'ll9%US8T\_<Vf<F`0]_7be!dc3)=k<rWjIQ7;piH&"^(lNtU-kMAhG50B4XOcE9A'3Z`YV=6&^c.Cti<B'Ar`J75LN'#*QG%EY=b@qW0BQccX:"=#H;l3,\9,[KOIV%cYAGr%9e\e_PUZmUe2k[R?=NQ!R-oJ[N!0Cpl&pT=%3jN1m<,#.[2'DX*QgogV_&a,t8U,9AgHg7:+9P;7OHZH`3?h[(BMbM0H6WEU"gmB)5>V%TYQE#jthP3klRC"[7P<+iSi'[1O,$s2$[_Uac->ETA"KtMs-28#"nHd]Vb682EENi]m[2MP>5JqSdf3d'FA]%BIPK#>:r%6]c=>GRPM3R5o%,F'\f,BTHM.I'k&;Pi8>aDkBM5k9[7C9MYf$s^4SZur[*4g.4><eX-KI"2(2qdDP?2](^#m@S8'>i$_o5gq62"9!Xd$ma50K4.0Tine.W8b!fMefY5[fud3]8DsFI&XTANV^aZ$6QRjNhbIOh?4*kd:H!pP=caJfd*kt347l^R<jpY9k:skdUG3-OY$%3AR=sc1oFL.mA"[cW5;aiprfjBi9YZ5"bGA~>endstream
+GauHL>>sQO'7K%FFRbGJ.AO:'Q7^s(>7b_#M^:#"T2X6A)N+ob`fW`@pXc<UI)0Wl<d;Le<?PM@dHR7OVpC;3%K+c,h_55t"RtYR#Mjo<$+cs9&.H>^:B!H)[j,`WZQ6s2Tk3PYmar"5LUZe>I6X&-5mhpB55XTmfZpAYHHWa#ptotrg(n@VWLGIQnec+9%D(TY`#[Z!BBkM'rQuAX"MPZTGidu!d:N>m2KaZOG]X/+?P*,d;>l6aY9@]8GdTo92;o.fHp5q]NdNWrD6mq9#b^!3bbb]qX-64OOb..+poW#b%gi#Lc>U-$k&73QH2KE$Q:uj'V5#e[b$<H-AKc<@^/F`9p?T+Fl@IlT&eX!:R[6$f4C@WK#RW,WR:'J59:eLE1Fg/!+K'Hk'L8r0#:Bfe"lgJ2>d0;*(DThX1_-2Y)t=-r*qq9FW9LfY#n-2fgeg%20D]d)]ne;a[U6cX)LO";bMiS)[$)_T]KV$<.0Li-R@6tA'kHBV`C.\O+LtMrQA0\?1)LpSR@s@.l04(9CP\o3/1E2Z5\#sBV^tq>MZQ?nV0-aP.*#,+k]bfZ>qLRGV$PsOnYlk/mC%E_>#U(,.cDZLQ6Q]s3Qu7PX;*#&kK/u7$aOJq->>n@U`-*d,Y>:rKhVCFOX@cb*LWp8a0IZ3]7m?Ffoj<c:8,^dJmm5c4JGYg8Pt&FG1/G=mH8HRi`dI[HmM@OR%%,d%g2'T2+An-JgW)n6>"[_3=?!a[/LkcIWg$g9Hf;s1U`AR=ctNP<>&n%O,'6\GO0km5lS_.$r@2i5NGuiMs#X[,tW"Of`RQuJ%HRn59125D]bk_c,6s&<[-+)3@YZff3%<$6;sIU!RT2SbE]c)Uc7Au%5f=9&n6WdHpt`BVm9]21bVrS2H@2\Vp,"ho)=b`d;>hRdJbUFL"19=c*Al8f'<FlD9^`DpkUQQZl98As&acj<4cGhHi\T$2o+PRD:\1T$Ct<2N(8>NCg]oE4u-5Vaj9RnK1*$\p)DZd&h4\;+s*%!l2n&-No_R&Yc_0ZJn)\jJS[A"Fpsh\0j'IC!#,>a,ni4CXbs&7)rCn%[pGDWs1O3VmODl-'`rM"8WLG"r6GaMP!Y7(?t\CJRM@<hE%cmC+b&>RhU!2F\)YY9\(_qLn.L/:59BHDGcRaEU*Wj\0%-1<S#u%Up@?#_,H]D7/Z3UDg)ZB6+XpsbpRX^??lm>bki7=LYjDs,5ObPZrbOQ9V`2*Q'cPHR)uLQ`HTgaF.A#I[kP#A0n#M,m1B2itF\+3!Oq8Is@TA:%d9X(0if=8_NE.7D"@RU9`aq[#P=b>G2<=%:=L*T\nHP<8`,1%p[a&$!6X>+>l!($)3<,Htp5/u:Mr-u4CG"&H=YLmhK#=u8FFSjJJ*M0/nam$3XuEGfrNM7S4sM-^E5O]'ruIoH7%:]oL!h9/n35-CM8&I^lRF<LknjZ/J);#.&e[rHh%3thh/8*"ONqZ"O%TLWIt'mS[ToS]a*0.8r6N>9Y>Hn&lHm53chA3U^DSr%cd/V!CUT;AL.4DcELbAXgR=i1b=N[0%dqWhF6G_>h7U2(?HR/ZA$(@0pccRHH]PS@>X!G+g3sk8aHAsU#g5hH(>)X8%<A:.9:eO.YCEl'H0-)!"#f)^L!$oA+3JljPU-,1,?RRg^'g2t%`YJH*/%$<<)+K=[kdYW7*F(#oL=hL7Ea2M.,9dmX'qdZ3gfrfbZS/&Si>k_nYU2:i;$JThK/ht;;b_[4Y\\F`]bId'!?'mbl<]lfJ/=KD%8b*CPbS'Z*1*6&P[6-PKQZrJKG47BDASk0p*Ee*.).GlsgpTOAk@aEcnri`LRn/p[Pt(+hDj$TgU_T(h0$Cn-+8?`Y*L^^!$6)"oQ6s]CVQPfM[";^%Hb`ibj5sECYkcSsL^XPR<"\+SC/2OB>M:bf8dm@YK8]adE`1=QVWg_DN%h6?#5R.TKsAp2R-FI$944`U_"s@&+:40Eo;]JP:WD*\'1Dndks-IG+js:m>UBf(k9<pHh<t)>A#$E*oL?G89b]iuEgqFnf]e"qSp%>]4I$U/sMinQ,_\U9NKc!<"uO"V-pO:>IA/C3A?k,\u23T$$,B@7?"q2sXe7BhGU\WV$/Yb3R=@_gZBFZGCBKgo*Tm4C_Pc/.2"BGbski6(7*1iUFM3gR_V@VM&%[.=,#orb-BJq.s0cDC4$TI!>-TrBJFY]T]4%6i;Ite6h7aV,]i>NXZ_miJo%Z\"A)Z4!n`c;MPsK`rn0W=iQb$fe(mS=5*cQ'$"i:h(IZ\%.C/Dl@?Hg%n2:<^"<IPPK/*Q)a.]@n?Vtm"K5Onh0uudl$>_GgE.d@=9,oNocJ9:7t\pjs2FB^eA:NJc`c+1pg//&m0>T&p'0B=4$^^OG6`#8kY3QI+h'-_HZ21d4Il<OL6HY2~>
+endstream
 endobj
 15 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 2402
+/Contents 16 0 R
+/MediaBox [ 0 0 595.2756 841.8898 ]
+/Resources <<
+/Font 6 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >>
-stream
-GauHL>>sQO'7K%FFRbGJ.AO:'Q7^s(>7b_#M^:#"T2X6A)N+ob`fW`@pXc<UI)0Wl<d;Le<?PM@dHR7OVpC;3%K+c,h_55t"RtYR#Mjo<$+cs9&.H>^:B!H)[j,`WZQ6s2Tk3PYmar"5LUZe>I6X&-5mhpB55XTmfZpAYHHWa#ptotrg(n@VWLGIQnec+9%D(TY`#[Z!BBkM'rQuAX"MPZTGidu!d:N>m2KaZOG]X/+?P*,d;>l6aY9@]8GdTo92;o.fHp5q]NdNWrD6mq9#b^!3bbb]qX-64OOb..+poW#b%gi#Lc>U-$k&73QH2KE$Q:uj'V5#e[b$<H-AKc<@^/F`9p?T+Fl@IlT&eX!:R[6$f4C@WK#RW,WR:'J59:eLE1Fg/!+K'Hk'L8r0#:Bfe"lgJ2>d0;*(DThX1_-2Y)t=-r*qq9FW9LfY#n-2fgeg%20D]d)]ne;a[U6cX)LO";bMiS)[$)_T]KV$<.0Li-R@6tA'kHBV`C.\O+LtMrQA0\?1)LpSR@s@.l04(9CP\o3/1E2Z5\#sBV^tq>MZQ?nV0-aP.*#,+k]bfZ>qLRGV$PsOnYlk/mC%E_>#U(,.cDZLQ6Q]s3Qu7PX;*#&kK/u7$aOJq->>n@U`-*d,Y>:rKhVCFOX@cb*LWp8a0IZ3]7m?Ffoj<c:8,^dJmm5c4JGYg8Pt&FG1/G=mH8HRi`dI[HmM@OR%%,d%g2'T2+An-JgW)n6>"[_3=?!a[/LkcIWg$g9Hf;s1U`AR=ctNP<>&n%O,'6\GO0km5lS_.$r@2i5NGuiMs#X[,tW"Of`RQuJ%HRn59125D]bk_c,6s&<[-+)3@YZff3%<$6;sIU!RT2SbE]c)Uc7Au%5f=9&n6WdHpt`BVm9]21bVrS2H@2\Vp,"ho)=b`d;>hRdJbUFL"19=c*Al8f'<FlD9^`DpkUQQZl98As&acj<4cGhHi\T$2o+PRD:\1T$Ct<2N(8>NCg]oE4u-5Vaj9RnK1*$\p)DZd&h4\;+s*%!l2n&-No_R&Yc_0ZJn)\jJS[A"Fpsh\0j'IC!#,>a,ni4CXbs&7)rCn%[pGDWs1O3VmODl-'`rM"8WLG"r6GaMP!Y7(?t\CJRM@<hE%cmC+b&>RhU!2F\)YY9\(_qLn.L/:59BHDGcRaEU*Wj\0%-1<S#u%Up@?#_,H]D7/Z3UDg)ZB6+XpsbpRX^??lm>bki7=LYjDs,5ObPZrbOQ9V`2*Q'cPHR)uLQ`HTgaF.A#I[kP#A0n#M,m1B2itF\+3!Oq8Is@TA:%d9X(0if=8_NE.7D"@RU9`aq[#P=b>G2<=%:=L*T\nHP<8`,1%p[a&$!6X>+>l!($)3<,Htp5/u:Mr-u4CG"&H=YLmhK#=u8FFSjJJ*M0/nam$3XuEGfrNM7S4sM-^E5O]'ruIoH7%:]oL!h9/n35-CM8&I^lRF<LknjZ/J);#.&e[rHh%3thh/8*"ONqZ"O%TLWIt'mS[ToS]a*0.8r6N>9Y>Hn&lHm53chA3U^DSr%cd/V!CUT;AL.4DcELbAXgR=i1b=N[0%dqWhF6G_>h7U2(?HR/ZA$(@0pccRHH]PS@>X!G+g3sk8aHAsU#g5hH(>)X8%<A:.9:eO.YCEl'H0-)!"#f)^L!$oA+3JljPU-,1,?RRg^'g2t%`YJH*/%$<<)+K=[kdYW7*F(#oL=hL7Ea2M.,9dmX'qdZ3gfrfbZS/&Si>k_nYU2:i;$JThK/ht;;b_[4Y\\F`]bId'!?'mbl<]lfJ/=KD%8b*CPbS'Z*1*6&P[6-PKQZrJKG47BDASk0p*Ee*.).GlsgpTOAk@aEcnri`LRn/p[Pt(+hDj$TgU_T(h0$Cn-+8?`Y*L^^!$6)"oQ6s]CVQPfM[";^%Hb`ibj5sECYkcSsL^XPR<"\+SC/2OB>M:bf8dm@YK8]adE`1=QVWg_DN%h6?#5R.TKsAp2R-FI$944`U_"s@&+:40Eo;]JP:WD*\'1Dndks-IG+js:m>UBf(k9<pHh<t)>A#$E*oL?G89b]iuEgqFnf]e"qSp%>]4I$U/sMinQ,_\U9NKc!<"uO"V-pO:>IA/C3A?k,\u23T$$,B@7?"q2sXe7BhGU\WV$/Yb3R=@_gZBFZGCBKgo*Tm4C_Pc/.2"BGbski6(7*1iUFM3gR_V@VM&%[.=,#orb-BJq.s0cDC4$TI!>-TrBJFY]T]4%6i;Ite6h7aV,]i>NXZ_miJo%Z\"A)Z4!n`c;MPsK`rn0W=iQb$fe(mS=5*cQ'$"i:h(IZ\%.C/Dl@?Hg%n2:<^"<IPPK/*Q)a.]@n?Vtm"K5Onh0uudl$>_GgE.d@=9,oNocJ9:7t\pjs2FB^eA:NJc`c+1pg//&m0>T&p'0B=4$^^OG6`#8kY3QI+h'-_HZ21d4Il<OL6HY2~>endstream
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
 endobj
 16 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 691
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 691
 >>
 stream
-GatUmh/Car'ZJu,=.CYF+dOEKRP_[:I;)OJd05WY?ArsW)B:iFSWs-JgiQi28O])$/1%TMm^_N[S06sZCqd1UhGlPL8<Ad-h'0t8%+PdLe`^n8CmFfUb0+dmTU;NP;W]:WnMM+040PGFeK@G=ik_c;gu?S!$QL/FZW"Q!CKu&"#nr-OilBX]hp4NY_7&Dm+HOgtj<3B5;_h`mV9h^Kb5$Qh3)T,-;RA%+&5FiX+;m41&MB:[7Ok*/M]gkAC.0HhUABT/2%GRYaM39[23d@-Op";']%Y%uci#\WT!5YoK="A-"[;72-LZ^Wd%=>hWIeIJ[CK9FDTWhI`Ng2Ug3,>WB7%VNUPH"rmgH=I%$UGm_ZrNS@A`PpF,0:W.PmUBJu:_0?>?/PEfUL8!B`adCr7sm/QH?kQT4)V1BF3$?MP%f!C>0G"0Zu$XViHY@;K=:5/Php^tQ(I?OYulTE554X`Y*Ml:iC846&n&3707]p?^Tc>&i8f1aC^h\(4Z\Ye6l^?X6S\>i7"25DceTC](8*XaDXN>eU>\S4$qSD%Q.NjCJp7>J],DRUF+'pS4Z8o=1/3R\l9gRIPbf:+%LQQQriABTV=%T9`F4BO(Qf5[I-Vq!W^mCu5o`*1Yk*@N:GMI%"(,o5@^^eHq6XSp;H[0is9En<fCef2MVL+F0+;JGf/S)#XUq+"^(~>endstream
+GatUmh/Car'ZJu,=.CYF+dOEKRP_[:I;)OJd05WY?ArsW)B:iFSWs-JgiQi28O])$/1%TMm^_N[S06sZCqd1UhGlPL8<Ad-h'0t8%+PdLe`^n8CmFfUb0+dmTU;NP;W]:WnMM+040PGFeK@G=ik_c;gu?S!$QL/FZW"Q!CKu&"#nr-OilBX]hp4NY_7&Dm+HOgtj<3B5;_h`mV9h^Kb5$Qh3)T,-;RA%+&5FiX+;m41&MB:[7Ok*/M]gkAC.0HhUABT/2%GRYaM39[23d@-Op";']%Y%uci#\WT!5YoK="A-"[;72-LZ^Wd%=>hWIeIJ[CK9FDTWhI`Ng2Ug3,>WB7%VNUPH"rmgH=I%$UGm_ZrNS@A`PpF,0:W.PmUBJu:_0?>?/PEfUL8!B`adCr7sm/QH?kQT4)V1BF3$?MP%f!C>0G"0Zu$XViHY@;K=:5/Php^tQ(I?OYulTE554X`Y*Ml:iC846&n&3707]p?^Tc>&i8f1aC^h\(4Z\Ye6l^?X6S\>i7"25DceTC](8*XaDXN>eU>\S4$qSD%Q.NjCJp7>J],DRUF+'pS4Z8o=1/3R\l9gRIPbf:+%LQQQriABTV=%T9`F4BO(Qf5[I-Vq!W^mCu5o`*1Yk*@N:GMI%"(,o5@^^eHq6XSp;H[0is9En<fCef2MVL+F0+;JGf/S)#XUq+"^(~>
+endstream
 endobj
 xref
 0 17
 0000000000 65535 f 
-0000000061 00000 n 
-0000000122 00000 n 
-0000000229 00000 n 
-0000000341 00000 n 
-0000000546 00000 n 
-0000000651 00000 n 
-0000000734 00000 n 
-0000000939 00000 n 
-0000001144 00000 n 
-0000001349 00000 n 
-0000001419 00000 n 
-0000001700 00000 n 
-0000001778 00000 n 
-0000004200 00000 n 
-0000006673 00000 n 
-0000009167 00000 n 
+0000000015 00000 n 
+0000000054 00000 n 
+0000000134 00000 n 
+0000000183 00000 n 
+0000000382 00000 n 
+0000006188 00000 n 
+0000006250 00000 n 
+0000006357 00000 n 
+0000006469 00000 n 
+0000006574 00000 n 
+0000006658 00000 n 
+0000006859 00000 n 
+0000013566 00000 n 
+0000013767 00000 n 
+0000016262 00000 n 
+0000016463 00000 n 
 trailer
 <<
-/ID 
-[<dff3e90c720400e3b70a7596b354c8cb><dff3e90c720400e3b70a7596b354c8cb>]
-% ReportLab generated PDF document -- digest (opensource)
-
-/Info 11 0 R
-/Root 10 0 R
 /Size 17
+/Root 3 0 R
+/Info 1 0 R
 >>
 startxref
-9949
+17246
 %%EOF

@@ -2,7 +2,7 @@
 ZUKWEND — Multilingual Billing Agent
 Modulo: resource_utils.py
 Ruolo: Risoluzione percorsi risorse (PyInstaller-safe) e cartelle di scrittura.
-Versione: 2.1.4-ENTERPRISE
+Versione: 2.1.5-ENTERPRISE
 REPTANA MODE | OLTREVISTA 2030 | Offline-First
 
 Regole:
