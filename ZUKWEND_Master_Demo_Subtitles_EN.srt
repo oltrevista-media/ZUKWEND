@@ -1,0 +1,35 @@
+1
+00:00:01,000 --> 00:00:04,400
+Meet ZUKWEND: the local, autonomous AI agent for Accounts Receivable.
+
+2
+00:00:04,700 --> 00:00:09,100
+Automate invoice aging analysis and payment reminders directly on your desktop.
+
+3
+00:00:10,000 --> 00:00:14,100
+100% on-device processing with Native Local AI.
+
+4
+00:00:14,400 --> 00:00:19,100
+No cloud uploads, zero API fees, and total data privacy for your accounting records.
+
+5
+00:00:20,100 --> 00:00:25,500
+Need to process a full portfolio? Watch ZUKWEND analyze 202 overdue invoices...
+
+6
+00:00:25,800 --> 00:00:32,200
+...and build consolidated, multi-currency customer dossiers in under three seconds.
+
+7
+00:00:33,500 --> 00:00:39,600
+Get instant multi-currency aging tables in Excel and ERP-ready JSON data.
+
+8
+00:00:40,000 --> 00:00:46,700
+Plus, automated consolidated statements of account ready to send to your clients.
+
+9
+00:00:47,700 --> 00:00:50,700
+ZUKWEND. Lifetime license, zero subscription fees.

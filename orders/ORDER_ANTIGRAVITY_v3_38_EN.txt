@@ -1,0 +1,23 @@
+[ORDER] ZUKWEND VIDEO ASSET MULTI-CHANNEL DEPLOYMENT (v3.38)
+
+OBJECTIVE:
+Deploy and embed the video asset ZUKWEND_Master_Demo_FINAL.mp4 across digital touchpoints defined in Phase 2 and 3 of the Master Plan.
+
+--------------------------------------------------------------------------------
+
+1. LANDING PAGE VIDEO EMBED (CLOUDFLARE PAGES)
+- Copy ZUKWEND_Master_Demo_FINAL.mp4 into the web public assets folder.
+- Update HTML Hero section across all 6 localized landing pages (IT, EN, DE, FR, ES, PT) with an optimized responsive video player component.
+- Add subtitles support pointing to ZUKWEND_Master_Demo_Subtitles_EN.srt.
+- Direct call-to-action button below video pointing to checkout.
+
+2. COLD EMAIL ASSETS GENERATION
+- Generate a 5-second GIF preview with play icon overlay for email embedding.
+- Update email templates with video thumbnail link.
+
+3. SOCIAL DISTRIBUTION
+- Prepare post metadata for LinkedIn B2B and YouTube B2B demo.
+
+--------------------------------------------------------------------------------
+EXECUTION COMMAND FOR ANTIGRAVITY:
+Deploy video asset to landing repo, embed video player across localized landing pages, generate email GIF preview, and prepare social media distribution files.
