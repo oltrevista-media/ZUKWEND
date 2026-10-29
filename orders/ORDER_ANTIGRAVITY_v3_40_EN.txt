@@ -1,0 +1,31 @@
+[ORDER] ZUKWEND WEB LANDING PAGES FIXES (v3.40 - CHAT 1 ONLY)
+
+TARGET WORKSPACE / CHAT:
+Chat 1 — SITI & LANDING (Repositories: ZUKWEND_repo and oltrevista-site)
+
+OBJECTIVE:
+Execute web-only landing page fixes on Cloudflare Pages. Do NOT touch desktop application source code.
+
+--------------------------------------------------------------------------------
+
+1. LANDING PAGES VERSION STANDARDIZATION (v2.15)
+- In the web landing pages (IT, EN, DE, FR, ES, PT), update footers and HTML text strings to display version 'v2.15'.
+- Replace any HTML text references to '2.1.6' or 'v2.1.6' in the web pages with 'v2.15'.
+
+2. SUBTITLE TRACK REMOVAL (NO DUPLICATION)
+- Remove the HTML5 <track> tag from the <video> player element across all localized landing pages.
+- The video MP4 already contains burned-in subtitles, preventing double text rendering.
+
+3. OPENGRAPH & SOCIAL PREVIEW METADATA VERIFICATION
+- Ensure <meta property="og:image"> and <meta name="twitter:image"> across all landing pages point directly to /assets/ZUKWEND_Master_Demo_Poster.jpg.
+
+4. CHECKOUT LINK VERIFICATION
+- Confirm CTA buttons across all 6 localized web pages point to live checkout:
+  https://zukwend.lemonsqueezy.com/checkout/buy/c6c7d5b7-7ee9-4717-a708-c386ad1d2344 (249 € lifetime).
+
+5. GIT COMMIT & CLOUDFLARE PAGES DEPLOY
+- Commit and push changes to main branch for ZUKWEND_repo and oltrevista-site.
+
+--------------------------------------------------------------------------------
+EXECUTION COMMAND FOR ANTIGRAVITY (CHAT 1 ONLY):
+Execute web landing page fixes (v2.15 in footers, remove video <track> tags, verify OpenGraph meta tags and checkout links) and push to main.
