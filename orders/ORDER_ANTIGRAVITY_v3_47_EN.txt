@@ -1,0 +1,29 @@
+TASK DIRECTIVE: UPDATE 6 LOCALIZED LANDINGS WITH OFFICIAL YOUTUBE MASTER DEMO (v2.1.5)
+
+OBJECTIVE:
+Update all landing page templates across web repositories (IT, EN, DE, FR, ES, PT) with the official Master Demo YouTube video (v2.1.5, ID: nw6SKifa3Sw), dynamically configuring closed captions and interface language per locale to maximize conversion without creating multiple video assets.
+
+CORE ASSET PARAMETERS:
+Video ID: nw6SKifa3Sw
+Base URL: https://www.youtube.com/embed/nw6SKifa3Sw?rel=0&modestbranding=1&controls=1&playsinline=1
+
+LOCALIZED QUERY PARAMETERS PER LOCALE:
+- Portuguese (PT / BR): &cc_load_policy=1&cc_lang_pref=pt&hl=pt
+- Italian (IT): &cc_load_policy=1&cc_lang_pref=it&hl=it
+- German (DE): &cc_load_policy=1&cc_lang_pref=de&hl=de
+- Spanish (ES): &cc_load_policy=1&cc_lang_pref=es&hl=es
+- French (FR): &cc_load_policy=1&cc_lang_pref=fr&hl=fr
+- English / Global (EN): &cc_load_policy=1&cc_lang_pref=en&hl=en
+
+ACTIONS TO EXECUTE:
+1. Locate landing page components and template files across all 6 localized routes (/it, /en, /de, /fr, /es, /pt).
+2. For each language version, construct the target embed URL by appending the respective locale parameters to the Base URL.
+3. Replace the legacy video player or placeholder in each template with this responsive iframe:
+
+<iframe width="100%" height="100%" src="CONSTRUCTED_LOCALE_URL" title="ZUKWEND v2.1.5 - Enterprise Demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+(Note for Antigravity: replace CONSTRUCTED_LOCALE_URL with the exact generated URL for that specific language).
+
+4. Ensure parent video container retains 16:9 responsive aspect ratio without layout shift.
+5. Run repository build check to verify syntax and asset paths across all 6 pages.
+6. Commit changes with message: feat(landing): deploy localized youtube v2.1.5 embeds with auto-captions across 6 languages (nw6SKifa3Sw) and push to main for Cloudflare Pages deployment.
